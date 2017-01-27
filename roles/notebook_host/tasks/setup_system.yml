@@ -1,2 +1,0 @@
-- name: Disable auto-updates on Pouta
-  file: name=/etc/cron.daily/automatic_updates state=absent
