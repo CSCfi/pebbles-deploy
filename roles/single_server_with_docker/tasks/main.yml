@@ -1,3 +1,73 @@
+- name: create docker group
+  group:
+    name: docker
+    state: present
+  become: True
+
+- name: add ansible user to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yesA
+  become: True
+
+- name: install yum packages
+  yum:
+    state: installed
+    name:
+      - centos-release-openstack
+      - bind-utils
+      - git
+      - python-devel
+      - python-setuptools
+      - python-novaclient
+      - libffi-devel
+      - openssl-devel
+  become: True
+
+# not 100% sure why easy_install and not yum but it's how it was so let's keep
+# it
+- name: easy_install latest pip
+  easy_install:
+    name: pip
+      state: latest
+  become: True
+
+- name: pip install ansible (fixed version)
+  pip:
+    version: "{{ ansible_version }}"
+    name: ansible
+    state: installed
+  become: True
+
+
+# move over credentials file from localhost, where it should be
+
+- name: ensure in-memory filesystem
+  file:
+    path: "{{ application_m2m_credentials_dir }}"
+    state: folder
+    owner: root
+    group: root
+    mode: 0644
+    recurse: yes
+  become: True
+
+
+# we could check that local file exists but lack of m2m creds is an error at
+# the time of this writing
+
+- name: copy local creds to remote virtual filesystem
+  file:
+    src: "{{ local_m2m_credentials_path }}"
+    path: "{{ application_m2m_credentials_path }}"
+    owner: root
+    group: root
+    setype: svirt_sandbox_file_t
+    mode: 0644
+  become: True
+
+
 - name: Create ssl dir
   file:
     dest: "{{ docker_host_cert_dir }}"
@@ -5,6 +75,20 @@
     group: root
     mode: 0600
     state: directory
+
+- name: check if local key exists
+  local_action:
+      stat:
+        path: "{{local_ssl_key}}"
+  register: stat_local_ssl_key
+
+- name: check if local certificate exists
+  local_action:
+      stat:
+        path: "{{local_ssl_cert}}"
+  register: stat_local_ssl_cert
+
+
 
 - name: Create self-signed SSL cert
   command: >
@@ -16,10 +100,43 @@
     -out {{ docker_host_cert_dir }}/server.crt
     creates={{ docker_host_cert_dir }}/server.crt
   register: self_signed_cert
+  when: stat_local_ssl_key.stat.exists == False or stat_local_ssl_cert.stat.exists == False
 
 - name: Use self-signed SSL cert as a dummy file for chain
   command: cp {{ docker_host_cert_dir }}/server.crt {{ docker_host_cert_dir }}/chain.crt
-  when: self_signed_cert | changed
+  when: self_signed_cert is defined and elf_signed_cert | changed
+
+- name: Upload fixed certificate
+  command:
+    file:
+      path: "{{ docker_host_cert_dir }}/chain.crt"
+      src: "{{ local_ssl_crt }}"
+  when: stat_local_ssl_key.stat.exists == True and  stat_local_ssl_cert.stat.exists == True
+
+- name: Upload fixed key
+  command:
+    file:
+      path: "{{ docker_host_cert_dir }}/server.key"
+      src: "{{ local_ssl_key }}"
+  when: stat_local_ssl_key.stat.exists == True and  stat_local_ssl_cert.stat.exists == True
+
+
+
+- name: create SSO directory
+    file:
+      dest: "{{ sso_cert_path }}"
+  when: use_sso == True
+
+- name: upload SSO files
+    file:
+      dest: "{{ sso_cert_path }}/{{item}}"
+      src: "{{ sso_cert_local_path }}/{{item}}"
+  with_items:
+    - sp_key.pem
+    - sp_cert.pem
+    - idp_cert.pem
+  when: use_sso = True
+
 
 - name: make temporary directory for image build
   command: mktemp -d
