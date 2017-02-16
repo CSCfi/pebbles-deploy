@@ -1,14 +1,33 @@
 ---
+############################################
+#These need to be installed per-installation
+############################################
+
+# public ipv4 address of the service, goes to nginx conf etc
+public_ipv4: "{{ ansible_eth0[\"ipv4\"][\"address\"] }}"
+domain_name: "localhost"
+
+application_debug_logging: True
+
+docker_host_app_mount_root: "/home/cloud-user/"
+docker_host_app_root: "{{docker_host_app_mount_root}}/pebbles/"
+
 # deploy mode:
 #   devel: git from shared directory
 #   docker: source, logs and and database from shared directory
 #   standalone: checkout from github
-deploy_mode: "devel"
+deploy_mode: "docker"
 
 # application server type:
 #   devel: Flask built-in HTTP server
 #   prod: Gunicorn HTTP server
-server_type: "devel"
+server_type: "prod"
+
+
+############################################
+# below are optional configs
+############################################
+
 
 git_repository: "https://github.com/CSC-IT-Center-for-Science/pebbles.git"
 git_version: "master"
@@ -32,11 +51,9 @@ application_worker_endpoint_log_file: "{{ application_log_dir }}/gunicorn_worker
 celery_log_file: "{{ application_log_dir }}/celery.log"
 celery_system_log_file: "{{ application_log_dir }}/celery-system.log"
 celerybeat_log_file: "{{ application_log_dir }}/celerybeat.log"
-domain_name: "localhost"
 application_name: "pebbles"
 application_user: "{{ application_name }}"
 application_group: "webapps"
-application_debug_logging: True
 application_secret_key: "change_me"
 application_config_dir: "/etc/{{ application_name }}"
 application_config: "{{ application_config_dir }}/config.yaml"
@@ -61,7 +78,6 @@ gunicorn_bind_endpoint_worker: "{{ gunicorn_bind_address }}:{{ gunicorn_bind_por
 gunicorn_num_workers: "{{ 2 * ansible_processor_vcpus }}"
 gunicorn_max_requests: 50
 
-public_ipv4: "{{ ansible_eth0[\"ipv4\"][\"address\"] }}"
 provisioning_log_file_root: "/webapps/{{ application_name }}/provisioning_logs"
 
 # shibboleth; requires apache instead of nginx
@@ -89,7 +105,6 @@ pvc_install_dir: "/opt/pvc"
 pvc_version: "wip-for_pouta_blueprints"
 
 # docker host
-docker_host_app_root: "/opt/{{ application_name }}"
 docker_host_m2m_credentials_dir: "/run/shm/{{ application_name }}"
 docker_host_image_dir: "/var/lib/pb/docker_images"
 docker_host_cert_dir: "/var/lib/pb/certs"

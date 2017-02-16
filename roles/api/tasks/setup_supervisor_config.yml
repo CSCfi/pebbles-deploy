@@ -18,6 +18,12 @@
             backup=yes
   when: server_type == "prod"
 
+- name: ensure redis log directory exists (prod)
+  file:
+    path: /var/log/redis
+    state: directory
+  when: server_type == "prod"
+
 - name: Re-read the Supervisor config files
   command: supervisorctl reread
 

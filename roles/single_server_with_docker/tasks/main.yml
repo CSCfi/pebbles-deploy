@@ -8,7 +8,7 @@
   user:
     name: "{{ ansible_user }}"
     groups: docker
-    append: yesA
+    append: yes
   become: True
 
 - name: install yum packages
@@ -25,42 +25,63 @@
       - openssl-devel
   become: True
 
+- name: check out project using git
+  git:
+    repo: "{{ git_repository }}"
+    version: "{{ git_version }}"
+    dest: "{{ docker_host_app_root }}"
+  become: false
+
+#for some reason the root dir belongs to root anyway
+- name: make sure cloud-user owns git
+  file:
+    setype: svirt_sandbox_file_t
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    state: directory
+    recurse: true
+    path: "{{ docker_host_app_root }}"
+
+
 # not 100% sure why easy_install and not yum but it's how it was so let's keep
 # it
 - name: easy_install latest pip
   easy_install:
     name: pip
-      state: latest
+    state: latest
   become: True
 
 - name: pip install ansible (fixed version)
   pip:
-    version: "{{ ansible_version }}"
+    version: "{{ ansible_version.full }}"
     name: ansible
-    state: installed
+    state: present
   become: True
 
 
 # move over credentials file from localhost, where it should be
-
 - name: ensure in-memory filesystem
   file:
-    path: "{{ application_m2m_credentials_dir }}"
-    state: folder
+    path: "{{ item }}"
+    state: directory
     owner: root
     group: root
-    mode: 0644
+    mode: 0755
     recurse: yes
   become: True
+  with_items:
+    - "{{ application_m2m_credentials_dir }}"
+    - /run/shm/
+    - /run/
 
 
 # we could check that local file exists but lack of m2m creds is an error at
 # the time of this writing
 
 - name: copy local creds to remote virtual filesystem
-  file:
+  copy:
     src: "{{ local_m2m_credentials_path }}"
-    path: "{{ application_m2m_credentials_path }}"
+    dest: "{{ application_m2m_credentials_path }}"
     owner: root
     group: root
     setype: svirt_sandbox_file_t
@@ -77,18 +98,14 @@
     state: directory
 
 - name: check if local key exists
-  local_action:
-      stat:
-        path: "{{local_ssl_key}}"
+  local_action: stat path="{(local_ssl_key}}"
   register: stat_local_ssl_key
+  become: false
 
 - name: check if local certificate exists
-  local_action:
-      stat:
-        path: "{{local_ssl_cert}}"
+  local_action: stat path="{(local_ssl_cert}}"
   register: stat_local_ssl_cert
-
-
+  become: false
 
 - name: Create self-signed SSL cert
   command: >
@@ -104,7 +121,7 @@
 
 - name: Use self-signed SSL cert as a dummy file for chain
   command: cp {{ docker_host_cert_dir }}/server.crt {{ docker_host_cert_dir }}/chain.crt
-  when: self_signed_cert is defined and elf_signed_cert | changed
+  when: self_signed_cert is defined and self_signed_cert | changed
 
 - name: Upload fixed certificate
   command:
@@ -123,19 +140,19 @@
 
 
 - name: create SSO directory
-    file:
-      dest: "{{ sso_cert_path }}"
+  file:
+    dest: "{{ sso_cert_path }}"
   when: use_sso == True
 
 - name: upload SSO files
-    file:
+  file:
       dest: "{{ sso_cert_path }}/{{item}}"
       src: "{{ sso_cert_local_path }}/{{item}}"
   with_items:
     - sp_key.pem
     - sp_cert.pem
     - idp_cert.pem
-  when: use_sso = True
+  when: use_sso == True
 
 
 - name: make temporary directory for image build
@@ -155,12 +172,11 @@
   copy: src=~/.ssh/id_rsa.pub dest={{ mktemp.stdout }}/id_rsa.pub
 
 - name: check or build image
-  docker_image: path={{ mktemp.stdout }} name={{ image_name }} state=present
+  docker_image: path={{ mktemp.stdout }} name={{ image_name }} state=present docker_host=unix:///var/run/docker.sock
 
 - name: remove temp image build directory
   file: name={{ mktemp.stdout }} state=absent
 
-  # command: chcon -Rt svirt_sandbox_file_t {{ docker_host_app_root }}
 - name: Allow access to mounted host directories (CentOS)
   file:
     path: "{{ item }}"
@@ -171,6 +187,7 @@
     - "{{ docker_host_app_root }}"
     - "{{ docker_host_image_dir }}"
     - "{{ docker_host_cert_dir }}"
+    - "{{ docker_host_m2m_credentials_dir }}"
   when: ansible_lsb.id=="CentOS"
 
 # Avoid docker 1.8.2 with ansible 1.9.x pull bug
@@ -222,7 +239,7 @@
   add_host:
     name: api
     groups: docker,api
-    ansible_ssh_host: localhost
+    ansible_ssh_host: "{{ ansible_host }}"
     ansible_ssh_port: 2222
     ansible_ssh_user: ansible
   ## see https://github.com/ansible/ansible-modules-core/issues/1005
@@ -251,7 +268,7 @@
   add_host:
     name: sso
     groups: docker,sso
-    ansible_ssh_host: localhost
+    ansible_ssh_host: "{{ ansible_host }}"
     ansible_ssh_port: 2225
     ansible_ssh_user: ansible
   when: "{{ enable_shibboleth | bool }}"
@@ -291,7 +308,7 @@
   add_host:
     name: frontend
     groups: docker,frontend
-    ansible_ssh_host: localhost
+    ansible_ssh_host: "{{ ansible_host }}"
     ansible_ssh_port: 2224
     ansible_ssh_user: ansible
 
@@ -319,7 +336,7 @@
   add_host:
     name: worker
     groups: docker,worker
-    ansible_ssh_host: localhost
+    ansible_ssh_host: "{{ ansible_host }}"
     ansible_ssh_port: 2223
     ansible_ssh_user: ansible
   ## see https://github.com/ansible/ansible-modules-core/issues/1005

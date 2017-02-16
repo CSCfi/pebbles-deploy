@@ -1,5 +1,3 @@
-
-
 - name: Add docker repo key (Ubuntu)
   apt_key: keyserver=keyserver.ubuntu.com id=36A1D7869245C8950F966E92D8576A8BA88D21E9
   when: ansible_lsb.id=="Ubuntu"
@@ -34,6 +32,8 @@
     - tmux
     - git
     - python-devel
+    - openssl-devel
+    - python-pip
     - sysstat
     - iptables-services
   when: ansible_lsb.id=="CentOS"
@@ -73,6 +73,12 @@
 - name: Install ansible from pip
   pip: name=ansible version=2.2.1.0
 
+- name: create docker group
+  group:
+    name: docker
+    state: present
+  become: True
+
 - name: Add cloud-user to docker group and create ssh key
   user:
     name=cloud-user
@@ -103,3 +109,19 @@
     - restart iptables
     - restart iptables-persistent
 
+# @OlliT is this the correct way to enable a repo in CentOS or is there a
+# simpler way?
+
+- name: enable OpenStack kilo repo
+  copy:
+    mode: 0744
+    dest: /etc/yum.repos.d/
+    src: CentOS-OpenStack-kilo.repo
+  become: true
+
+- name: add OpenStack kilo repo sign key
+  copy:
+    mode: 0744
+    dest: /etc/pki/rpm-gpg/
+    src: RPM-GPG-KEY-CentOS-SIG-Cloud
+  become: true

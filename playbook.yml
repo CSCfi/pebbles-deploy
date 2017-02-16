@@ -12,7 +12,8 @@
     - single_server_with_docker
   vars:
     - image_name: ubuntu_with_ssh
-
+    - application_secret_key: "{{ lookup('password',
+                                '~/..pb_application_secret_key length=32')}}"
 - hosts:
     - api
     - worker
@@ -21,24 +22,39 @@
   roles:
       - cloud_user_with_sudo
       - common
+  vars:
+    - application_secret_key: "{{ lookup('password',
+                                '~/..pb_application_secret_key length=32')}}"
 
 - hosts: frontend
   become: True
   roles:
       - frontend
+  vars:
+    - application_secret_key: "{{ lookup('password',
+                                '~/..pb_application_secret_key length=32')}}"
 
 - hosts: api
   become: True
   roles:
       - api
+  vars:
+    - application_secret_key: "{{ lookup('password',
+                                '~/..pb_application_secret_key length=32')}}"
 
 - hosts: worker
   become: True
   roles:
       - worker
+  vars:
+    - application_secret_key: "{{ lookup('password',
+                                '~/..pb_application_secret_key length=32')}}"
 
 - hosts: sso
   become: True
   roles:
       - sso
       - cloud_user_with_sudo
+  vars:
+    - application_secret_key: "{{ lookup('password',
+                                '~/..pb_application_secret_key length=32')}}"
