@@ -112,5 +112,5 @@ local_ssl_key: "{{ application_m2m_credentials_dir }}/server.key"
 
 use_sso: False
 sso_cert_path: /var/lib/pb/sso
-sso_cert_local_path: "{{ sso_cert_path }}"
+sso_cert_local_path: null
 
