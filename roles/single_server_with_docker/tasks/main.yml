@@ -98,14 +98,18 @@
     state: directory
 
 - name: check if local key exists
-  local_action: stat path="{(local_ssl_key}}"
+  stat:
+    path: "{{ local_ssl_key }}"
   register: stat_local_ssl_key
   become: false
+  delegate_to: 127.0.0.1
 
 - name: check if local certificate exists
-  local_action: stat path="{(local_ssl_cert}}"
-  register: stat_local_ssl_cert
+  stat:
+    path: '{{ local_ssl_crt }}'
+  register: stat_local_ssl_crt
   become: false
+  delegate_to: 127.0.0.1
 
 - name: Create self-signed SSL cert
   command: >
@@ -117,35 +121,34 @@
     -out {{ docker_host_cert_dir }}/server.crt
     creates={{ docker_host_cert_dir }}/server.crt
   register: self_signed_cert
-  when: stat_local_ssl_key.stat.exists == False or stat_local_ssl_cert.stat.exists == False
+  when: stat_local_ssl_key.stat.exists == False or stat_local_ssl_crt.stat.exists == False
 
 - name: Use self-signed SSL cert as a dummy file for chain
   command: cp {{ docker_host_cert_dir }}/server.crt {{ docker_host_cert_dir }}/chain.crt
   when: self_signed_cert is defined and self_signed_cert | changed
 
 - name: Upload fixed certificate
-  command:
-    file:
-      path: "{{ docker_host_cert_dir }}/chain.crt"
-      src: "{{ local_ssl_crt }}"
-  when: stat_local_ssl_key.stat.exists == True and  stat_local_ssl_cert.stat.exists == True
+  copy:
+    dest: "{{ docker_host_cert_dir }}/server.crt"
+    src: "{{ local_ssl_crt }}"
+  when: stat_local_ssl_key.stat.exists == True and  stat_local_ssl_crt.stat.exists == True
 
 - name: Upload fixed key
-  command:
-    file:
-      path: "{{ docker_host_cert_dir }}/server.key"
-      src: "{{ local_ssl_key }}"
-  when: stat_local_ssl_key.stat.exists == True and  stat_local_ssl_cert.stat.exists == True
+  copy:
+    dest: "{{ docker_host_cert_dir }}/server.key"
+    src: "{{ local_ssl_key }}"
+  when: stat_local_ssl_key.stat.exists == True and  stat_local_ssl_crt.stat.exists == True
 
 
 
 - name: create SSO directory
   file:
     dest: "{{ sso_cert_path }}"
+    state: directory
   when: use_sso == True
 
 - name: upload SSO files
-  file:
+  copy:
       dest: "{{ sso_cert_path }}/{{item}}"
       src: "{{ sso_cert_local_path }}/{{item}}"
   with_items:
@@ -154,7 +157,9 @@
     - idp_cert.pem
   when: use_sso == True
 
-
+# tempfile is coming in ansible 2.3
+# before that we need to skip things that depend on mktemp
+# in check mode
 - name: make temporary directory for image build
   command: mktemp -d
   register: mktemp
@@ -167,15 +172,19 @@
     - ansible-sudo
     - Dockerfile
     - supervisord.conf
+  when: not ansible_check_mode
 
 - name: prepare docker image source (public key)
   copy: src=~/.ssh/id_rsa.pub dest={{ mktemp.stdout }}/id_rsa.pub
+  when: not ansible_check_mode
 
 - name: check or build image
   docker_image: path={{ mktemp.stdout }} name={{ image_name }} state=present docker_host=unix:///var/run/docker.sock
+  when: not ansible_check_mode
 
 - name: remove temp image build directory
   file: name={{ mktemp.stdout }} state=absent
+  when: not ansible_check_mode
 
 - name: Allow access to mounted host directories (CentOS)
   file:
@@ -342,6 +351,28 @@
   ## see https://github.com/ansible/ansible-modules-core/issues/1005
   # when: item.config.hostname == "worker" and item.state.running == True
   # with_items: docker_containers
+
+- name: Add aliases to local ssh config
+  blockinfile:
+    dest:  ~/.ssh/config
+    backup: yes
+    mode: 0700
+    create: yes
+    block: |
+      Host {{ installation_prefix }}{{ item.name }}
+      StrictHostKeyChecking no
+      User {{ ansible_user }}
+      HostName {{ ansible_default_ipv4.address }}
+      Port {{ item.port }}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{installation_prefix}}{{ item.name }}"
+  with_items:
+    - { name: api, port: 2222}
+    - { name: worker, port: 2223}
+    - { name: frontend, port: 2224}
+    - { name: sso, port: 2225}
+    - { name: docker_host, port: 22}
+  become: False
+  delegate_to: 127.0.0.1
 
 - name: "Wait a bit for sshd to come up"
   pause: seconds=5
