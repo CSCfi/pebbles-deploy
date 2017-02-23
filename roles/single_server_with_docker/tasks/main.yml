@@ -31,6 +31,7 @@
     version: "{{ git_version }}"
     dest: "{{ docker_host_app_root }}"
   become: false
+  register: git_status
 
 #for some reason the root dir belongs to root anyway
 - name: make sure cloud-user owns git

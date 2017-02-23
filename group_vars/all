@@ -27,6 +27,7 @@ application_debug_logging: True
 # below are optional configs
 ############################################
 
+docker_host_inventory_hostname: "docker_host"
 
 git_repository: "https://github.com/CSC-IT-Center-for-Science/pebbles.git"
 git_version: "master"

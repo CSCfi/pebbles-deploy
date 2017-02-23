@@ -38,18 +38,27 @@
   become: True
   roles:
       - api
+      - reload_on_git_update
   vars:
     - application_secret_key: "{{ lookup('password',
                                 '~/..pb_application_secret_key length=32')}}"
+    - git_status: "{{hostvars[docker_host_inventory_hostname]['git_status']|default(False)}}"
+    - programs:
+      - gunicorn_app
+      - gunicorn_worker_app
 
 - hosts: worker
   become: True
   roles:
       - worker
+      - reload_on_git_update
   vars:
     - application_secret_key: "{{ lookup('password',
                                 '~/..pb_application_secret_key length=32')}}"
-
+    - git_status: "{{hostvars[docker_host_inventory_hostname]['git_status']|default(False)}}"
+    - programs:
+      - "{{ application_name }}_workers:"
+      - "{{ application_name }}-system-worker"
 - hosts: sso
   become: True
   roles:
