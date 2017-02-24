@@ -82,13 +82,6 @@ gunicorn_max_requests: 50
 
 provisioning_log_file_root: "/webapps/{{ application_name }}/provisioning_logs"
 
-# shibboleth; requires apache instead of nginx
-enable_shibboleth: False
-shibboleth_entity_id: "https://myserviceid.example.org"
-shibboleth_discovery_url: "https://disco.example.org/shibboleth/WAYF"
-shibboleth_metadata_url: "https://idp.exmaple.org/metadata.xml"
-shibboleth_support_contact: "admin@example.org"
-
 # nginx
 nginx_static_root: "/webapps/{{ application_name }}/source/{{ application_name }}/static"
 nginx_access_log_file: "{{application_log_dir}}/nginx_access.log"
@@ -131,3 +124,13 @@ sso_cert_local_path: "{{ local_secrets_path|''}}"
 # if we manage multiple installations from a single checkout we want local
 # references, e.g. ssh aliases to be prefixed
 installation_prefix: ''
+
+
+# shibboleth; requires apache instead of nginx
+enable_shibboleth: "{{ use_sso|default(False)}}"
+shibboleth_entity_id: "https://myserviceid.example.org"
+shibboleth_discovery_url: "https://disco.example.org/shibboleth/WAYF"
+shibboleth_metadata_url: "https://idp.exmaple.org/metadata.xml"
+shibboleth_support_contact: "admin@example.org"
+
+
