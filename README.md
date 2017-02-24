@@ -7,7 +7,9 @@ container with the program folder on localhost mounted as a volume inside a
 container.
 
 To install locally run vagrant to create a virtual machine, add it to your
-./hosts  and run with the default parameters.
+./hosts  and run with the default parameters. An example hosts file is
+
+  docker_host ansible_host=192.168.44.147  ansible_user=cloud-user
 
 To install in production edit production_vars.yml to suit your purposes and
 run
@@ -43,13 +45,23 @@ Optional for SSO
 Service provider key and certificate signed by CA.
 
 To enable creation of the SSO container set in production_vars.yml
+
   use_sso: True
 
-and the following variables with appropriate values
+and the following variables with appropriate values from your IDP
 
   shibboleth_entity_id
   shibboleth_discovery_url
   shibboleth_metadata_url
   shibboleth_support_contact
 
+** it is nontrivial to enable shibboleth after initial installation **
+
+### Firewall rules
+
+To work, the following things must be present in a rule:
+
+* allow port 443 to pebbles host
+* allow ports 22, and 2222-22225 from pebbles bastion
+* allow TCP and UDP traffic out
 
