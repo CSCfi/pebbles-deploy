@@ -5,7 +5,10 @@
   when: deploy_mode == "standalone"
 
 - name: Link shared directory content to application_path from Docker shared directory
-  file: src={{ shared_folder_path }}/source dest={{ application_path }} state=link
+  file:
+    dest: "{{ application_path }}"
+    src: "{{ shared_folder_path }}/source"
+    state: link
   when: deploy_mode == "docker"
 
 # TODO: unify this with docker deployment

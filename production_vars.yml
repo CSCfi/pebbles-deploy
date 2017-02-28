@@ -1,0 +1,25 @@
+---
+
+# this is the address nginx etc. will listen to
+public_ipv4: 192.168.1.100
+
+# this is the domain name
+domain_name: "pebbles-test.internal"
+
+deploy_mode: docker
+
+#affects the server that serves in API
+server_type: prod
+
+application_debug_logging: false
+
+#safest to point to a tagged version in production
+git_version: "master"
+
+
+# it's not required to have SSO integration
+use_sso: False
+#shibboleth_entity_id: "https:/notebooks.example.org"
+#shibboleth_discovery_url: "https://federation.example.org/shibboleth/WAYF"
+#shibboleth_metadata_url: "https://federation.example.org/metadata/metadata.xml"
+#shibboleth_support_contact: "help@example.org"

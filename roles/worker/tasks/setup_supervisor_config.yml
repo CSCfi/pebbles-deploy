@@ -11,6 +11,22 @@
             dest=/etc/supervisor/conf.d/{{ application_name }}-system-worker.conf
             backup=yes
 
+- name: make a list of the provisioning worker names
+  set_fact:
+    provisioning_workers: "{{
+            provisioning_workers|default([])|union(['%s-worker-%s'|format(application_name,item)])
+            }}"
+  with_sequence: count={{ provisioning_num_workers}}
+
+# this is so that we can easily controll all the workers with a single
+# supervisorctl command e.g. when updating
+- name: add process group tu supervisor
+  blockinfile:
+    dest: /etc/supervisor/conf.d/supervisord.conf
+    block: |
+        [group:{{ application_name }}_workers]
+        programs={{ provisioning_workers|join(',') }}
+
 - name: Re-read the Supervisor config files
   command: supervisorctl reread
 

@@ -1,4 +1,15 @@
 ---
+############################################
+#These need to be installed per-installation
+############################################
+
+# public ipv4 address of the service, goes to nginx conf etc
+public_ipv4: "{{ ansible_eth0[\"ipv4\"][\"address\"] }}"
+domain_name: "localhost"
+
+
+docker_host_app_root: "/home/cloud-user/pebbles/"
+
 # deploy mode:
 #   devel: git from shared directory
 #   docker: source, logs and and database from shared directory
@@ -9,6 +20,14 @@ deploy_mode: "devel"
 #   devel: Flask built-in HTTP server
 #   prod: Gunicorn HTTP server
 server_type: "devel"
+
+application_debug_logging: True
+
+############################################
+# below are optional configs
+############################################
+
+docker_host_inventory_hostname: "docker_host"
 
 git_repository: "https://github.com/CSC-IT-Center-for-Science/pebbles.git"
 git_version: "master"
@@ -32,11 +51,9 @@ application_worker_endpoint_log_file: "{{ application_log_dir }}/gunicorn_worker
 celery_log_file: "{{ application_log_dir }}/celery.log"
 celery_system_log_file: "{{ application_log_dir }}/celery-system.log"
 celerybeat_log_file: "{{ application_log_dir }}/celerybeat.log"
-domain_name: "localhost"
 application_name: "pebbles"
 application_user: "{{ application_name }}"
 application_group: "webapps"
-application_debug_logging: True
 application_secret_key: "change_me"
 application_config_dir: "/etc/{{ application_name }}"
 application_config: "{{ application_config_dir }}/config.yaml"
@@ -45,6 +62,8 @@ application_database_user: postgres
 application_database_password: "{{ application_secret_key }}"
 application_database_uri: "postgresql://postgres:{{ application_database_password }}@db/{{ application_database_name }}"
 application_m2m_credentials_dir: "/run/shm/{{ application_name }}"
+# can be different from the remote path above
+local_secrets_path: "/run/shm/{{ application_name }}"
 application_m2m_credentials_path: "{{ application_m2m_credentials_dir }}/creds"
 shared_folder_path: "/shared_folder"
 instance_data_dir: /var/spool/pb_instances
@@ -61,15 +80,7 @@ gunicorn_bind_endpoint_worker: "{{ gunicorn_bind_address }}:{{ gunicorn_bind_por
 gunicorn_num_workers: "{{ 2 * ansible_processor_vcpus }}"
 gunicorn_max_requests: 50
 
-public_ipv4: "{{ ansible_eth0[\"ipv4\"][\"address\"] }}"
 provisioning_log_file_root: "/webapps/{{ application_name }}/provisioning_logs"
-
-# shibboleth; requires apache instead of nginx
-enable_shibboleth: False
-shibboleth_entity_id: "https://myserviceid.example.org"
-shibboleth_discovery_url: "https://disco.example.org/shibboleth/WAYF"
-shibboleth_metadata_url: "https://idp.exmaple.org/metadata.xml"
-shibboleth_support_contact: "admin@example.org"
 
 # nginx
 nginx_static_root: "/webapps/{{ application_name }}/source/{{ application_name }}/static"
@@ -83,13 +94,7 @@ nginx_ssl_key: "/etc/nginx/ssl/server.key"
 # provisioning workers
 provisioning_num_workers: "{{ 1 if deploy_mode == 'devel' else 4 * ansible_processor_vcpus }}"
 
-# pouta-virtualcluster
-pvc_install_dir: "/opt/pvc"
-#pvc_version: HEAD
-pvc_version: "wip-for_pouta_blueprints"
-
 # docker host
-docker_host_app_root: "/opt/{{ application_name }}"
 docker_host_m2m_credentials_dir: "/run/shm/{{ application_name }}"
 docker_host_image_dir: "/var/lib/pb/docker_images"
 docker_host_cert_dir: "/var/lib/pb/certs"
@@ -103,14 +108,26 @@ docker_image_postgres: "postgres:9.3"
 ansible_version: "2.2.1"
 
 # where secrets are locally on the deploying machine
-local_m2m_credentials_path: "{{ application_m2m_credentials_path }}"
+local_m2m_credentials_path: "{{ local_secrets_path }}/creds"
 
 # presence of these files disables creation of self-signed certificate
-local_ssl_crt: "{{ application_m2m_credentials_dir }}/server.crt"
-local_ssl_key: "{{ application_m2m_credentials_dir }}/server.key"
+local_ssl_crt: "{{ local_secrets_path }}/server.crt.chained"
+local_ssl_key: "{{ local_secrets_path }}/server.key"
 
 
+# In production installations SSO is probably to be used
 use_sso: False
 sso_cert_path: /var/lib/pb/sso
-sso_cert_local_path: null
+# sso_cert_local_path: "{{ sso_cert_path }}"
+sso_cert_local_path: "{{ local_secrets_path|''}}"
 
+# if we manage multiple installations from a single checkout we want local
+# references, e.g. ssh aliases to be prefixed
+installation_prefix: ''
+
+# shibboleth; requires apache instead of nginx
+enable_shibboleth: "{{ use_sso|default(False)}}"
+shibboleth_entity_id: "https://myserviceid.example.org"
+shibboleth_discovery_url: "https://disco.example.org/shibboleth/WAYF"
+shibboleth_metadata_url: "https://idp.exmaple.org/metadata.xml"
+shibboleth_support_contact: "admin@example.org"

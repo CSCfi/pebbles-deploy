@@ -11,13 +11,9 @@
   notify: restart apache
 
 - name: Ensure that the default site is disabled
-  command: rm /etc/apache2/sites-enabled/000-default.conf
-           removes=/etc/apache2/sites-enabled/000-default.conf
-  notify: restart apache
-
-- name: Enable application site with Shibboleth login
-  command: a2ensite {{ application_name }}-login
-           creates=/etc/apache2/sites-enabled/{{ application_name }}-login.conf
+  file:
+    path: etc/apache2/sites-enabled/000-default.conf
+    state: absent
   notify: restart apache
 
 - name: Install shib2 module for Apache
@@ -25,14 +21,32 @@
   notify: restart apache
 
 - name: Enable required Apache modules
-  apache2_module: state=present name={{ item }}
+  apache2_module:
+    state: present
+    name: "{{ item }}"
   with_items:
-      - proxy
       - proxy_http
+      - proxy
   notify: restart apache
 
+# a hack because of
+# https://github.com/ansible/ansible-modules-core/issues/5559
+# should be fixed in ansible 2.3
+
+- stat:
+    path: /etc/apache2/mods-enabled/shib2.load
+  register: shib2_stat
+
 - name: Enable Apache Shibboleth module
-  apache2_module: state=present name=shib2
+  apache2_module:
+    state: present
+    name: shib2
+  notify: restart apache
+  when: not shib2_stat.stat.exists
+
+- name: Enable application site with Shibboleth login
+  command: a2ensite {{ application_name }}-login
+           creates=/etc/apache2/sites-enabled/{{ application_name }}-login.conf
   notify: restart apache
 
 - name: Ensure Apache service is stopped and disabled on boot - supervisord takes care of running it
