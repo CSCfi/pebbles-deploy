@@ -10,11 +10,12 @@ domain_name: "localhost"
 
 docker_host_app_root: "/home/cloud-user/pebbles/"
 
+# This must now be explicitly given as extra var to avoid snafus
 # deploy mode:
 #   devel: git from shared directory
 #   docker: source, logs and and database from shared directory
 #   standalone: checkout from github
-deploy_mode: "devel"
+#deploy_mode: "devel"
 
 # application server type:
 #   devel: Flask built-in HTTP server
