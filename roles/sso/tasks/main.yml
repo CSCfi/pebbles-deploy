@@ -6,6 +6,9 @@
       files and set sso_cert_local_path!
   when: use_sso == True
 
+- assert:
+    that: 'use_sso == enable_shibboleth'
+
 - include: setup_apache.yml
 - include: setup_shibboleth.yml
 - include: setup_supervisor_config.yml

@@ -144,13 +144,13 @@
 
 - name: create SSO directory
   file:
-    dest: "{{ sso_cert_path }}"
+    dest: "{{ docker_host_sso_dir }}"
     state: directory
   when: use_sso == True
 
 - name: upload SSO files
   copy:
-      dest: "{{ sso_cert_path }}/{{item}}"
+      dest: "{{ docker_host_sso_dir }}/{{item}}"
       src: "{{ sso_cert_local_path }}/{{item}}"
   with_items:
     - sp_key.pem
@@ -198,6 +198,7 @@
     - "{{ docker_host_image_dir }}"
     - "{{ docker_host_cert_dir }}"
     - "{{ docker_host_m2m_credentials_dir }}"
+    - "{{ docker_host_sso_dir }}"
   when: ansible_lsb.id=="CentOS"
 
 # Avoid docker 1.8.2 with ansible 1.9.x pull bug
