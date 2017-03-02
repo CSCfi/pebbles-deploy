@@ -1,12 +1,4 @@
 - assert:
-    that:
-      - "sso_cert_local_path is not '' "
-    msg: >
-      to use SSO you must have SSO related
-      files and set sso_cert_local_path!
-  when: use_sso == True
-
-- assert:
     that: 'use_sso == enable_shibboleth'
 
 - include: setup_apache.yml
