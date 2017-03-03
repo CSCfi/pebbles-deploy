@@ -28,6 +28,11 @@ application_debug_logging: True
 # below are optional configs
 ############################################
 
+# Force restarting of python processes,
+# sometimes useful in deploying new versions
+
+force_restart: False
+
 docker_host_inventory_hostname: "docker_host"
 
 git_repository: "https://github.com/CSC-IT-Center-for-Science/pebbles.git"
