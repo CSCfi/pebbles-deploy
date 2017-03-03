@@ -2,7 +2,6 @@
   filesystem:
    dev: "{{ image_device }}"
    fstype: xfs
-   resizefs: yes
   when: image_device is defined
   become: True
 
