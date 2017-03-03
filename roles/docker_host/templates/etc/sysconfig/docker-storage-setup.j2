@@ -4,6 +4,5 @@ STORAGE_DRIVER={{ docker_storage_driver|default('devicemapper') }}
 DEVS="{{ lib_docker_device }}"
 VG=docker
 DATA_SIZE=99%FREE
-DOCKER_ROOT_VOLUME_SIZE=99%FREE
 {% endif %}
 
