@@ -1,4 +1,5 @@
 - name: format new image volumee
+  filesystem:
    dev: "{{ image_device }}"
    fstype: xfs
    resizefs: yes

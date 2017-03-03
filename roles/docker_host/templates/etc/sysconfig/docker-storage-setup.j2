@@ -3,6 +3,6 @@ STORAGE_DRIVER={{ docker_storage_driver|default('devicemapper') }}
 {% if lib_docker_device is defined %}
 DEVS="{{ lib_docker_device }}"
 VG=docker
-DATA_SIZE=100%FREE
+DATA_SIZE=99%FREE
 {% endif %}
 
