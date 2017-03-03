@@ -23,19 +23,3 @@
   when: image_device is defined
   become: True
 
-##- name: format /var/lib/docker device
-#   dev: "{{ lib_docker_device }}"
-#   fstype: xfs
-#   resizefs: yes
-#  when: lib_docker_device is defined
-#  become: True
-
-#- name: mount device to /var/lib/docker
-#  mount:
-#    name: /var/lib/pb
-#    src: "{{ lib_docker_device }}"
-#    state: mounted
-#    fstype: xfs
-#  when: lib_docker_device is defined
-#become: True
-

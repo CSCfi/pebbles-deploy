@@ -126,3 +126,5 @@
     dest: /etc/pki/rpm-gpg/
     src: RPM-GPG-KEY-CentOS-SIG-Cloud
   become: true
+
+- include: mount_devices.yml
