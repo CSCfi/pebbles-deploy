@@ -49,6 +49,7 @@
     backup=True
   with_items:
     - docker-network
+    - docker-storage-setup
   notify: restart docker
   when: ansible_lsb.id=="CentOS"
 
