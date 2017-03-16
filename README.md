@@ -1,13 +1,15 @@
 # Pebbles deployment playbook
 
-This repository contains an Ansible playbook to deploy Pebbles.
+This repository contains an Ansible playbook to deploy [Pebbles](https://github.com/CSC-IT-Center-for-Science/pebbles).
 
-With defaults it installs everything for a web developer, i.e. inside a single
-container with the program folder on localhost mounted as a volume inside a
-container.
 
-To install locally run vagrant to create a virtual machine, add it to your
-./hosts  and run with the default parameters. An example hosts file is
+### Production
+
+The production deployment has been envisioned as follows
+
+![pebbles schematic](https://cloud.githubusercontent.com/assets/609234/24000118/0d0b5dd4-0a63-11e7-8920-9d9a0841c5e3.png)
+
+To run in production create an Ansible hosts file e.g.
 
   docker_host ansible_host=192.168.44.147  ansible_user=cloud-user
 
@@ -23,12 +25,21 @@ The playbook installs docker on a (remote) host and installs a number of
 containers. For the purpose of managing the containers ports 2220:2230 should
 be open between the deploying host and the remote host.
 
+### Local installation
+
+It *should* be possible to install the machine locally inside a Vagrant virtual
+machine but that hasn't been tested with the new system. That way one can edit
+the files locally on a mounted directory.
+
+If done, one should set ansible_host to point to the vagrant system, and set
+the installation to standalone. Pull requests are welcome.
+
 ## Secrets
 
 Currently the system expects to find the following files in the directory
-pointed to by local_secrets_path
+pointed to by local_secrets_path on the deploying machine.
 
-Compulsory
+Compulsory for production
 
 * creds: provisioning credentials for the OpenStack installation
 
@@ -59,9 +70,9 @@ and the following variables with appropriate values from your IDP
 
 ### Firewall rules
 
-To work, the following things must be present in a rule:
+To work, the following things are required for a production installation:
 
 * allow port 443 to pebbles host
-* allow ports 22, and 2222-22225 from pebbles bastion
-* allow TCP and UDP traffic out
+* allow ports 22, and 2222-22225 to pebbles host from pebbles bastion
+* allow TCP and UDP traffic out from the server
 
