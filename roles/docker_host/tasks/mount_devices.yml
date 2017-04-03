@@ -16,10 +16,41 @@
 
 - name: set permissions on image volume mount
   file:
-    name: /var/lib/pb
+    name: /var/lib/pb/
     state: directory
     owner: cloud-user
     group: cloud-user
   when: image_device is defined
+  become: True
+
+
+- name: format backup volume
+  filesystem:
+   dev: "{{ backup_device }}"
+   fstype: xfs
+  when: backup_device is defined
+  become: True
+
+- name: set backup dir location
+  set_fact:
+    backup_dir: /var/lib/pb/backup/
+  when: backup_device is defined
+
+- name: mount backup device
+  mount:
+    name: "{{ backup_dir }}"
+    src: "{{ backup_device }}"
+    state: mounted
+    fstype: xfs
+  when: backup_device is defined
+  become: True
+
+- name: set permissions on backup volume mount
+  file:
+    name: "{{ backup_dir }}"
+    state: directory
+    owner: cloud-user
+    group: cloud-user
+  when: backup_device is defined
   become: True
 
