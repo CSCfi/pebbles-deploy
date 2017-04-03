@@ -1,6 +1,6 @@
 # Pebbles deployment playbook
 
-This repository contains an Ansible playbook to deploy [Pebbles](https://github.com/CSC-IT-Center-for-Science/pebbles).
+This repository contains an Ansible playbook to deploy [Pebbles](https://github.com/CSCfi/pebbles).
 
 
 ### Production
