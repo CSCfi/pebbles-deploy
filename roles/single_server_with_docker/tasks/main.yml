@@ -201,39 +201,37 @@
     - "{{ docker_host_sso_dir }}"
   when: ansible_lsb.id=="CentOS"
 
-# Avoid docker 1.8.2 with ansible 1.9.x pull bug
-# see https://github.com/ansible/ansible-modules-core/issues/2043
 - name: Pull images
-  command: docker pull {{ item }}
+  docker_image: path={{ mktemp.stdout }} name={{ image_name }} state=present docker_host=unix:///var/run/docker.sock
   with_items:
     - "{{ docker_image_redis }}"
     - "{{ docker_image_postgres }}"
 
 - name: Bring up container for db
-  docker:
+  docker_container:
     name: db
     image: "{{ docker_image_postgres }}"
-    state: running
+    state: started
     restart_policy: always
     env:
       POSTGRES_USER: "{{ application_database_user }}"
       POSTGRES_PASSWORD: "{{ application_database_password }}"
 
 - name: Bring up container for redis
-  docker:
+  docker_container:
     name: redis
     image: "{{ docker_image_redis }}"
-    state: running
+    state: started
     restart_policy: always
 
 - name: Bring up container for api
-  docker:
+  docker_container:
     hostname: api
     image: "{{ image_name }}"
-    state: running
+    state: started
     restart_policy: always
     name: api
-    expose:
+    exposed_ports:
       - 22
       - "{{ gunicorn_bind_port }}"
       - "{{ gunicorn_bind_port_worker }}"
@@ -259,10 +257,10 @@
 
 
 - name: Bring up container for sso
-  docker:
+  docker_container:
     hostname: sso
     image: "{{ image_name }}"
-    state: running
+    state: started
     restart_policy: always
     name: sso
     expose:
@@ -295,10 +293,10 @@
   when: "{{ enable_shibboleth | bool }}"
 
 - name: Bring up container for frontend
-  docker:
+  docker_container:
     hostname: frontend
     image: "{{ image_name }}"
-    state: running
+    state: started
     restart_policy: always
     name: frontend
     expose:
@@ -325,10 +323,10 @@
 
 
 - name: Bring up container for worker
-  docker:
+  docker_container:
     hostname: worker
     image: "{{ image_name }}"
-    state: running
+    state: started
     restart_policy: always
     name: worker
     expose:

@@ -125,7 +125,7 @@ local_ssl_key: "{{ local_secrets_path }}/server.key"
 use_sso: False
 sso_cert_path: /var/lib/pb/sso
 # sso_cert_local_path: "{{ sso_cert_path }}"
-sso_cert_local_path: "{{ local_secrets_path|''}}"
+sso_cert_local_path: "{{ local_secrets_path|default('')}}"
 
 # if we manage multiple installations from a single checkout we want local
 # references, e.g. ssh aliases to be prefixed
