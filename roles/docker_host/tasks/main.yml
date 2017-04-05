@@ -129,13 +129,12 @@
 
 - include: mount_devices.yml
 
-- name: add backup script dir
+- name: create backup script dir
   file:
     dest: ~cloud-user/backup_scripts/
     state: directory
   become: true
   become_user: cloud-user
-  when: backup_dir is defined
 
 - name: add backup script to dir
   template:
@@ -143,5 +142,4 @@
     src: backup.sh
     owner: cloud-user
     mode: 0744
-  when: backup_dir is defined
 
