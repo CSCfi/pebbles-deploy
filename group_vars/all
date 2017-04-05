@@ -105,6 +105,7 @@ docker_host_m2m_credentials_dir: "/run/shm/{{ application_name }}"
 docker_host_image_dir: "/var/lib/pb/docker_images"
 docker_host_cert_dir: "/var/lib/pb/certs"
 docker_host_sso_dir: "/var/lib/pb/sso"
+docker_host_database_dir: "/var/lib/pb/db/data" #postgresql db location
 
 # docker images
 docker_image_redis: "redis:2.8"

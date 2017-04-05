@@ -199,6 +199,7 @@
     - "{{ docker_host_cert_dir }}"
     - "{{ docker_host_m2m_credentials_dir }}"
     - "{{ docker_host_sso_dir }}"
+    - "{{ docker_host_database_dir }}"
   when: ansible_lsb.id=="CentOS"
 
 - name: Pull images
@@ -216,6 +217,9 @@
     env:
       POSTGRES_USER: "{{ application_database_user }}"
       POSTGRES_PASSWORD: "{{ application_database_password }}"
+      #ToDo mount postgres data to an external volume
+    volumes:
+      - "{{ docker_host_database_dir }}:/var/lib/postgresql/data:rw"
 
 - name: Bring up container for redis
   docker_container:
