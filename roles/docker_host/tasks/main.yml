@@ -137,7 +137,7 @@
   become_user: cloud-user
 
 - name: add backup script to dir
-  template:
+  copy:
     dest: ~cloud-user/backup_scripts/backup.sh
     src: backup.sh
     owner: cloud-user
