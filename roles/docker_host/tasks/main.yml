@@ -129,6 +129,8 @@
 
 - include: mount_devices.yml
 
+- include: configure_swap.yml
+  when: swap_space is defined
 - name: create backup script dir
   file:
     dest: ~cloud-user/backup_scripts/
