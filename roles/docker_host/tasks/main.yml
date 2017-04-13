@@ -36,6 +36,7 @@
     - python-pip
     - sysstat
     - iptables-services
+    - tmpwatch
   when: ansible_lsb.id=="CentOS"
 
 - name: Enable iptables service (CentOS)

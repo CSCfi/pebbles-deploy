@@ -9,17 +9,12 @@ The production deployment has been envisioned as follows
 
 ![pebbles schematic](https://cloud.githubusercontent.com/assets/609234/24000118/0d0b5dd4-0a63-11e7-8920-9d9a0841c5e3.png)
 
-To run in production create an Ansible hosts file e.g.
-
-  docker_host ansible_host=192.168.44.147  ansible_user=cloud-user
-
-To install in production edit production_vars.yml to suit your purposes and
-run
+To install in production edit production_vars_example.yml to suit your
+purposes, save it under a different name and run
 
   $ ansible-playbook playbook.yml -e @production_vars.yml
 
-This way it is possible to have multiple extra variable files for multiple
-instances of the software if needed.
+This way it is possible to manage multiple installations from the same place.
 
 The playbook installs docker on a (remote) host and installs a number of
 containers. For the purpose of managing the containers ports 2220:2230 should
