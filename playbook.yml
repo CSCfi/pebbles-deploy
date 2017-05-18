@@ -5,6 +5,12 @@
   roles:
     - docker_host
 
+  tasks:
+  - assert:
+      that:
+        - extra_variables_loaded is defined 
+      msg: "Did you forget to give variables file?"
+
 - hosts:
     - docker_host
   become: True

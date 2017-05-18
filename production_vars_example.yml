@@ -23,3 +23,8 @@ use_sso: False
 #shibboleth_discovery_url: "https://federation.example.org/shibboleth/WAYF"
 #shibboleth_metadata_url: "https://federation.example.org/metadata/metadata.xml"
 #shibboleth_support_contact: "help@example.org"
+#
+
+# if this is not defined the playbook will assume you messed up
+extra_variables_loaded: True
+
