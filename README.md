@@ -12,7 +12,9 @@ The production deployment has been envisioned as follows
 To install in production edit production_vars_example.yml to suit your
 purposes, save it under a different name and run
 
-  $ ansible-playbook playbook.yml -e @production_vars.yml
+```bash
+$ ansible-playbook playbook.yml -e @production_vars.yml
+```
 
 This way it is possible to manage multiple installations from the same place.
 
