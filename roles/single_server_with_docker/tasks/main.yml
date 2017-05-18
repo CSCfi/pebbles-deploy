@@ -183,6 +183,13 @@
   docker_image: path={{ mktemp.stdout }} name={{ image_name }} state=present docker_host=unix:///var/run/docker.sock
   when: not ansible_check_mode
 
+- name: Pull images
+  docker_image: path={{ mktemp.stdout }} name={{ item }} state=present docker_host=unix:///var/run/docker.sock
+  with_items:
+    - "{{ docker_image_redis }}"
+    - "{{ docker_image_postgres }}"
+  when: not ansible_check_mode
+
 - name: remove temp image build directory
   file: name={{ mktemp.stdout }} state=absent
   when: not ansible_check_mode
@@ -201,12 +208,6 @@
     - "{{ docker_host_sso_dir }}"
     - "{{ docker_host_database_dir }}"
   when: ansible_lsb.id=="CentOS"
-
-- name: Pull images
-  docker_image: path={{ mktemp.stdout }} name={{ image_name }} state=present docker_host=unix:///var/run/docker.sock
-  with_items:
-    - "{{ docker_image_redis }}"
-    - "{{ docker_image_postgres }}"
 
 - name: Bring up container for db
   docker_container:
@@ -275,7 +276,7 @@
       - "api:api"
     volumes:
       - "{{ docker_host_sso_dir }}:/etc/{{ application_name }}/sso:ro"
-  when: "{{ enable_shibboleth | bool }}"
+  when: enable_shibboleth | bool
 
 - name: add sso to inventory
   add_host:
@@ -284,17 +285,17 @@
     ansible_ssh_host: "{{ ansible_host }}"
     ansible_ssh_port: 2225
     ansible_ssh_user: ansible
-  when: "{{ enable_shibboleth | bool }}"
+  when: enable_shibboleth | bool
 
 - name: define frontend links
   set_fact:
     frontend_links: "['api:api', 'redis:redis']"
-  when: "{{ not enable_shibboleth | bool }}"
+  when: not enable_shibboleth | bool
 
 - name: define frontend links (shibboleth enabled)
   set_fact:
     frontend_links: "['api:api', 'redis:redis', 'sso:sso']"
-  when: "{{ enable_shibboleth | bool }}"
+  when: enable_shibboleth | bool
 
 - name: Bring up container for frontend
   docker_container:
