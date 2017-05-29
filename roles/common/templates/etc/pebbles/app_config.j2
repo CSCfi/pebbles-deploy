@@ -2,6 +2,7 @@ DEBUG: {{ application_debug_logging | bool }}
 SECRET_KEY: '{{ application_secret_key }}'
 SQLALCHEMY_DATABASE_URI: '{{ application_database_uri }}'
 M2M_CREDENTIAL_STORE: '{{ application_m2m_credentials_path }}'
+
 {%  if public_ipv4 is defined %}
 PUBLIC_IPV4: '{{ public_ipv4 }}'
 {%  if application_external_https_port is defined and application_external_https_port!=443 %}
@@ -14,7 +15,51 @@ BASE_URL: 'https://{{ public_ipv4 }}/'
 EXTERNAL_HTTPS_PORT: {{ application_external_https_port }}
 INTERNAL_API_BASE_URL: 'http://api:{{ gunicorn_bind_port_worker }}/api/v1'
 
-{% if enable_shibboleth | bool %}
+{% if enable_shibboleth | d() | bool %}
 ENABLE_SHIBBOLETH_LOGIN: True
 {% endif %}
 PROVISIONING_NUM_WORKERS: {{ provisioning_num_workers }}
+
+{% if sender_email is defined %}
+SENDER_EMAIL = 'sender@example.org'
+{% endif %}
+{% if mail_server is defined %}
+MAIL_SERVER = 'smtp.example.org'
+{% endif %}
+{% if mail_suppress_send | d() | bool %}
+MAIL_SUPPRESS_SEND = True
+{% endif %}
+{% if mail_use_tls | d() | bool %}
+MAIL_USE_TLS = False
+{% endif %}
+
+{% if fake_provisioning | d() | bool %}
+FAKE_PROVISIONING = False
+{% endif %}
+{% if skip_task_queue | d() | bool %}
+SKIP_TASK_QUEUE = False
+{% endif %}
+{% if write_provisioning_logs | d() | bool %}
+WRITE_PROVISIONING_LOGS = True
+{% endif %}
+
+{%  if public_ipv4 is defined %}
+INSTANCE_NAME_PREFIX: '{{ instance_name_prefix }}'
+{% endif %}
+{% if default_quota is defined %}    
+DEFAULT_QUOTA: '{{ default_quota }}'
+{% endif %}
+
+{% if installation_name is defined %}    
+INSTALLATION_NAME: '{{ installation_name }}'
+{% endif %}
+{% if installation_description is defined %}
+INSTALLATION_DESCRIPTION: '{{ installation_description }}'
+{% endif %}
+{% if brand_image is defined %}
+BRAND_IMAGE: '{{ brand_image }}'
+{% endif %}
+
+{% if plugin_whitelist is defined %}
+PLUGIN_WHITELIST: '{{ plugin_whitelist }}'
+{% endif %}
