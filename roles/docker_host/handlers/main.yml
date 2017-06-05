@@ -9,3 +9,9 @@
     - docker
   when: ansible_lsb.id=="CentOS"
 
+- name: restart iptables-persistent
+  service: name={{ item }} state=restarted
+  with_items:
+    - iptables-persistent
+    - docker
+  when: ansible_lsb.id=="Ubuntu"
