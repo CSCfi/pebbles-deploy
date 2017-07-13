@@ -21,26 +21,26 @@ ENABLE_SHIBBOLETH_LOGIN: True
 PROVISIONING_NUM_WORKERS: {{ provisioning_num_workers }}
 
 {% if sender_email is defined %}
-SENDER_EMAIL = 'sender@example.org'
+SENDER_EMAIL: {{ sender_email }}
 {% endif %}
 {% if mail_server is defined %}
-MAIL_SERVER = 'smtp.example.org'
+MAIL_SERVER: {{ mail_server }}
 {% endif %}
 {% if mail_suppress_send | d() | bool %}
-MAIL_SUPPRESS_SEND = True
+MAIL_SUPPRESS_SEND: True
 {% endif %}
 {% if mail_use_tls | d() | bool %}
-MAIL_USE_TLS = False
+MAIL_USE_TLS: False
 {% endif %}
 
 {% if fake_provisioning | d() | bool %}
-FAKE_PROVISIONING = False
+FAKE_PROVISIONING: False
 {% endif %}
 {% if skip_task_queue | d() | bool %}
-SKIP_TASK_QUEUE = False
+SKIP_TASK_QUEUE: False
 {% endif %}
 {% if write_provisioning_logs | d() | bool %}
-WRITE_PROVISIONING_LOGS = True
+WRITE_PROVISIONING_LOGS: True
 {% endif %}
 
 {%  if public_ipv4 is defined %}
