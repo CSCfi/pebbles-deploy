@@ -1,0 +1,79 @@
+---
+- hosts:
+    - docker_host
+  tags:
+    - docker_host
+  become: True
+  roles:
+    - docker_host
+
+- hosts:
+    - docker_host
+  become: True
+  roles:
+    - single_server_with_docker
+  vars:
+    - image_name: ubuntu_with_ssh
+    - application_secret_key: "{{ pb_application_secret_key }}"
+
+- hosts:
+    - api
+    - worker
+    - frontend
+  become: True
+  roles:
+      - cloud_user_with_sudo
+      - common
+  vars:
+    - application_secret_key: "{{ pb_application_secret_key }}"
+  tags:
+    - common
+
+- hosts: frontend
+  tags:
+    - frontend
+  become: True
+  roles:
+      - frontend
+  vars:
+    - application_secret_key: "{{ pb_application_secret_key }}"
+
+- hosts: api
+  tags:
+    - api
+  become: True
+  roles:
+      - api
+      - reload_on_git_update
+  vars:
+    - application_secret_key: "{{ pb_application_secret_key }}"
+    - git_status: "{{hostvars[docker_host_inventory_hostname]['git_status
+    ']|default({})}}"
+    - programs:
+      - gunicorn_app
+      - gunicorn_worker_app
+
+- hosts: worker
+  become: True
+  tags:
+    - worker
+  roles:
+      - worker
+      - reload_on_git_update
+  vars:
+    - application_secret_key: "{{ pb_application_secret_key }}"
+    - git_status: "{{hostvars[docker_host_inventory_hostname]['git_status
+    ']|default({})}}"
+    - programs:
+      - "{{ application_name }}_workers:"
+      - "{{ application_name }}-system-worker"
+
+- hosts: sso
+  tags:
+    - sso
+  become: True
+  roles:
+      - sso
+      - cloud_user_with_sudo
+  vars:
+        - application_secret_key: "{{ pb_application_secret_key }}"

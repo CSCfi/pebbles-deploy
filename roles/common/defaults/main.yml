@@ -1,0 +1,3 @@
+---
+application_config_dir: "/etc/{{ application_name }}"
+application_config: "{{ application_config_dir }}/config.yaml"

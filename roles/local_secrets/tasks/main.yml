@@ -1,0 +1,66 @@
+---
+- name: create secrets_path for storing secrets
+  local_action:
+      module: file
+      path: "{{ secrets_path }}"
+      recurse:  yes
+      state: directory
+      mode: 0700
+
+- name: copy openstack credentials file to in-memory file
+  local_action:
+      module: template
+      dest: "{{ secrets_path }}/creds"
+      src: creds.j2
+      mode: 0700
+  when: state == "present"
+
+- name: copy private ssl key to in-memory file
+  local_action:
+      module: copy
+      dest: "{{ secrets_path }}/server.key"
+      content: "{{ private_ssl_key }}"
+      mode: 0700
+
+
+# file is assembled in alphabetical order of file names
+- name: assemble certificate chain to remote machine
+  local_action:
+      module: copy
+      dest: "{{ secrets_path }}/server.crt.chained"
+      content: "{{ public_ssl_cert_chain }}"
+      mode: 0700
+  when: state == "present"
+
+
+- name: copy private SSO key to in-memory file
+  local_action:
+      module: copy
+      dest: "{{ secrets_path }}/sp_key.pem"
+      content: "{{ private_sso_key }}"
+      mode: 0700
+  when: use_sso and state == "present"
+
+- name: copy SSO service provider certificate
+  local_action:
+      module: copy
+      dest: "{{ secrets_path }}/sp_cert.pem"
+      content: "{{ sp_cert }}"
+      mode: 0700
+  when: use_sso and state == "present"
+
+- name: copy SSO identity provider certificate
+  local_action:
+      module: copy
+      dest: "{{ secrets_path }}/idp_cert.pem"
+      content: "{{ idp_cert }}"
+      mode: 0700
+  when: use_sso and state == "present"
+
+
+- name: Clean secrets
+  local_action:
+    module: file
+    state: absent
+    path: "{{ secrets_path }}/"
+  when: state == "absent"

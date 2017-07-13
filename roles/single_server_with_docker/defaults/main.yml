@@ -1,0 +1,15 @@
+---
+git_repository: "https://github.com/CSCfi/pebbles.git"
+git_version: "master"
+
+docker_host_app_root: "/home/cloud-user/pebbles/"
+docker_host_m2m_credentials_dir: "/run/shm/{{ application_name }}"
+docker_host_image_dir: "/var/lib/pb/docker_images"
+docker_host_cert_dir: "/var/lib/pb/certs"
+docker_host_sso_dir: "/var/lib/pb/sso"
+docker_host_database_dir: "/var/lib/pb/db/data" #postgresql db location
+
+
+# presence of these files disables creation of self-signed certificate
+local_ssl_crt: "{{ local_secrets_path }}/server.crt.chained"
+local_ssl_key: "{{ local_secrets_path }}/server.key"

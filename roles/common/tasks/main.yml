@@ -20,6 +20,15 @@
     - supervisor
   when: ansible_lsb.id=="CentOS"
 
+#- name: Install Python SSL libs to avoid issues with SNI and old python
+#  pip:
+#    name: "{{ item }}"
+#    state: present
+#  with_items:
+#    - pyopenssl
+#    - ndg-httpsclient
+#    - pyasn1
+
 - include: create_users_and_groups.yml
 - include: setup_virtualenv.yml
 - include: fetch_application.yml

@@ -43,7 +43,6 @@
     recurse: true
     path: "{{ docker_host_app_root }}"
 
-
 # not 100% sure why easy_install and not yum but it's how it was so let's keep
 # it
 - name: easy_install latest pip
@@ -56,6 +55,14 @@
   pip:
     version: "{{ ansible_version.full }}"
     name: ansible
+    state: present
+  become: True
+
+# see here for reason https://github.com/ansible/ansible/issues/20776
+- name: pip install docker-py (fixed version)
+  pip:
+    version: 1.10.6
+    name: docker-py
     state: present
   become: True
 
@@ -158,17 +165,17 @@
     - idp_cert.pem
   when: use_sso == True
 
-# tempfile is coming in ansible 2.3
-# before that we need to skip things that depend on mktemp
-# in check mode
+
 - name: make temporary directory for image build
-  command: mktemp -d
-  register: mktemp
+  tempfile:
+    state: directory
+    suffix: own
+  register: ubuntu_build
 
 - name: prepare docker image source (templates)
   template:
     src: "docker/{{ item }}.j2"
-    dest: "{{mktemp.stdout}}/{{ item }}"
+    dest: "{{ ubuntu_build.path }}/{{ item }}"
   with_items:
     - ansible-sudo
     - Dockerfile
@@ -176,22 +183,39 @@
   when: not ansible_check_mode
 
 - name: prepare docker image source (public key)
-  copy: src=~/.ssh/id_rsa.pub dest={{ mktemp.stdout }}/id_rsa.pub
+  copy:
+    src: ~/.ssh/id_rsa.pub
+    dest: "{{ ubuntu_build.path }}/id_rsa.pub"
   when: not ansible_check_mode
 
 - name: check or build image
-  docker_image: path={{ mktemp.stdout }} name={{ image_name }} state=present docker_host=unix:///var/run/docker.sock
+  docker_image:
+    path: "{{ ubuntu_build.path }}"
+    name: "{{ image_name }}"
+    state: present
+    docker_host: unix:///var/run/docker.sock
   when: not ansible_check_mode
 
+- name: remove temp image build directory
+  file: name={{ ubuntu_build.path }} state=absent
+  when: not ansible_check_mode
+
+
+- name: make temporary directory for image build
+  tempfile:
+    state: directory
+    suffix: own
+  register: img_build
+
 - name: Pull images
-  command: docker pull {{ item }}
+  docker_image:
+    name: "{{ item }}"
+    state: present
+    docker_host: unix:///var/run/docker.sock
   with_items:
     - "{{ docker_image_redis }}"
     - "{{ docker_image_postgres }}"
 
-- name: remove temp image build directory
-  file: name={{ mktemp.stdout }} state=absent
-  when: not ansible_check_mode
 
 - name: Allow access to mounted host directories (CentOS)
   file:
@@ -228,11 +252,22 @@
     state: started
     restart_policy: always
 
+- name: combine common and separate environment variables
+  set_fact:
+    api_env: "{{ pebbles_environment_config|combine(pebbles_api_config) }}"
+    worker_env: "{{ pebbles_environment_config|combine(pebbles_worker_config)
+     }}"
+  tags:
+    - worker
+    - api
+    - config
+
 - name: Bring up container for api
   docker_container:
     hostname: api
     image: "{{ image_name }}"
     state: started
+    recreate: "{{ recreate_volatile_containers|default('no') }}"
     restart_policy: always
     name: api
     exposed_ports:
@@ -247,6 +282,10 @@
     volumes:
       - "{{ docker_host_app_root }}:/shared_folder/source:ro"
       - "{{ provisioning_log_file_root }}"
+    env: "{{ api_env }}"
+  tags:
+    - api
+    - config
 
 - name: add api to inventory
   add_host:
@@ -255,6 +294,9 @@
     ansible_ssh_host: "{{ ansible_host }}"
     ansible_ssh_port: 2222
     ansible_ssh_user: ansible
+  tags:
+    - api
+    - always
   ## see https://github.com/ansible/ansible-modules-core/issues/1005
   # when: item.Config.Hostname == "www" and item.State.Running == True
   # with_items: docker_containers
@@ -284,6 +326,9 @@
     ansible_ssh_host: "{{ ansible_host }}"
     ansible_ssh_port: 2225
     ansible_ssh_user: ansible
+  tags:
+    - sso
+    - always
   when: enable_shibboleth | bool
 
 - name: define frontend links
@@ -316,6 +361,8 @@
       - "{{ docker_host_cert_dir }}:/etc/nginx/ssl:ro"
     volumes_from:
       - api:ro
+  tags:
+    - frontend
 
 - name: add frontend to inventory
   add_host:
@@ -324,6 +371,9 @@
     ansible_ssh_host: "{{ ansible_host }}"
     ansible_ssh_port: 2224
     ansible_ssh_user: ansible
+  tags:
+    - always
+    - frontend
 
 
 - name: Bring up container for worker
@@ -331,6 +381,8 @@
     hostname: worker
     image: "{{ image_name }}"
     state: started
+    recreate: "{{ recreate_volatile_containers|default('no') }}"
+
     restart_policy: always
     name: worker
     expose:
@@ -344,6 +396,12 @@
       - "{{ docker_host_app_root }}:/shared_folder/source:ro"
       - "{{ docker_host_m2m_credentials_dir }}:{{ application_m2m_credentials_dir }}:ro"
       - "{{ docker_host_image_dir }}:/images:ro"
+    env:  "{{ worker_env }}"
+  tags:
+    - worker
+    - config
+
+
 
 - name: add worker to inventory
   add_host:
@@ -352,13 +410,13 @@
     ansible_ssh_host: "{{ ansible_host }}"
     ansible_ssh_port: 2223
     ansible_ssh_user: ansible
-  ## see https://github.com/ansible/ansible-modules-core/issues/1005
-  # when: item.config.hostname == "worker" and item.state.running == True
-  # with_items: docker_containers
+  tags:
+    - worker
+    - always
 
 - name: Add aliases to local ssh config
   blockinfile:
-    dest:  ~/.ssh/config
+    dest:  "{{ pebbles_ssh_config }}"
     backup: yes
     mode: 0700
     create: yes
@@ -377,6 +435,8 @@
     - { name: docker_host, port: 22}
   become: False
   delegate_to: 127.0.0.1
+  tags:
+    - always
 
 - name: "Wait a bit for sshd to come up"
   pause: seconds=5

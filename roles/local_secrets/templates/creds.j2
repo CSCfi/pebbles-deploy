@@ -1,0 +1,16 @@
+{
+{% if openstack_user is defined %}
+    "OS_USERNAME": "{{ openstack_user }}",
+    "OS_PASSWORD": "{{ openstack_password }}",
+    "OS_TENANT_NAME": "{{ openstack_tenant_name }}",
+    "OS_TENANT_ID": "{{ openstack_tenant_id }}",
+    "OS_AUTH_URL": "{{ openstack_endpoint }}",
+{% endif %}
+{% for cred in openshift_cluster_creds|default([]) %}
+    "OSD_{{ cred.name }}_BASE_URL": "{{ cred.base_url }}",
+    "OSD_{{ cred.name }}_SUBDOMAIN": "{{ cred.subdomain }}",
+    "OSD_{{ cred.name }}_USER": "{{ cred.user }}",
+    "OSD_{{ cred.name }}_PASSWORD": "{{ cred.password }}",
+{% endfor %}
+    "PLACEHOLDER": "ignore"
+}

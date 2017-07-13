@@ -1,0 +1,156 @@
+---
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - include: environment_context.yml
+    - name: set ssh config name if not set
+    #this needs to be mirrored in ansible.cfg
+      set_fact:
+        pebbles_ssh_config: "/tmp/pebbles.ssh.config"
+    - name: Add public key to OpenStack for {{ cluster_name }}
+      os_keypair:
+        state: present
+        name: "{{ cluster_name }}"
+        public_key: "{{ id_rsa_pub }}"
+    - name: check if stack has been provisioned already
+      shell: openstack stack show {{ cluster_name }}
+      register: stack_output
+      failed_when: false
+      changed_when: false
+    - block:
+      - name: Build the Pebbles Heat stack
+        register: heat_stack
+        os_stack:
+          name: "{{ cluster_name }}"
+          state: present
+          template: "files/pebbles-heat-stack.yml"
+          wait: yes
+          parameters:
+            env_name: "{{ cluster_name }}"
+            jump_host_allow_cidrs: "{{ jump_host_allow_cidrs }}"
+            secgroup_ext_access_rules: "{{ secgroup_ext_access_rules }}"
+            pebbles_network_cidr: "{{ pebbles_network_cidr }}"
+            pebbles_router: "{{ pebbles_router }}"
+            key_name: "{{ cluster_name }}"
+            jump_host_vm_image: "{{ jump_host_vm_image }}"
+            jump_host_vm_flavor: "{{ jump_host_vm_flavor }}"
+            jump_host_cloud_config: "{{ jump_host_cloud_config|default({}) }}"
+            pebbles_vm_image: "{{ pebbles_vm_image }}"
+            pebbles_vm_flavor: "{{ pebbles_vm_flavor }}"
+      - name: Associate fixed floating IP with first pebbles node
+        os_floating_ip:
+          server: "{{ cluster_name }}-pebbles"
+          floating_ip_address: "{{ pebbles_public_ip }}"
+        when: pebbles_public_ip is defined
+      - name: Associate random floating IP with first pebbles node
+        os_floating_ip:
+          server: "{{ cluster_name }}-pebbles"
+          reuse: yes
+        when: not pebbles_public_ip is defined
+      - name: Associate fixed floating IP with first jump host
+        os_floating_ip:
+          server: "{{ cluster_name }}-jump"
+          floating_ip_address: "{{ jump_host_public_ip }}"
+        when: jump_host_public_ip is defined
+      - name: Associate random floating IP with first jump host
+        os_floating_ip:
+          server: "{{ cluster_name }}-jump"
+          reuse: yes
+        when: not jump_host_public_ip is defined
+      - name: Associate volumes with pebbles node
+        os_server_volume:
+          server: "{{ cluster_name}}-pebbles"
+          state: present
+          volume: "{{ item }}"
+        with_items:
+          - "{{ cluster_name }}-docker"
+          - "{{ cluster_name }}-backup"
+          - "{{ cluster_name }}-images"
+        when:
+          - permanent_volumes
+      when:
+      - stack_output.stderr.find('Stack not found') != -1
+
+    - debug:
+        msg: "Refreshing inventory, this may take a while"
+
+    - name: Refresh dynamic inventory
+      meta: refresh_inventory
+    - name: add global ssh config
+      blockinfile:
+        create: yes
+        mode: '0600'
+        dest: "{{ pebbles_ssh_config }}"
+        block: |
+          Host *
+            ForwardAgent no
+            GSSAPIAuthentication no
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+        marker: "# {mark} ANSIBLE MANAGED BLOCK for global pebbles options"
+    - name: add ssh config entry for jump_host
+      blockinfile:
+        create: yes
+        mode: '0600'
+        dest: "{{ pebbles_ssh_config }}"
+        block: |
+          Host {{ item }} {{ hostvars[item].ansible_ssh_host }} {{
+          jump_host_public_ip }}
+              HostName {{ jump_host_public_ip }}
+              IdentityFile {{ identity_file }}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: {{ item }}"
+      with_items: "{{ groups.jump_host }}"
+    - name: add ssh config entries for hosts
+      blockinfile:
+        create: yes
+        mode: '0600'
+        dest: "{{ pebbles_ssh_config }}"
+        block: |
+          Host {{ item }} {{ hostvars[item].ansible_ssh_host }}
+              HostName {{ hostvars[item].ansible_ssh_host }}
+              IdentityFile {{ identity_file }}
+              ProxyCommand ssh -F {{ pebbles_ssh_config }} -q cloud-user@{{
+              jump_host_public_ip }} nc %h %p
+        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: {{ item }}"
+      when:
+      - item != "localhost"
+      - item != "{{ cluster_name }}-jump"
+      with_items: "{{ groups.all }}"
+    - name: add ssh config entry for all hosts with names starting with
+      blockinfile:
+        create: yes
+        mode: '0600'
+        dest: "{{ pebbles_ssh_config }}"
+        block: |
+          Host {{ installation_prefix }}*
+              IdentityFile {{ identity_file }}
+              ProxyCommand ssh -F {{ pebbles_ssh_config }} -q cloud-user@{{
+              jump_host_public_ip }} nc %h %p
+        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ installation_prefix }}"
+    - name: Wait for connectivity on port 22 on the jump_host
+      wait_for:
+        host: "{{ jump_host_public_ip }}"
+        port: 22
+        search_regex: "OpenSSH"
+        delay: 5
+        timeout: 900
+    - name: Wait for SSH to work
+      shell: >
+        ssh -F {{ pebbles_ssh_config }} cloud-user@{{  jump_host_public_ip }}
+        'echo success'
+      register: result
+      until: result.stdout.find('success') != -1
+      retries: 30
+      delay: 5
+      changed_when: false
+
+- name: Install nmap-ncat on bastion if need be
+  hosts: jump_host
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Install nmap-ncat
+      yum:
+        name: nmap-ncat
+        state: present

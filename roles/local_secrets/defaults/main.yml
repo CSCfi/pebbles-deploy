@@ -1,0 +1,2 @@
+---
+secrets_path: ~/.pebbles-secrets/{{ cluster_name }}/
