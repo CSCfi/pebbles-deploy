@@ -65,3 +65,7 @@ BRAND_IMAGE: '{{ brand_image }}'
 {% if plugin_whitelist is defined %}
 PLUGIN_WHITELIST: '{{ plugin_whitelist }}'
 {% endif %}
+
+{% if pebbles_extra_file_config is defined %}
+{{ pebbles_extra_file_config }}
+{% endif %}

@@ -25,6 +25,15 @@
 #- name: Install latest version of Sphinx
 #  pip: name=Sphinx state=latest virtualenv={{ virtualenv_path }}
 
+- name: Install latest version of separately installable software
+  pip: name={{ item }} state=latest virtualenv={{ virtualenv_path }}
+  with_items:
+    - pbr
+    - pyopenssl
+    - pyasn1
+    - ndg-httpsclient
+    - "requests[security]"
+
 - name: Install dependencies from requirements.txt
   pip: requirements={{ application_path }}/requirements.txt virtualenv={{ virtualenv_path }}
 

@@ -1,75 +1,38 @@
-# Pebbles deployment playbook
+# Pebbles deployment playbook with HEAT
 
 This repository contains an Ansible playbook to deploy [Pebbles](https://github.com/CSCfi/pebbles).
 
 
-### Production
+It is assumed that you will have a separate repository with group_vars and
+dynamic inventory as described [here](
+https://github.com/CSCfi/pouta-ansible-cluster/blob/master/playbooks/openshift/README.md#advanced-deployment-mechanism-using-heat-for-automated-build-pipelines).
 
-The production deployment has been envisioned as follows
 
-![pebbles schematic](https://cloud.githubusercontent.com/assets/609234/24000118/0d0b5dd4-0a63-11e7-8920-9d9a0841c5e3.png)
+## Setting up environment
 
-To install in production edit production_vars_example.yml to suit your
-purposes, save it under a different name and run
+1. Create a virtualenv and install requirerements.txt .
+2. Clone the configuration repository, optionally symlink it as environments
+   under the current repo. This is the default but not strictly necessary.
+3. $ source project openrc.sh to set environment variables
 
-```bash
-$ ansible-playbook playbook.yml -e @production_vars.yml
-```
+## Provisioning and configuring
 
-This way it is possible to manage multiple installations from the same place.
+    $ workon pebbles-deploy
+    (pebbles-deploy) $ ansible-playbook -i environments/[environment-name]/ -e
+    "cluster_name=environment-name" playbooks/site.yml
+    [give vault password when prompted]
 
-The playbook installs docker on a (remote) host and installs a number of
-containers. For the purpose of managing the containers ports 2220:2230 should
-be open between the deploying host and the remote host.
+## Deprovisioning
 
-### Local installation
+    $ workon pebbles-deploy
+    (pebbles-deploy) $ ansible-playbook -i environments/[environment-name]/ -e
+    "cluster_name=environment-name" playbooks/deprovision_heat.yml
+    [give vault password when prompted]
 
-It *should* be possible to install the machine locally inside a Vagrant virtual
-machine but that hasn't been tested with the new system. That way one can edit
-the files locally on a mounted directory.
+Note that if you have provisioned a stack for hard drives it will *not* be
+destroyed by deprovision_heat.yml at the moment. You have to manually remove
+that stack from OpenStack UI. This is so that we can shut down QA environments
+and re-provision and reinstall from scratch without losing state like docker
+images on the pebbles host.
 
-If done, one should set ansible_host to point to the vagrant system, and set
-the installation to standalone. Pull requests are welcome.
-
-## Secrets
-
-Currently the system expects to find the following files in the directory
-pointed to by local_secrets_path on the deploying machine.
-
-Compulsory for production
-
-* creds: provisioning credentials for the OpenStack installation
-
-Optional for SSL
-* server.crt.chained
-* server.key, SSL x.509 (chained) certificate file and private key in a format
-  nginx understands
-
-If these are not present, a self-signed certificate is created.
-
-Optional for SSO
-* sp_cert.pem
-* sp_key.pem
-Service provider key and certificate signed by CA.
-
-To enable creation of the SSO container set in production_vars.yml
-
-  use_sso: True
-
-and the following variables with appropriate values from your IDP
-
-  shibboleth_entity_id
-  shibboleth_discovery_url
-  shibboleth_metadata_url
-  shibboleth_support_contact
-
-** it is nontrivial to enable shibboleth after initial installation **
-
-### Firewall rules
-
-To work, the following things are required for a production installation:
-
-* allow port 443 to pebbles host
-* allow ports 22, and 2222-22225 to pebbles host from pebbles bastion
-* allow TCP and UDP traffic out from the server
-
+Note: the inventory is a *directory* not just the hosts file.

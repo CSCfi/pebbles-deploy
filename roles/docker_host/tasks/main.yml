@@ -1,3 +1,4 @@
+---
 # include openstack pike repo so we can install from it in the next steps
 - name: enable OpenStack pike repo
   copy:

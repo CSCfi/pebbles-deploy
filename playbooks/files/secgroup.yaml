@@ -1,0 +1,33 @@
+---
+heat_template_version: 2015-10-15
+
+parameters:
+  env_name:
+    description: >
+      A name for the Pebbles environment to be used for naming resources.
+    type: string
+  name_suffix:
+    description: >
+      A name suffix for this security group.
+    type: string
+  rules:
+    description: >
+      Rules for this security group.
+    type: json
+    default: "[]"
+
+resources:
+  secgroup:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name:
+        str_replace:
+          template: env_name-name_suffix
+          params:
+            env_name: { get_param: env_name }
+            name_suffix: { get_param: name_suffix }
+      rules: { get_param: rules }
+
+outputs:
+  OS::stack_id:
+    value: { get_resource: secgroup }
