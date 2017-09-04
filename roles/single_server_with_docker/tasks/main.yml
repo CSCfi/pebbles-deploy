@@ -184,11 +184,10 @@
   when: not ansible_check_mode
 
 - name: Pull images
-  docker_image: path={{ mktemp.stdout }} name={{ item }} state=present docker_host=unix:///var/run/docker.sock
+  command: docker pull {{ item }}
   with_items:
     - "{{ docker_image_redis }}"
     - "{{ docker_image_postgres }}"
-  when: not ansible_check_mode
 
 - name: remove temp image build directory
   file: name={{ mktemp.stdout }} state=absent
