@@ -18,3 +18,7 @@ INTERNAL_API_BASE_URL: 'http://api:{{ gunicorn_bind_port_worker }}/api/v1'
 ENABLE_SHIBBOLETH_LOGIN: True
 {% endif %}
 PROVISIONING_NUM_WORKERS: {{ provisioning_num_workers }}
+
+{% if m2m_credential_store is defined %}
+M2M_CREDENTIAL_STORE: '{{ m2m_credential_store }}'
+{% endif %}
