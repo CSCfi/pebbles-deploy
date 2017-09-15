@@ -28,6 +28,8 @@ MAIL_SERVER: {{ mail_server }}
 {% endif %}
 {% if mail_suppress_send | d() | bool %}
 MAIL_SUPPRESS_SEND: True
+{% else %}
+MAIL_SUPPRESS_SEND: False
 {% endif %}
 {% if mail_use_tls | d() | bool %}
 MAIL_USE_TLS: False
