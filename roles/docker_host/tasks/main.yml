@@ -76,14 +76,14 @@
 # @OlliT is this the correct way to enable a repo in CentOS or is there a
 # simpler way?
 
-- name: enable OpenStack kilo repo
+- name: enable OpenStack pike repo
   copy:
     mode: 0744
     dest: /etc/yum.repos.d/
-    src: CentOS-OpenStack-kilo.repo
+    src: CentOS-OpenStack-pike.repo
   become: true
 
-- name: add OpenStack kilo repo sign key
+- name: add OpenStack pike repo sign key
   copy:
     mode: 0744
     dest: /etc/pki/rpm-gpg/
