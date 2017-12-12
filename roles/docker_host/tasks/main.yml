@@ -1,3 +1,18 @@
+# include openstack pike repo so we can install from it in the next steps
+- name: enable OpenStack pike repo
+  copy:
+    mode: 0744
+    dest: /etc/yum.repos.d/
+    src: CentOS-OpenStack-pike.repo
+  become: true
+
+- name: add OpenStack pike repo sign key
+  copy:
+    mode: 0744
+    dest: /etc/pki/rpm-gpg/
+    src: RPM-GPG-KEY-CentOS-SIG-Cloud
+  become: true
+
 - name: Install packages (CentOS)
   yum: name={{ item }} state=present
   with_items:
@@ -72,23 +87,6 @@
     backup=True
   notify:
     - restart iptables
-
-# @OlliT is this the correct way to enable a repo in CentOS or is there a
-# simpler way?
-
-- name: enable OpenStack pike repo
-  copy:
-    mode: 0744
-    dest: /etc/yum.repos.d/
-    src: CentOS-OpenStack-pike.repo
-  become: true
-
-- name: add OpenStack pike repo sign key
-  copy:
-    mode: 0744
-    dest: /etc/pki/rpm-gpg/
-    src: RPM-GPG-KEY-CentOS-SIG-Cloud
-  become: true
 
 - include: mount_devices.yml
 
