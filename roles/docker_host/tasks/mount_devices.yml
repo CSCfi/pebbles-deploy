@@ -20,6 +20,7 @@
     state: directory
     owner: cloud-user
     group: cloud-user
+    recurse: true
   when: image_device is defined
   become: True
 
