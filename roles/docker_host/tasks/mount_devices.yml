@@ -14,9 +14,11 @@
   when: image_device is defined
   become: True
 
+  # this is for convenience so cloud-user can copy things directly and not
+  # have to upload to temp and copy as super user
 - name: set permissions on image volume mount
   file:
-    name: /var/lib/pb/
+    name: /var/lib/pb/docker_images
     state: directory
     owner: cloud-user
     group: cloud-user
