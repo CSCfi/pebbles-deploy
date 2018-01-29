@@ -39,7 +39,7 @@ server {
     add_header Cache-Control no-store;
     add_header Pragma no-cache;
     add_header Strict-Transport-Security max-age=31536000;  # 1 year time limit
-    add_header Content-Security-Policy "script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; default-src 'self'";  # does not work without unsafe-inline / unsafe-eval
+    add_header Content-Security-Policy "img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; default-src 'self'";  # does not work without unsafe-inline / unsafe-eval
 
     location /api {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
