@@ -1,0 +1,50 @@
+---
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  vars_prompt:
+    - name: "project_name"
+      prompt: "Enter new project name for installation"
+      private: no
+  tasks:
+  - include: environment_context_openshift.yml
+  - name: Create openshift project
+    openshift_raw:
+      api_version: v1
+      kind: Project
+      name: "{{ project_name }}"
+      description: Testing
+      display_name: "{{ project_name }}"
+      state: present
+  - name: Switch to created openshift project
+    shell: oc project "{{ project_name }}"
+
+  - name: create secrets_path for storing openshift secrets
+    local_action:
+      module: file
+      path: "{{ local_secrets_path }}"
+      recurse:  yes
+      state: directory
+      mode: 0700
+  - name: Template out the secrets file
+    template:
+      src: pebbles-m2m.j2
+      dest: "{{ local_secrets_path }}/pebbles-m2m"
+  - name: Create secret object from the secrets file
+    openshift_raw:
+      state: present
+      definition:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: pebbles-m2m
+          namespace: "{{project_name}}"
+        data:
+          pebbles-m2m: "{{ lookup('file', '{{ local_secrets_path }}/pebbles-m2m') | b64encode }}"
+
+  - name: Template out the oc template variables file
+    template:
+      src: os_template_vars.j2
+      dest: /tmp/oc_template_vars.env
+  - name: Process the pebbles openshift template and create deployments
+    shell: oc process --param-file=/tmp/oc_template_vars.env -f templates/pebbles-template.yml | oc apply -f -
