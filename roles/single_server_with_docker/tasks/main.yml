@@ -75,7 +75,7 @@
     owner: root
     group: root
     mode: 0755
-    recurse: yes
+    recurse: no
   become: True
   with_items:
     - "{{ application_m2m_credentials_dir }}"
