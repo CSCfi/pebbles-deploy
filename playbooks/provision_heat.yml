@@ -135,6 +135,19 @@
         search_regex: "OpenSSH"
         delay: 5
         timeout: 900
+    - name: Copy key
+      copy:
+        mode: 0600
+        content: "{{ id_rsa_pebbles_bastion }}"
+        dest: ~/.ssh/id_rsa_pebbles_bastion
+    - name: Copy public key
+      copy:
+        content: "{{ id_rsa_pub }}"
+        dest: ~/.ssh/id_rsa.pub
+    - name: Start ssh agent
+      shell: eval "$(ssh-agent -s)"
+    - name: Add keys to agent
+      shell: ssh-add ~/.ssh/id_rsa_pebbles_bastion
     - name: Wait for SSH to work
       shell: >
         ssh -F {{ pebbles_ssh_config }} cloud-user@{{  jump_host_public_ip }}
