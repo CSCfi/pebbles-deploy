@@ -14,5 +14,15 @@
         ProxyPass http://api:{{ gunicorn_bind_port }}/login
         ProxyPassReverse http://api:{{ gunicorn_bind_port }}/login
     </Location>
+    <Location /csclogin>
+        AuthType shibboleth
+        ShibRequestSetting requireSessionWith customeridp
+        ShibRequestSetting requireSession 1
+        ShibUseHeaders On
+        require shib-session
+
+        ProxyPass http://api:{{ gunicorn_bind_port }}/login
+        ProxyPassReverse http://api:{{ gunicorn_bind_port }}/login
+    </Location>
 
 </VirtualHost>

@@ -43,18 +43,37 @@
             (Set discoveryProtocol to "WAYF" for legacy Shibboleth WAYF support.)
             You can also override entityID on /Login query string, or in RequestMap/htaccess.
             -->
-        <SSO discoveryProtocol="SAMLDS" discoveryURL="{{ shibboleth_discovery_url }}">
+        <!-- Commenting out to support multiple idps
+        <SSO discoveryProtocol="SAMLDS" discoveryURL="{{ shibboleth_idp_url1 }}">
               SAML2
         </SSO>
+        -->
 
+        <SessionInitiator type="Chaining" Location="/Login" id="Login">
+              <SessionInitiator type="SAML2" template="bindingTemplate.html" forceAuthn="true"/>
+              <SessionInitiator type="SAMLDS" URL="{{ shibboleth_idp_url1 }}" />
+        </SessionInitiator>
+        <SessionInitiator type="Chaining" Location="/csclogin" id="customeridp"
+           relayState="cookie" entityID="{{ shibboleth_idp_url2 }}">
+              <SessionInitiator type="SAML2" defaultACSIndex="1" template="bindingTemplate.html" forceAuthn="true"/>
+        </SessionInitiator>
 
+            <!--
 	    <md:AssertionConsumerService Location="/api/v1/acs" index="1"
 		    Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"                                          
 	    	conf:ignoreNoPassive="true" />
+            -->
+
+            <md:AssertionConsumerService Location="/SAML2/POST" index="1"
+                    Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"/>
 
             <!-- SAML and local-only logout. -->
             <!-- <Logout>SAML2 Local</Logout> -->
-            
+                       
+            <LogoutInitiator type="Chaining" Location="/Logout">
+                <LogoutInitiator type="Local"/>
+            </LogoutInitiator>
+ 
             <!-- Extension service that generates "approximate" metadata based on SP configuration. -->
             <Handler type="MetadataGenerator" Location="/Metadata" signing="false"/>
 
@@ -62,10 +81,15 @@
             <Handler type="Status" acl="127.0.0.1"  Location="/Status"/>
 
             <!-- Session diagnostic service. -->
-            <Handler type="Session" acl="127.0.0.1" Location="/Session" showAttributeValues="true"/>
+            <Handler type="Session" Location="/Session" showAttributeValues="true"/>
 
             <!-- JSON feed of discovery information. -->
             <Handler type="DiscoveryFeed" Location="/DiscoFeed"/>
+
+            <!-- Checks for required attribute(s) before login completes. -->
+           <Handler type="AttributeChecker" Location="/AttrChecker" template="attrChecker.html"
+                attributes="eppn" flushSession="true"/>
+
         </Sessions>
 
         <!--
@@ -82,9 +106,14 @@
             <MetadataFilter type="RequireValidUntil" maxValidityInterval="2419200"/>
             <MetadataFilter type="Signature" certificate="idp_cert.pem"/>
         </MetadataProvider>
+        <MetadataProvider type="XML" uri="{{ shibboleth_metadata2_url }}"
+               backingFile="{{ shibboleth_metadata2_file }}" reloadInterval="7200" />
 
         <!-- Map to extract attributes from SAML assertions. -->
-        <AttributeExtractor type="XML" path="/etc/shibboleth/attribute-map.xml"/>
+        <AttributeExtractor type="XML" validate="true" reloadChanges="false" path="/etc/shibboleth/attribute-map.xml"/>
+
+        <!-- Extracts support information for IdP from its metadata. -->
+        <AttributeExtractor type="Metadata" errorURL="errorURL" DisplayName="displayName"/>
 
         <!-- Use a SAML query if no attributes are supplied during SSO. -->
         <AttributeResolver type="Query" subjectMatch="true"/>
