@@ -13,7 +13,7 @@
       api_version: v1
       kind: Project
       name: "{{ project_name }}"
-      description: Testing
+      description: Pebbles Project
       display_name: "{{ project_name }}"
       state: present
   - name: Switch to created openshift project
@@ -44,7 +44,7 @@
 
   - name: Template out the oc template variables file
     template:
-      src: os_template_vars.j2
+      src: oc_template_vars.j2
       dest: /tmp/oc_template_vars.env
   - name: Process the pebbles openshift template and create deployments
     shell: oc process --param-file=/tmp/oc_template_vars.env -f templates/pebbles-template.yml | oc apply -f -
