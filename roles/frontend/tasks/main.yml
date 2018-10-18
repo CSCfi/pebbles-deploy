@@ -1,6 +1,20 @@
+- name: Install package to get add-apt-repository command
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - software-properties-common 
+
+- name: Add nginx ppa
+  apt_repository:
+    repo: "{{ item }}"
+  with_items:
+    - ppa:nginx/stable
+
 - name: Install Nginx and inotify-tools
   apt:
     name: "{{ item }}"
+    update_cache: yes
     state: present
   with_items:
     - nginx
