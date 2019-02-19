@@ -6,6 +6,9 @@
     - name: "project_name"
       prompt: "Enter new project name for installation"
       private: no
+    - name: "pouta_project_code"
+      prompt: "Enter cPouta project code for project creation on rahti"
+      private: no
   tasks:
   - include: environment_context_openshift.yml
   - name: Create openshift project
@@ -13,7 +16,7 @@
       api_version: v1
       kind: Project
       name: "{{ project_name }}"
-      description: Pebbles Project
+      description: "csc_project: {{ pouta_project_code }}"
       display_name: "{{ project_name }}"
       state: present
   - name: Switch to created openshift project
@@ -26,10 +29,12 @@
       recurse:  yes
       state: directory
       mode: 0700
-  - name: Template out the secrets file
+
+  - name: Template out the secrets file for m2m
     template:
       src: pebbles-m2m.j2
       dest: "{{ local_secrets_path }}/pebbles-m2m"
+
   - name: Create secret object from the secrets file
     openshift_raw:
       state: present
@@ -37,14 +42,94 @@
         apiVersion: v1
         kind: Secret
         metadata:
-          name: pebbles-m2m
+          name: "{{ template_name }}-m2m"
           namespace: "{{project_name}}"
         data:
           pebbles-m2m: "{{ lookup('file', '{{ local_secrets_path }}/pebbles-m2m') | b64encode }}"
+
+  - name: Template out Shibboleth.xml
+    template:
+      src: shibboleth2.xml.j2
+      dest: "{{ local_secrets_path }}/shibboleth2.xml"
+    when: use_sso
+
+  - name: copy private SSO key to in-memory file
+    local_action:
+      module: copy
+      dest: "{{ local_secrets_path }}/sp_key.pem"
+      content: "{{ vaulted_private_sso_key }}"
+      mode: 0700
+    when: use_sso
+
+  - name: copy SSO service provider certificate
+    local_action:
+      module: copy
+      dest: "{{ local_secrets_path }}/sp_cert.pem"
+      content: "{{ sp_cert }}"
+      mode: 0700
+    when: use_sso
+
+  - name: copy SSO identity provider certificate
+    local_action:
+      module: copy
+      dest: "{{ local_secrets_path }}/idp_cert.pem"
+      content: "{{ idp_cert }}"
+      mode: 0700
+    when: use_sso
+
+
+  - name: Create secret object from the shibboleth configs
+    openshift_raw:
+      state: present
+      definition:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: "{{ template_name }}-sso-shib"
+          namespace: "{{project_name}}"
+        data:
+          shibboleth2.xml: "{{ lookup('file', '{{ local_secrets_path }}/shibboleth2.xml') | b64encode }}"
+          attribute-map.xml: "{{ lookup('file', 'attribute-map.xml') | b64encode }}"
+          sp_key.pem: "{{ lookup('file', '{{ local_secrets_path }}/sp_key.pem') | b64encode }}"
+          sp_cert.pem: "{{ lookup('file', '{{ local_secrets_path }}/sp_cert.pem') | b64encode }}"
+          idp_cert.pem: "{{ lookup('file', '{{ local_secrets_path }}/idp_cert.pem') | b64encode }}"
+          shibd.logger: "{{ lookup('file', 'shibd.logger') | b64encode }}"
+    when: use_sso
+
+  - name: Template out pebbles-login.conf
+    template:
+      src: pebbles-login.conf.j2
+      dest: "{{ local_secrets_path }}/pebbles-login.conf"
+    when: use_sso
+
+  - name: Create secret object from the apache config
+    openshift_raw:
+      state: present
+      definition:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: "{{ template_name }}-sso-apache"
+          namespace: "{{project_name}}"
+        data:
+          pebbles-login.conf: "{{ lookup('file', '{{ local_secrets_path }}/pebbles-login.conf') | b64encode }}"
+    when: use_sso
+
+  - name: Clean secrets
+    local_action:
+      module: file
+      state: absent
+      path: "{{ local_secrets_path }}/{{ project_name }}"
 
   - name: Template out the oc template variables file
     template:
       src: oc_template_vars.j2
       dest: /tmp/oc_template_vars.env
-  - name: Process the pebbles openshift template and create deployments
-    shell: oc process --param-file=/tmp/oc_template_vars.env -f templates/pebbles-template.yml | oc apply -f -
+
+  - name: Process the pebbles openshift template and create deployments (without SSO)
+    shell: oc process --param-file=/tmp/oc_template_vars.env -p NAME="{{ template_name }}" -f templates/pebbles-template.yml | oc apply -f -
+    when: not use_sso
+
+  - name: Process the pebbles openshift template and create deployments (with SSO)
+    shell: oc process --param-file=/tmp/oc_template_vars.env -p NAME="{{ template_name }}" -f templates/pebbles-template-sso.yml | oc apply -f -
+    when: use_sso

@@ -58,6 +58,75 @@ objects:
       termination: edge
 
 - apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${NAME}-api-sp
+  spec:
+    host: ${SSO_DOMAIN}
+    to:
+      kind: Service
+      name: ${NAME}-api
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${NAME}-sso-login
+  spec:
+    host: ${APPLICATION_DOMAIN}
+    path: "/login"
+    to:
+      kind: Service
+      name: ${NAME}-sso
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${NAME}-sso-login-sp
+  spec:
+    host: ${SSO_DOMAIN}
+    path: "/login"
+    to:
+      kind: Service
+      name: ${NAME}-sso
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${NAME}-sso-shibboleth
+  spec:
+    host: ${APPLICATION_DOMAIN}
+    path: "/Shibboleth.sso"
+    to:
+      kind: Service
+      name: ${NAME}-sso
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${NAME}-sso-shibboleth-sp
+  spec:
+    host: ${SSO_DOMAIN}
+    path: "/Shibboleth.sso"
+    to:
+      kind: Service
+      name: ${NAME}-sso
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+
+- apiVersion: v1
   kind: ImageStream
   metadata:
     annotations:
@@ -141,6 +210,8 @@ objects:
               secretKeyRef:
                 name: ${NAME}
                 key: pb-secret-key
+          - name: PB_ENABLE_SHIBBOLETH_LOGIN
+            value: "true"
           image: ' '
           readinessProbe:
             httpGet:
@@ -536,6 +607,74 @@ objects:
       type: ImageChange
     - type: ConfigChange
 
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: Exposes the apache server
+    name: ${NAME}-sso
+  spec:
+    ports:
+    - name: apache2
+      port: 80
+      targetPort: 8000
+    selector:
+      name: ${NAME}-sso
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      description: How to deploy the apache + sso
+      template.alpha.openshift.io/wait-for-ready: "true"
+    name: ${NAME}-sso
+  spec:
+    replicas: 1
+    selector:
+      name: ${NAME}-sso
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          name: ${NAME}-sso
+        name: ${NAME}-sso
+      spec:
+        containers:
+        - name: apache2
+          env: {}
+          image: ' '
+          resources:
+            requests:
+              memory: 200Mi
+            limits:
+              memory: 200Mi
+          volumeMounts:
+          - mountPath: /etc/shibboleth/secret
+            name: ${NAME}-sso-shib-data
+          - mountPath: /etc/apache2/sites-enabled/pebbles-login.conf
+            name: ${NAME}-sso-apache-data
+            subPath: pebbles-login.conf
+        volumes:
+        - name: ${NAME}-sso-shib-data
+          secret:
+            secretName: ${NAME}-sso-shib
+        - name: ${NAME}-sso-apache-data
+          secret:
+            secretName: ${NAME}-sso-apache
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - apache2
+        from:
+          kind: ImageStreamTag
+          name: apache-shib:latest
+          namespace: apache-shibboleth
+      type: ImageChange
+    - type: ConfigChange
+
+
 parameters:
 - description: The name assigned to all of the frontend objects defined in this template.
   displayName: Name
@@ -581,6 +720,10 @@ parameters:
     blank a value will be defaulted.
   displayName: Application Hostname
   name: APPLICATION_DOMAIN
+
+- description: The SSO domain name which has been configured in the service provider
+  displayName: SSO Hostname
+  name: SSO_DOMAIN
 
 - description: Github trigger secret.  A difficult to guess string encoded as part
     of the webhook URL.  Not encrypted.
