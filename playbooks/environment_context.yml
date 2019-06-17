@@ -5,4 +5,5 @@
 - name: Get context for current environment
   include_vars:
     dir: "{{ os_env_path }}/group_vars/{{ cluster_name }}"
+  no_log: True
 

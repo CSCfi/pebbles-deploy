@@ -15,13 +15,11 @@ parameters:
     description: >
       Which ports to allow connections to on thejump_host host.
     type: comma_delimited_list
-    default: '22'
   jump_host_allow_cidrs:
     description: >
       The CIDRs of the networks where the bastion host should be accessible
       from.
     type: comma_delimited_list
-    default: '0.0.0.0/0'
   secgroup_ext_access_rules:
     description: >
       Rules for the security group that governs external access to the system.
@@ -30,12 +28,10 @@ parameters:
     description: >
       What CIDR to use for the dedicated cluster network. Must be unique within the tenant.
     type: string
-    default: '192.168.25.0/24'
   pebbles_network_dns_servers:
     description: >
       What DNS servers to use in the dedicated cluster network.
     type: comma_delimited_list
-    default: '193.166.4.24,193.166.4.25'
   pebbles_router:
     description: >
       The router to which the dedicated cluster network should be connected to
@@ -61,13 +57,11 @@ parameters:
     description: >
       Which ports to allow connections to on the Pebbles host.
     type: comma_delimited_list
-    default: '80,443'
   pebbles_allow_cidrs:
     description: >
       The CIDRs of the networks where the Pebbles host should be accessible
       from via HTTP(S).
     type: comma_delimited_list
-    default: '0.0.0.0/0'
   pebbles_vm_image:
     description: >
       What OpenStack image to use for master hosts.
@@ -109,10 +103,6 @@ resources:
           remote_group_id: { get_resource: secgroup_jump }
         - remote_mode: remote_group_id
           protocol: icmp
-        - remote_mode: remote_group_id
-          protocol: udp
-          port_range_min: 4789
-          port_range_max: 4789
 
   secgroup_infra:
     type: secgroup.yaml
@@ -121,13 +111,6 @@ resources:
       name_suffix: infra
       rules:
         - remote_mode: remote_group_id
-
-  secgroup_ext_access:
-    type: secgroup.yaml
-    properties:
-      env_name: { get_param: env_name }
-      name_suffix: "ext-access"
-      rules: { get_param: secgroup_ext_access_rules }
 
 
 ## All Pebbles Instances need to be ac
@@ -234,6 +217,5 @@ resources:
         - { get_resource: secgroup_common }
         - { get_resource: secgroup_infra }
         - { get_resource: secgroup_pebbles }
-        - { get_resource: secgroup_ext_access }
 
 outputs:
