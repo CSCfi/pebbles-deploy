@@ -31,6 +31,7 @@
             jump_host_allow_ports: "{{ jump_host_allow_ports }}"
             jump_host_allow_cidrs: "{{ jump_host_allow_cidrs }}"
             pebbles_network_dns_servers: "{{ pebbles_network_dns_servers }}"
+            pebbles_allow_cidrs: "{{ pebbles_allow_cidrs }}"
             pebbles_allow_ports: "{{ pebbles_allow_ports }}"
             secgroup_ext_access_rules: "{{ secgroup_ext_access_rules }}"
             pebbles_network_cidr: "{{ pebbles_network_cidr }}"
