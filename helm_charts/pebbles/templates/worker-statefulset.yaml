@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: worker
+spec:
+  serviceName: worker
+  selector:
+    matchLabels:
+      name: worker
+  replicas: {{ .Values.workerReplicas }}
+  template:
+    metadata:
+      labels:
+        name: worker
+    spec:
+      serviceAccount: worker
+      terminationGracePeriodSeconds: 30
+      initContainers:
+        - name: wait-for-api
+          image: {{ .Values.workerImage }}
+          imagePullPolicy: {{ .Values.workerImagePullPolicy }}
+          command:
+            - bash
+            - -c
+            - until curl -s -m 1 -o /dev/null api:8080/api/v1/config; do echo waiting for api; sleep 1; done
+        {{- if .Values.useSourceVolume }}
+        - name: init-source-volume
+          image: {{ .Values.workerImage }}
+          imagePullPolicy: {{ .Values.workerImagePullPolicy }}
+          command:
+            - bash
+            - -c
+            - if [[ ! -d /mnt/source-volume/pebbles ]]; then rsync -avi /opt/app-root/src/* /mnt/source-volume/.; fi
+          volumeMounts:
+            - name: src
+              mountPath: /mnt/source-volume
+
+        {{- end }}
+      containers:
+        - name: worker
+          image: {{ .Values.workerImage }}
+          imagePullPolicy: {{ .Values.workerImagePullPolicy }}
+          command:
+            - python
+            - pebbles/worker/main.py
+          env:
+            - name: PYTHONPATH
+              value: /opt/app-root/src
+            - name: PB_INTERNAL_API_BASE_URL
+              value: http://api:8080/api/v1
+            - name: WORKER_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: PB_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pebbles
+                  key: pb-secret-key
+            {{- if .Values.remoteDebugServerWorker }}
+            - name: REMOTE_DEBUG_SERVER
+              value: {{ .Values.remoteDebugServerWorker }}
+            {{- end }}
+          volumeMounts:
+            - name: backend-config
+              mountPath: "/run/secrets/pebbles/backend-config.yaml"
+              subPath: backend-config.yaml
+            - name: backend-passwords
+              mountPath: "/run/secrets/pebbles/backend-passwords.yaml"
+              subPath: backend-passwords.yaml
+          {{- if or .Values.mountHostSrc .Values.useSourceVolume }}
+            - name: src
+              mountPath: /opt/app-root/src
+          {{- end }}
+      volumes:
+        - name: backend-config
+          secret:
+            secretName: backend-config
+        - name: backend-passwords
+          secret:
+            secretName: backend-passwords
+      {{- if .Values.mountHostSrc }}
+        - name: src
+          hostPath:
+            path: {{ .Values.mountHostSrc }}
+            type: Directory
+      {{- end }}
+      {{- if .Values.useSourceVolume }}
+      volumes:
+        - name: src
+          persistentVolumeClaim:
+            claimName: source
+      {{- end }}

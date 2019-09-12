@@ -1,0 +1,60 @@
+# Default values for pebbles
+
+# Images to deploy
+dbImage: centos/postgresql-95-centos7:latest
+apiImage: pebbles:latest
+workerImage: pebbles:latest
+
+# To avoid remote pulling with local kubernetes, you can set these to 'IfNotPresent'
+dbImagePullPolicy: Always
+apiImagePullPolicy: Always
+workerImagePullPolicy: Always
+
+# Database volume size
+databaseVolumeSize: 1Gi
+
+# Replica counts for api and worker
+apiReplicas: 1
+workerReplicas: 1
+
+# Database password. If not set, a random value is used.
+#databasePassword: pebbles
+
+# Master secret key for API. If not set, a random value is used
+#pbSecretKey: unsafe_danger_danger
+
+# To retain secrets between deployment updates, generated secret is only updated/created
+# when overrideSecret is set to 'true'
+#overrideSecret: false
+
+# Ingress type can be 'Ingress' for K8s ingresses or 'Route' for OpenShift Routes
+ingressType: Ingress
+
+# Optional ingress host
+#ingressHost: localhost
+
+# Storage class for database
+#dbStorageClass: standard-rwo
+
+# For local development, we can mount source folder from the host
+#mountHostSrc: /home/user/src/github.com/CSCfi/pebbles
+
+# To debug api, set address for callback
+#remoteDebugServerApi: host.docker.internal
+
+# To debug worker, set address for callback
+#remoteDebugServerWorker: host.docker.internal
+
+# Run api with just one thread and reload mode
+#apiDevelopmentMode: true
+
+# Mount a ReadWriteMany volume as the source. Useful for remote development
+#useSourceVolume: true
+
+# Backend config is provided in local values
+backendConfig: |
+  - name: example
+
+# Passwords for backends are provided in local values
+backendPasswords: |
+  example: "not very secret"
