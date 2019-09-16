@@ -1,9 +1,14 @@
 # Default values for pebbles
 
 # images to deploy
-databaseImage: centos/postgresql-95-centos7:latest
+dbImage: centos/postgresql-95-centos7:latest
 apiImage: pebbles:latest
 workerImage: pebbles:latest
+
+# To avoid remote pulling with local kubernetes, you can set these to 'IfNotPresent'
+dbImagePullPolicy: Always
+apiImagePullPolicy: Always
+workerImagePullPolicy: Always
 
 # database volume size
 databaseVolumeSize: 1Gi
@@ -24,6 +29,9 @@ databaseVolumeSize: 1Gi
 # kubernetes local driver needs application domain
 #instanceAppDomain: 127.0.0.1.nip.io
 
+# storage class for database
+#dbStorageClass: standard-rwo
+
 # for local development, we can mount source folder from the host
 #mountHostSrc: /home/user/src/github.com/CSCfi/pebbles
 
@@ -35,3 +43,4 @@ databaseVolumeSize: 1Gi
 
 # run api with just one thread and reload mode
 #apiDevelopmentMode: true
+

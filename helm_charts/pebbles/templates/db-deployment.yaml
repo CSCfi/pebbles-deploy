@@ -31,8 +31,8 @@ spec:
                   name: pebbles
             - name: POSTGRESQL_DATABASE
               value: pebbles
-          image: centos/postgresql-95-centos7
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.dbImage }}
+          imagePullPolicy: {{ .Values.dbImagePullPolicy }}
           livenessProbe:
             initialDelaySeconds: 30
             tcpSocket:

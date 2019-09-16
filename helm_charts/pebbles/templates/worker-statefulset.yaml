@@ -17,8 +17,8 @@ spec:
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: wait-for-api
-          image: cscfi/pebbles:latest
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.workerImage }}
+          imagePullPolicy: {{ .Values.workerImagePullPolicy }}
           command:
             - bash
             - -c
@@ -26,7 +26,7 @@ spec:
       containers:
         - name: worker
           image: {{ .Values.workerImage }}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.workerImagePullPolicy }}
           command:
             - python
             - pebbles/worker/main.py

@@ -19,8 +19,8 @@ spec:
     spec:
       initContainers:
         - name: wait-for-db
-          image: {{ .Values.databaseImage }}
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.dbImage }}
+          imagePullPolicy: {{ .Values.dbImagePullPolicy }}
           command:
             - bash
             - -c
@@ -58,7 +58,7 @@ spec:
                   name: pebbles
                   key: pb-secret-key
           image: {{ .Values.apiImage }}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.apiImagePullPolicy }}
           livenessProbe:
             httpGet:
               path: /
