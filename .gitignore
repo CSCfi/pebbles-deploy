@@ -6,3 +6,4 @@ group_vars/
 
 # local deployment values
 local_values.yaml
+local_values/

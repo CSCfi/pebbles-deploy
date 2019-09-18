@@ -22,7 +22,7 @@ spec:
           command:
             - bash
             - -c
-            - until curl -s -m 1 -o /dev/null api:8080; do echo waiting for api; sleep 1; done
+            - until curl -s -m 1 -o /dev/null api:8080/api/v1/config; do echo waiting for api; sleep 1; done
       containers:
         - name: worker
           image: {{ .Values.workerImage }}
