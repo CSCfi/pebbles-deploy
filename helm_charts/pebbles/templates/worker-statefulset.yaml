@@ -6,12 +6,12 @@ spec:
   serviceName: worker
   selector:
     matchLabels:
-      app: worker
-  replicas: 1
+      name: worker
+  replicas: {{ .Values.workerReplicas }}
   template:
     metadata:
       labels:
-        app: worker
+        name: worker
     spec:
       serviceAccount: worker
       terminationGracePeriodSeconds: 30
@@ -44,9 +44,9 @@ spec:
                 secretKeyRef:
                   name: pebbles
                   key: pb-secret-key
-            {{- if .Values.instanceAppDomain }}
-            - name: INSTANCE_APP_DOMAIN
-              value: {{ .Values.instanceAppDomain }}
+            {{- if .Values.ingressAppDomain }}
+            - name: INGRESS_APP_DOMAIN
+              value: {{ .Values.ingressAppDomain }}
             {{- end }}
             {{- if .Values.remoteDebugServerWorker }}
             - name: REMOTE_DEBUG_SERVER

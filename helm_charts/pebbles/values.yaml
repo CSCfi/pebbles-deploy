@@ -1,6 +1,6 @@
 # Default values for pebbles
 
-# images to deploy
+# Images to deploy
 dbImage: centos/postgresql-95-centos7:latest
 apiImage: pebbles:latest
 workerImage: pebbles:latest
@@ -10,37 +10,41 @@ dbImagePullPolicy: Always
 apiImagePullPolicy: Always
 workerImagePullPolicy: Always
 
-# database volume size
+# Database volume size
 databaseVolumeSize: 1Gi
 
-# database password. If not set, a random value is used.
+# Replica counts for api and worker
+apiReplicas: 1
+workerReplicas: 1
+
+# Database password. If not set, a random value is used.
 #databasePassword: pebbles
 
-# master secret key for API. If not set, a random value is used
+# Master secret key for API. If not set, a random value is used
 #pbSecretKey: unsafe_danger_danger
 
 # To retain secrets between deployment updates, generated secret is only updated/created
 # when overrideSecret is set to 'true'
 #overrideSecret: false
 
-# optional ingress host
+# Optional ingress host
 #ingressHost: localhost
 
-# kubernetes local driver needs application domain
-#instanceAppDomain: 127.0.0.1.nip.io
+# Kubernetes/Openshift local driver needs application domain for ingresses
+#ingressAppDomain: 127.0.0.1.nip.io
 
-# storage class for database
+# Storage class for database
 #dbStorageClass: standard-rwo
 
-# for local development, we can mount source folder from the host
+# For local development, we can mount source folder from the host
 #mountHostSrc: /home/user/src/github.com/CSCfi/pebbles
 
-# to debug api, set address for callback
+# To debug api, set address for callback
 #remoteDebugServerApi: host.docker.internal
 
-# to debug worker, set address for callback
+# To debug worker, set address for callback
 #remoteDebugServerWorker: host.docker.internal
 
-# run api with just one thread and reload mode
+# Run api with just one thread and reload mode
 #apiDevelopmentMode: true
 

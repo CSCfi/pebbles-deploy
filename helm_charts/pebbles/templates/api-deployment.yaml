@@ -5,7 +5,7 @@ metadata:
     description: Pebbles API
   name: api
 spec:
-  replicas: 1
+  replicas: {{ .Values.apiReplicas }}
   selector:
     matchLabels:
       name: api
