@@ -1,0 +1,18 @@
+{{- if eq .Values.ingressType "Route" }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: api
+spec:
+  {{- if .Values.ingressHost }}
+  host: {{ .Values.ingressHost }}
+  {{- end }}
+  to:
+    kind: Service
+    name: api
+  port:
+    targetPort: web
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+{{- end}}

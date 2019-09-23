@@ -27,6 +27,9 @@ workerReplicas: 1
 # when overrideSecret is set to 'true'
 #overrideSecret: false
 
+# Ingress type can be 'Ingress' for K8s ingresses or 'Route' for OpenShift Routes
+ingressType: Ingress
+
 # Optional ingress host
 #ingressHost: localhost
 
