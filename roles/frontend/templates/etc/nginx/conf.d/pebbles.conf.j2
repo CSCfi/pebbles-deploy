@@ -10,6 +10,7 @@ upstream sso_login_server {
 
 server {
     listen 80;
+    server_tokens off;  # turn off the version number
     server_name {{ domain_name }};
     return 301 https://{{ domain_name }}$request_uri;
 }
