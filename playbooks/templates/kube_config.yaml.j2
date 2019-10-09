@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Config
+preferences: {}
+clusters:
+  - name: deploy-target-cluster
+    cluster:
+      server: {{ k8s_auth.host }}
+contexts:
+  - name: deploy-target-context
+    context:
+      cluster: deploy-target-cluster
+      namespace: {{ openshift_namespace }}
+      user: {{ k8s_auth.username }}/deploy-target
+current-context: deploy-target-context
+users:
+  - name: {{ k8s_auth.username }}/deploy-target
+    user:
+      token: {{ k8s_auth.api_key }}
