@@ -1,0 +1,19 @@
+{{- if and .Values.oauth2LoginEnabled (eq .Values.ingressType "Ingress")  }}
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  labels:
+    app: oauth2-proxy
+  name: oauth2-proxy
+spec:
+  rules:
+  - host: {{ .Values.ingressHost | default "localhost" }}
+    http:
+      paths:
+      - backend:
+          serviceName: oauth2-proxy
+          servicePort: 80
+        path: /oauth2
+
+{{- end }}

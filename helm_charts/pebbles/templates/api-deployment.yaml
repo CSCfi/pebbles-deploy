@@ -61,6 +61,12 @@ spec:
                 secretKeyRef:
                   name: pebbles
                   key: pb-secret-key
+            {{- if .Values.oauth2LoginEnabled }}
+            - name: PB_OAUTH2_LOGIN_ENABLED
+              value: '1'
+            - name: PB_OAUTH2_PROXY_SECRET
+              value: {{ .Values.oauth2ProxySecret }}
+            {{- end }}
           image: {{ .Values.imagePrefix }}{{ .Values.apiImage }}
           imagePullPolicy: {{ .Values.apiImagePullPolicy }}
           resources:

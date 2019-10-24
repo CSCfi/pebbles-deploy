@@ -5,7 +5,7 @@ COPY logstash.conf /usr/share/logstash/pipeline/logstash.conf
 
 USER root
 RUN chown logstash:root /usr/share/logstash/config/logstash.yml
-RUN chown logstash:root /usr/share/logstash/pipeline/logstash.conf 
+RUN chown logstash:root /usr/share/logstash/pipeline/logstash.conf
 
 USER logstash
 CMD logstash
