@@ -1,0 +1,12 @@
+{{- if .Values.useSourceVolume }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: source
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.databaseVolumeSize }}
+{{- end }}

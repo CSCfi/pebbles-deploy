@@ -1,0 +1,8 @@
+- name: Set facts for environment context
+  set_fact:
+    os_env_path: "{{ os_env_path|default('/opt/deployment/pebbles-environments') }}"
+
+- name: Get context for current environment
+  include_vars:
+    dir: "{{ os_env_path }}/group_vars/{{ cluster_name }}"
+  no_log: True

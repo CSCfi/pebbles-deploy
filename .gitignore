@@ -3,3 +3,7 @@
 
 # no longer in this repo
 group_vars/
+
+# local deployment values
+local_values.yaml
+local_values/

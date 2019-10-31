@@ -1,0 +1,42 @@
+# .bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+    source /etc/bashrc
+fi
+
+# Define colour macros and utility functions for our custom bash prompt
+YELLOW="$(tput setaf 3)"
+GREEN="$(tput setaf 2)"
+RESET="$(tput sgr0)"
+
+parse_git_branch() {
+    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/*\(.*\)/\1/' -e 's/ //g'
+}
+
+short_cwd() {
+    echo $PWD | sed -e "s|^$HOME|~|g"
+}
+
+branch-info() {
+    for repo in pebbles-deploy pebbles-environments; do
+        branch=$(cd /opt/deployment/$repo && parse_git_branch)
+        printf "%23s: %s\n" $repo $branch
+    done
+}
+
+export PS1='${YELLOW}${ENV_NAME}${RESET} $(short_cwd) ${GREEN}($(parse_git_branch))${RESET} > '
+
+source init_env.bash
+
+echo
+echo "Branches, view with 'branch-info'":
+echo
+branch-info
+echo
+
+echo "Run Helm with default values for the environment:"
+echo
+echo "  cd pebbles-deploy"
+echo "  helm upgrade pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml"
+echo

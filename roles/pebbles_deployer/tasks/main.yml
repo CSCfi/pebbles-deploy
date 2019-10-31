@@ -1,0 +1,46 @@
+---
+- name: Create a temporary directory on the RAM disk
+  file:
+    path: "/dev/shm/{{ cluster_name }}"
+    state: directory
+    mode: 0700
+
+- name: Create OpenStack openrc.sh for Keystone API v3
+  copy:
+    dest: "/dev/shm/{{ cluster_name }}/openrc.sh"
+    mode: 0600
+    content: |
+      export OS_AUTH_URL="{{ openshift_cloudprovider_openstack_auth_url }}"
+      export OS_IDENTITY_API_VERSION=3
+      export OS_USERNAME="{{ openshift_cloudprovider_openstack_username }}"
+      export OS_USER_DOMAIN_NAME="{{ openshift_cloudprovider_openstack_domain_name }}"
+      export OS_PASSWORD="{{ openshift_cloudprovider_openstack_password }}"
+      export OS_TENANT_ID="{{ openshift_cloudprovider_openstack_tenant_id }}"
+      export OS_TENANT_NAME="{{ openshift_cloudprovider_openstack_tenant_name }}"
+      export OS_REGION="{{ openshift_cloudprovider_openstack_region }}"
+  when: openshift_cloudprovider_openstack_auth_url | default('') | regex_search('(/v3)')
+
+- name: Create OpenStack openrc.sh for Keystone API v2.0
+  copy:
+    dest: "/dev/shm/{{ cluster_name }}/openrc.sh"
+    mode: 0600
+    content: |
+      export OS_AUTH_URL="{{ openshift_cloudprovider_openstack_auth_url }}"
+      export OS_USERNAME="{{ openshift_cloudprovider_openstack_username }}"
+      export OS_PASSWORD="{{ openshift_cloudprovider_openstack_password }}"
+      export OS_TENANT_ID="{{ openshift_cloudprovider_openstack_tenant_id }}"
+      export OS_TENANT_NAME="{{ openshift_cloudprovider_openstack_tenant_name }}"
+      export OS_REGION="{{ openshift_cloudprovider_openstack_region }}"
+  when: openshift_cloudprovider_openstack_auth_url | default('') | regex_search('(/v2.0)')
+
+- name: Copy ssh private key
+  copy:
+    dest: "/dev/shm/{{ cluster_name }}/id_rsa"
+    content: "{{ ssh_private_key }}"
+    mode: 0600
+  register: copy_private_key
+  when: ssh_private_key is defined
+
+- name: Create ssh public key
+  shell: ssh-keygen -y -f /dev/shm/{{ cluster_name }}/id_rsa > /dev/shm/{{ cluster_name }}/id_rsa.pub
+  when: copy_private_key.changed
