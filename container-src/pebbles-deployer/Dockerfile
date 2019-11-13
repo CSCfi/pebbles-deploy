@@ -3,17 +3,14 @@ FROM centos:8
 LABEL maintainer="CSC Notebooks Team"
 
 # Install base packages
-RUN yum install -y \
-        epel-release \
-    && \
-    yum install -y \
+RUN dnf install -y \
         openssh-clients \
         python36-devel python3-pip \
         gcc openssl-devel openssl \
         jq \
         tmux less git man bash-completion \
     && \
-    yum clean all
+    dnf clean all
 
 # Install python requirements
 COPY requirements.txt /root/requirements.txt

@@ -1,0 +1,22 @@
+---
+image: docker:18.03.1-ce
+
+services:
+  - docker:18.03.1-ce-dind
+
+variables:
+  CI_REGISTRY_IMAGE: $CI_REGISTRY/pebbles/pebbles-deploy/pebbles-deployer
+
+before_script:
+  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+
+stages:
+  - build
+
+build-deployer-image:
+  stage: build
+  script:
+    # pull the previous image for caching
+    - docker pull $CI_REGISTRY_IMAGE || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:latest container-src/pebbles-deployer/.
+    - docker push $CI_REGISTRY_IMAGE:latest
