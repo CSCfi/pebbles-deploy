@@ -26,7 +26,8 @@ spec:
             - -c
             - until pg_isready -h db; do echo "waiting for db to respond"; sleep 2; done
       containers:
-        - env:
+        - name: api
+          env:
             - name: APP_MODULE
               value: pebbles.server:app
             - name: PB_SQLALCHEMY_DATABASE_URI
@@ -37,10 +38,8 @@ spec:
                   name: pebbles
                   key: database-password
             - name: PB_DB_AUTOMIGRATION
-              value: '1'
+              value: {{ .Values.dbAutomigration | default '1' | quote }}
             - name: PB_DEBUG
-              value: '1'
-            - name: DB_AUTOMIGRATION
               value: '1'
             - name: DEBUG
               value: '1'
@@ -65,7 +64,6 @@ spec:
               port: 8080
             initialDelaySeconds: 30
             timeoutSeconds: 3
-          name: api
           ports:
             - containerPort: 8080
           readinessProbe:

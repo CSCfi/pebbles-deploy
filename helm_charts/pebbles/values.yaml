@@ -30,8 +30,8 @@ workerReplicas: 1
 # Ingress type can be 'Ingress' for K8s ingresses or 'Route' for OpenShift Routes
 ingressType: Ingress
 
-# Optional ingress host
-#ingressHost: localhost
+# Ingress host
+ingressHost: localhost
 
 # Storage class for database
 #dbStorageClass: standard-rwo
@@ -50,6 +50,9 @@ ingressType: Ingress
 
 # Mount a ReadWriteMany volume as the source. Useful for remote development
 #useSourceVolume: true
+
+# Enable or disable running database automigration on API startup
+#dbAutomigration: true
 
 # Backend config is provided in local values
 backendConfig: |

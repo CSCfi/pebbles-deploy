@@ -1,4 +1,5 @@
 {{- if eq .Values.ingressType "Ingress" }}
+---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -7,12 +8,11 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   rules:
-    - http:
+    - host: {{ .Values.ingressHost }}
+      http:
         paths:
           - backend:
               serviceName: api
               servicePort: 8080
-      {{- if .Values.ingressHost }}
-      host: {{ .Values.ingressHost }}
-      {{- end }}
+
 {{- end}}
