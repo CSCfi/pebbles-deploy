@@ -25,7 +25,10 @@ branch-info() {
     done
 }
 
-export PS1='${YELLOW}${ENV_NAME}${RESET} $(short_cwd) ${GREEN}($(parse_git_branch))${RESET} > '
+# All non-printable output should be enclosed in '\[\]' to avoid bash evaluating the prompt length wrong,
+# which will in turn cause line wrapping issues
+# https://unix.stackexchange.com/questions/105958/terminal-prompt-not-wrapping-correctly
+export PS1='\[${YELLOW}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\] > '
 
 source init_env.bash
 
