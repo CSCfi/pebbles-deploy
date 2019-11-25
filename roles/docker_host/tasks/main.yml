@@ -1,13 +1,13 @@
 ---
-# include openstack pike repo so we can install from it in the next steps
-- name: enable OpenStack pike repo
+# include openstack train repo so we can install from it in the next steps
+- name: enable OpenStack train repo
   copy:
     mode: 0744
     dest: /etc/yum.repos.d/
-    src: CentOS-OpenStack-pike.repo
+    src: CentOS-OpenStack-train.repo
   become: true
 
-- name: add OpenStack pike repo sign key
+- name: add OpenStack train repo sign key
   copy:
     mode: 0744
     dest: /etc/pki/rpm-gpg/

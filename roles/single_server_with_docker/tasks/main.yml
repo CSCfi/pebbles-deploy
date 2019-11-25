@@ -15,7 +15,7 @@
   yum:
     state: installed
     name:
-      - centos-release-openstack-pike
+      - centos-release-openstack-train
       - bind-utils
       - git
       - python-devel
