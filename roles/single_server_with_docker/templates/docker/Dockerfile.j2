@@ -1,7 +1,9 @@
-FROM    ubuntu:14.04
+FROM    ubuntu:16.04
 MAINTAINER Olli Tourunen "olli.tourunen@csc.fi"
 
 RUN apt-get update
+
+RUN apt-get install -y sudo
 
 # base requirements
 RUN apt-get install -y openssh-server supervisor
