@@ -2,6 +2,7 @@
 
 # Images to deploy
 dbImage: centos/postgresql-95-centos7:latest
+imagePrefix: ''
 apiImage: pebbles:latest
 workerImage: pebbles:latest
 

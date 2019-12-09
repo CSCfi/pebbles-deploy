@@ -25,7 +25,7 @@ echo "ANSIBLE_INVENTORY set to $ANSIBLE_INVENTORY"
 echo
 
 # initialize repositories if we are running in a CI pipeline
-if [[ ! -z CI_COMMIT_REF_NAME ]]; then
+if [[ ! -z ${CI_COMMIT_REF_NAME} ]]; then
     echo 'CI initialization starts'
     pushd . > /dev/null
     # copy source in place
