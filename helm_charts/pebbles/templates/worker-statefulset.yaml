@@ -40,6 +40,13 @@ spec:
         - name: worker
           image: {{ .Values.imagePrefix }}{{ .Values.workerImage }}
           imagePullPolicy: {{ .Values.workerImagePullPolicy }}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 1
+              memory: 200Mi
           command:
             - python
             - pebbles/worker/main.py
@@ -57,6 +64,8 @@ spec:
                 secretKeyRef:
                   name: pebbles
                   key: pb-secret-key
+            - name: PB_ENABLE_FILE_LOGGING
+              value: '1'
             {{- if .Values.remoteDebugServerWorker }}
             - name: REMOTE_DEBUG_SERVER
               value: {{ .Values.remoteDebugServerWorker }}
@@ -68,10 +77,29 @@ spec:
             - name: backend-passwords
               mountPath: "/run/secrets/pebbles/backend-passwords.yaml"
               subPath: backend-passwords.yaml
+            - name: log
+              mountPath: /opt/log
           {{- if or .Values.mountHostSrc .Values.useSourceVolume }}
             - name: src
               mountPath: /opt/app-root/src
           {{- end }}
+        {{- if .Values.deployCentralLogging }}
+        - name: filebeat
+          image: {{ .Values.imagePrefix }}filebeat:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          securityContext:
+            runAsGroup: 0
+          volumeMounts:
+            - mountPath: /opt/log
+              name: log
+        {{- end }}
       volumes:
         - name: backend-config
           secret:
@@ -79,6 +107,8 @@ spec:
         - name: backend-passwords
           secret:
             secretName: backend-passwords
+        - name: log
+          emptyDir: {}
       {{- if .Values.mountHostSrc }}
         - name: src
           hostPath:
@@ -86,7 +116,6 @@ spec:
             type: Directory
       {{- end }}
       {{- if .Values.useSourceVolume }}
-      volumes:
         - name: src
           persistentVolumeClaim:
             claimName: source

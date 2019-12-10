@@ -62,3 +62,12 @@ backendConfig: |
 # Passwords for backends are provided in local values
 backendPasswords: |
   example: "not very secret"
+
+# ----------------------------------------------------------------------------
+# Optional central logging
+
+# deploy logstash and filebeat sidecar containers
+deployCentralLogging: True
+
+# logstashStorageClass: standard-rwo
+logstashVolumeSize: 1Gi
