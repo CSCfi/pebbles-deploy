@@ -19,7 +19,7 @@ short_cwd() {
 }
 
 branch-info() {
-    for repo in pebbles-deploy pebbles-environments; do
+    for repo in pebbles pebbles-deploy pebbles-environments; do
         branch=$(cd /opt/deployment/$repo && parse_git_branch)
         printf "%23s: %s\n" $repo $branch
     done
@@ -32,14 +32,23 @@ export PS1='\[${YELLOW}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(par
 
 source init_env.bash
 
+source deploy_functions.bash
+
 echo
 echo "Branches, view with 'branch-info'":
 echo
 branch-info
 echo
-
-echo "Run Helm with default values for the environment:"
+echo "Install and initialize Pebbles in an empty namespace:"
+echo
+echo "  install-pebbles <admin password>"
+echo
+echo "Update an existing installation:"
 echo
 echo "  cd pebbles-deploy"
 echo "  helm upgrade pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml"
+echo
+echo "Completely remove a development environment, including all data:"
+echo
+echo "  helm delete pebbles; oc delete all --all; oc delete pvc --all; oc delete secret pebbles"
 echo
