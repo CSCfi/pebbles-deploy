@@ -4,7 +4,7 @@
     pkg={{ item }}
     state=present
   with_items:
-    - postgresql-client-9.5
+    - postgresql-client
     - libpq-dev
     - python-psycopg2
 
@@ -13,7 +13,7 @@
     pkg={{ item }}
     state=present
   with_items:
-    - postgresql-9.5
+    - postgresql
     - libpq-dev
     - redis-server
   when: deploy_mode == "devel"
