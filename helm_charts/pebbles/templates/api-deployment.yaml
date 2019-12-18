@@ -28,6 +28,8 @@ spec:
       containers:
         - name: api
           env:
+            - name: APP_SCRIPT
+              value: /opt/app-root/src/deployment/run_gunicorn.bash
             - name: APP_MODULE
               value: pebbles.server:app
             - name: PB_SQLALCHEMY_DATABASE_URI
@@ -41,11 +43,14 @@ spec:
               value: {{ .Values.dbAutomigration | default '1' | quote }}
             - name: PB_DEBUG
               value: '1'
-            - name: DEBUG
+            - name: PB_ENABLE_FILE_LOGGING
               value: '1'
             {{- if .Values.apiDevelopmentMode }}
             - name: GUNICORN_CMD_ARGS
-              value: --workers=1 --reload
+              value: --access-logfile=/opt/log/access.log --log-file=/opt/log/error.log --workers=1 --reload
+            {{- else }}
+            - name: GUNICORN_CMD_ARGS
+              value: --access-logfile=/opt/log/access.log --log-file=/opt/log/error.log
             {{- end }}
             {{- if .Values.remoteDebugServerApi }}
             - name: REMOTE_DEBUG_SERVER
@@ -58,6 +63,13 @@ spec:
                   key: pb-secret-key
           image: {{ .Values.imagePrefix }}{{ .Values.apiImage }}
           imagePullPolicy: {{ .Values.apiImagePullPolicy }}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 1900m
+              memory: 1Gi
           livenessProbe:
             httpGet:
               path: /
@@ -72,13 +84,34 @@ spec:
               port: 8080
             initialDelaySeconds: 3
             timeoutSeconds: 3
-          {{- if .Values.mountHostSrc }}
           volumeMounts:
+            - mountPath: /opt/log
+              name: log
+          {{- if .Values.mountHostSrc }}
             - mountPath: /opt/app-root/src
               name: src
           {{- end }}
-      {{- if .Values.mountHostSrc }}
+        {{- if .Values.deployCentralLogging }}
+        - name: filebeat
+          image: {{ .Values.imagePrefix }}filebeat:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          securityContext:
+            runAsGroup: 0
+          volumeMounts:
+            - mountPath: /opt/log
+              name: log
+        {{- end }}
       volumes:
+        - name: log
+          emptyDir: {}
+      {{- if .Values.mountHostSrc }}
         - name: src
           hostPath:
             path: {{ .Values.mountHostSrc }}

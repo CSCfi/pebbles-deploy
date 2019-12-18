@@ -1,0 +1,18 @@
+{{- if .Values.deployCentralLogging }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logstash
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.logstashStorageClass }}
+  storageClassName: {{ .Values.logstashStorageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage:
+        {{ .Values.logstashVolumeSize }}
+{{- end }}

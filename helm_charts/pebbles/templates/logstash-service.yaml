@@ -1,0 +1,18 @@
+{{- if .Values.deployCentralLogging }}
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    description: Exposes the logstash server
+  name: logstash
+spec:
+  ports:
+    - name: api
+      port: 5044
+      targetPort: 5044
+    - name: monitoring-api
+      port: 9600
+      targetPort: 9600
+  selector:
+    name: logstash
+{{- end }}

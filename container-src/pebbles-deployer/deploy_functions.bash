@@ -1,4 +1,20 @@
-# This file contains function definitions for helping in deploying pebbles
+build-image-logstash() {
+    # create buildconfig and imagestream if missing
+    oc get buildconfig logstash || oc create -f ~/pebbles-deploy/openshift/logstash-bc.yaml
+    oc get imagestream logstash || oc create -f ~/pebbles-deploy/openshift/logstash-is.yaml
+
+    # the buildconfig has contextDir set, so build from root dir
+    oc start-build logstash --from-dir ~/pebbles-deploy --follow
+}
+
+build-image-filebeat() {
+    # create buildconfig and imagestream if missing
+    oc get buildconfig filebeat || oc create -f ~/pebbles-deploy/openshift/filebeat-bc.yaml
+    oc get imagestream filebeat || oc create -f ~/pebbles-deploy/openshift/filebeat-is.yaml
+
+    # the buildconfig has contextDir set, so build from root dir
+    oc start-build filebeat --from-dir ~/pebbles-deploy --follow
+}
 
 build-image-pebbles() {
     # create buildconfig and imagestream if missing
@@ -11,6 +27,8 @@ build-image-pebbles() {
 
 build-image-all() {
     build-image-pebbles
+    build-image-logstash
+    build-image-filebeat
 }
 
 install-pebbles() {
