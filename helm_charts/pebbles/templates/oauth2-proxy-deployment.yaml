@@ -1,0 +1,120 @@
+{{- if .Values.oauth2LoginEnabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    description: oauth2-proxy
+  name: oauth2-proxy
+spec:
+  replicas: {{ .Values.oauth2ProxyReplicas }}
+  selector:
+    matchLabels:
+      name: oauth2-proxy
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: oauth2-proxy
+    spec:
+      containers:
+        - name: oauth2-proxy
+          args:
+            - --http-address=0.0.0.0:4180
+            - --logging-filename=/opt/log/oauth2-proxy.log
+            - --silence-ping-logging
+            - --skip-provider-button
+          env:
+            {{- if .Values.oauth2ProxyProvider }}
+            - name: OAUTH2_PROXY_PROVIDER
+              value: {{ .Values.oauth2ProxyProvider }}
+            {{- end }}
+            {{- if .Values.oauth2ProxyOidcIssuerUrl }}
+            - name: OAUTH2_PROXY_OIDC_ISSUER_URL
+              value: {{ .Values.oauth2ProxyOidcIssuerUrl }}
+            {{- end }}
+            - name: OAUTH2_PROXY_REDIRECT_URL
+              value: {{ .Values.oauth2ProxyRedirectUrl }}
+            - name: OAUTH2_PROXY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy
+                  key: client-id
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy
+                  key: client-secret
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy
+                  key: cookie-secret
+            - name: OAUTH2_PROXY_EMAIL_DOMAINS
+              value: "*"
+            - name: OAUTH2_PROXY_UPSTREAMS
+              value: "http://api:8080"
+            - name: OAUTH2_PROXY_COOKIE_SECURE
+              value: "false"
+            - name: OAUTH2_PROXY_BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy
+                  key: basic-auth-password
+          image: {{ .Values.oauth2ProxyImage }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4180
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 1900m
+              memory: 200Mi
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+              scheme: HTTP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ping
+              port: http
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          volumeMounts:
+            - mountPath: /opt/log
+              name: log
+        {{- if .Values.deployCentralLogging }}
+        - name: filebeat
+          image: {{ .Values.imagePrefix }}filebeat:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          securityContext:
+            runAsGroup: 0
+          volumeMounts:
+            - mountPath: /opt/log
+              name: log
+        {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: log
+          emptyDir: {}
+
+{{- end }}

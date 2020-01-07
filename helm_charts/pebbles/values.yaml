@@ -71,3 +71,30 @@ deployCentralLogging: True
 
 # logstashStorageClass: standard-rwo
 logstashVolumeSize: 1Gi
+
+# ----------------------------------------------------------------------------
+# Optional oauth2 settings
+oauth2LoginEnabled: False
+
+# This is the shared secret between the API and the proxy. It must be defined.
+#oauth2ProxySecret: change_me
+
+# oauth2-proxy basic deployment config
+oauth2ProxyReplicas: 1
+oauth2ProxyImage: quay.io/pusher/oauth2_proxy:v4.1.0
+
+# Callback URL for the proxy. The default is for local K8s deployment
+oauth2ProxyRedirectUrl: http://localhost/oauth2/callback
+
+# Client ID and Secret must be defined
+#oauth2ProxyClientId: ''
+#oauth2ProxyClientSecret: ''
+
+# Optionally set a provider and issuer url. If not set, Google authentication is assumed.
+#oauth2ProxyProvider: 'oidc'
+#oauth2ProxyOidcIssuerUrl: 'https://test-user-auth.csc.fi'
+
+# Set a persistent cookie secret if needed. Because only the login access to create a new session
+# goes through oauth2-proxy in Pebbles, it is also ok to leave this undefined and let Helm generate
+# a random value every time the deployment is upgraded.
+#oauth2ProxyCookieSecret: change_me

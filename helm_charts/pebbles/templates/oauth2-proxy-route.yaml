@@ -1,0 +1,19 @@
+{{- if and .Values.oauth2LoginEnabled (eq .Values.ingressType "Route") }}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: oauth2-proxy
+spec:
+  host: {{ .Values.ingressHost }}
+  path: /oauth2
+  to:
+    kind: Service
+    name: oauth2-proxy
+  port:
+    targetPort: http
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+
+{{- end}}
