@@ -69,6 +69,17 @@ if [[ -e /dev/shm/${env_name}/deployment_data.sh ]]; then
     source /dev/shm/${env_name}/deployment_data.sh
 fi
 
+if [[ "$SKIP_SSH_CONFIG" == "1" ]]; then
+    echo
+    echo "Skipping ssh config generation"
+    echo
+else
+    echo
+    echo "Generating ssh config entries"
+    echo
+    ansible-playbook generate_ssh_config.yml
+fi
+
 popd > /dev/null
 
 set +e

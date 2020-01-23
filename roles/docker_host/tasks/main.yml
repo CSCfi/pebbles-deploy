@@ -1,75 +1,54 @@
 ---
-# include openstack pike repo so we can install from it in the next steps
-- name: enable OpenStack pike repo
-  copy:
-    mode: 0744
-    dest: /etc/yum.repos.d/
-    src: CentOS-OpenStack-pike.repo
-  become: true
+- include: mount_devices.yml
 
-- name: add OpenStack pike repo sign key
-  copy:
-    mode: 0744
-    dest: /etc/pki/rpm-gpg/
-    src: RPM-GPG-KEY-CentOS-SIG-Cloud
-  become: true
+- include: configure_swap.yml
+  when: swap_space is defined
 
 - name: Install packages (CentOS)
-  yum: name={{ item }} state=present
-  with_items:
-    - docker
-    - dstat
-    - lsof
-    - bash-completion
-    - time
-    - tmux
-    - git
-    - python-devel
-    - openssl-devel
-    - python-pip
-    - sysstat
-    - iptables-services
-    - tmpwatch
-  when: ansible_lsb.id=="CentOS"
+  yum:
+    state: present
+    name:
+      - docker
+      - dstat
+      - lsof
+      - bash-completion
+      - time
+      - tmux
+      - git
+      - python-devel
+      - openssl-devel
+      - python-pip
+      - sysstat
+      - iptables-services
+      - tmpwatch
 
 - name: Enable iptables service (CentOS)
   service: name=iptables state=started enabled=yes
-  when: ansible_lsb.id=="CentOS"
 
 - name: Upload custom docker configuration (CentOS)
   template:
-    src=etc/sysconfig/{{ item }}.j2
-    dest=/etc/sysconfig/{{ item }}
-    backup=True
+    src: etc/sysconfig/{{ item }}.j2
+    dest: /etc/sysconfig/{{ item }}
+    backup: True
   with_items:
     - docker-network
     - docker-storage-setup
   notify: restart docker
-  when: ansible_lsb.id=="CentOS"
 
 - name: Enable Docker service
   service: name=docker state=started enabled=yes
-
-- name: >
-        Install docker-py from pip (required by ansible,
-        versioning is iffy. Also 2.0 is called docker in PyPI)
-  pip: name=docker-py version=1.7.1.
-
-- name: Install ansible from pip
-  pip: name=ansible version=2.2.1.0
 
 - name: create docker group
   group:
     name: docker
     state: present
-  become: True
 
 - name: Add cloud-user to docker group and create ssh key
   user:
-    name=cloud-user
-    append=yes
-    groups=docker
-    generate_ssh_key=yes
+    name: cloud-user
+    append: yes
+    groups: docker
+    generate_ssh_key: yes
 
 - name: Create application root directory
   file: path={{ docker_host_app_root }} owner=cloud-user state=directory
@@ -89,15 +68,10 @@
   notify:
     - restart iptables
 
-- include: mount_devices.yml
-
-- include: configure_swap.yml
-  when: swap_space is defined
 - name: create backup script dir
   file:
     dest: ~cloud-user/backup_scripts/
     state: directory
-  become: true
   become_user: cloud-user
 
 - name: add backup script to dir
@@ -106,4 +80,3 @@
     src: backup.sh
     owner: cloud-user
     mode: 0744
-

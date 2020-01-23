@@ -1,4 +1,5 @@
-STORAGE_DRIVER={{ docker_storage_driver|default('devicemapper') }}
+{% if docker_storage_driver|default('overlay2') == 'devicemapper' %}
+STORAGE_DRIVER=devicemapper
 
 {% if lib_docker_device is defined %}
 DEVS="{{ lib_docker_device }}"
@@ -6,3 +7,4 @@ VG=docker
 DATA_SIZE=99%FREE
 {% endif %}
 
+{% endif %}

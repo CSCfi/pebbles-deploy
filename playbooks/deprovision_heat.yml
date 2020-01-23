@@ -6,8 +6,9 @@
 - hosts: localhost
   gather_facts: no
   connection: local
+  roles:
+    - pebbles_facts
   tasks:
-    - include: environment_context.yml
     - name: Disassociate floating IP from bastion
       os_floating_ip:
         server: "{{ cluster_name }}-jump"

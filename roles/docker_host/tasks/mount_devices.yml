@@ -1,7 +1,7 @@
-- name: format new image volumee
+- name: format new image volume
   filesystem:
-   dev: "{{ image_device }}"
-   fstype: xfs
+    dev: "{{ image_device }}"
+    fstype: xfs
   when: image_device is defined
   become: True
 
@@ -26,11 +26,10 @@
   when: image_device is defined
   become: True
 
-
 - name: format backup volume
   filesystem:
-   dev: "{{ backup_device }}"
-   fstype: xfs
+    dev: "{{ backup_device }}"
+    fstype: xfs
   when: backup_device is defined
   become: True
 
@@ -57,3 +56,19 @@
   when: backup_device is defined
   become: True
 
+- when:
+    - docker_storage_driver | default('overlay2') == 'overlay2'
+    - lib_docker_device is defined
+  become: True
+  block:
+    - name: format docker storage device when using overlay2 storage driver
+      filesystem:
+        dev: "{{ lib_docker_device }}"
+        fstype: xfs
+
+    - name: mount docker storage device when using overlay2 storage driver
+      mount:
+        name: "/var/lib/docker"
+        src: "{{ lib_docker_device }}"
+        state: mounted
+        fstype: xfs

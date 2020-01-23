@@ -9,8 +9,13 @@ RUN dnf install -y \
         gcc openssl-devel openssl \
         jq \
         tmux less git man bash-completion \
+        rsync \
+        glibc-langpack-en \
     && \
     dnf clean all
+
+# make python3 as the python for '#!/usr/bin/env python'
+RUN alternatives --set python /usr/bin/python3
 
 # Install python requirements
 COPY requirements.txt /root/requirements.txt
@@ -21,7 +26,7 @@ RUN pip3 install --no-cache-dir -r /root/requirements.txt
 RUN cd /tmp/ \
     && curl -LOs https://git.io/get_helm.sh \
     && chmod 700 get_helm.sh \
-    && ./get_helm.sh -v v3.0.0-beta.3 \
+    && ./get_helm.sh -v v3.0.2 \
     && rm /tmp/get_helm.sh
 RUN /usr/local/bin/helm completion bash > /etc/bash_completion.d/helm
 

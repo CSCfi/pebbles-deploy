@@ -2,8 +2,9 @@
 - hosts: localhost
   gather_facts: no
   connection: local
+  roles:
+    - pebbles_facts
   tasks:
-    - include: environment_context.yml
     - name: set the name of the volume stack
       set_fact:
         stack_name: "{{ cluster_name }}-volumes"

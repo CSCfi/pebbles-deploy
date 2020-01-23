@@ -16,8 +16,15 @@
   file: src={{ shared_folder_path }} dest={{ application_path }} state=link
   when: deploy_mode == "devel"
 
-- name: Install latest version of pip to avoid weird old dependency issues
-  pip: name=pip state=latest virtualenv={{ virtualenv_path }}
+- name: Install version of pip that supports python 2
+  pip:
+    name: pip<20
+    virtualenv: "{{ virtualenv_path }}"
+
+- name: Install setuptools that is still compatible with python 2
+  pip:
+    name: setuptools<45
+    virtualenv: "{{ virtualenv_path }}"
 
 # there's something fishy about installing Sphinx at the same time as building
 # a lot of things that use it: the packages sphinx uses aren't isntalled
@@ -26,18 +33,17 @@
 #  pip: name=Sphinx state=latest virtualenv={{ virtualenv_path }}
 
 - name: Install latest version of separately installable software
-  pip: name={{ item }} state=latest virtualenv={{ virtualenv_path }}
-  with_items:
-    - pbr
-    - pyopenssl
-    - pyasn1
-    - ndg-httpsclient
-    - "requests[security]"
+  pip:
+    state: latest
+    virtualenv: "{{ virtualenv_path }}"
+    name:
+      - pbr
+      - pyopenssl
+      - pyasn1
+      - ndg-httpsclient
+      - "requests[security]"
 
 - name: Install dependencies from requirements.txt
-  pip: requirements={{ application_path }}/requirements.txt virtualenv={{ virtualenv_path }}
-
-- name: Install infrastructural dependencies from PyPI
-  pip: name={{ item }} virtualenv={{ virtualenv_path }}
-  with_items:
-      - gunicorn
+  pip:
+    requirements: "{{ application_path }}/requirements.txt"
+    virtualenv: "{{ virtualenv_path }}"

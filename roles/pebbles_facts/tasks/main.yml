@@ -6,3 +6,5 @@
   include_vars:
     dir: "{{ os_env_path }}/group_vars/{{ cluster_name }}"
   no_log: True
+
+- set_fact: ssh_config_file={{lookup('env', 'HOME')}}/.ssh/config

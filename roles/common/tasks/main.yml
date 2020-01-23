@@ -1,23 +1,25 @@
-- name: Tools for debugging installation (Centos)
-  yum: name={{ item }} state=present
-  with_items:
-    - dstat
-    - lsof
-    - bash-completion
-    - time
+- name: Tools for debugging installation
+  yum:
+    state: present
+    name:
+      - dstat
+      - lsof
+      - bash-completion
+      - time
   when: ansible_lsb.id=="CentOS"
 
-- name: Install dependencies (CentOS)
-  yum: name={{ item }} state=present
-  with_items:
-    - git
-    - python
-    - python-pip
-    - python-dev
-    - libffi-devel
-    - openssl-devel
-    - python-virtualenv
-    - supervisor
+- name: Install dependencies
+  yum:
+    state: present
+    name:
+      - git
+      - python
+      - python-pip
+      - python-dev
+      - libffi-devel
+      - openssl-devel
+      - python-virtualenv
+      - supervisor
   when: ansible_lsb.id=="CentOS"
 
 #- name: Install Python SSL libs to avoid issues with SNI and old python

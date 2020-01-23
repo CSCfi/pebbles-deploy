@@ -7,40 +7,44 @@
     - pebbles_facts
     - pebbles_deployer
   tasks:
-    - name: Login to remote OpenShift using robot credentials
-      k8s_auth:
-        host: "{{ openshift_host }}"
-        username: "{{ openshift_username }}"
-        password: "{{ openshift_password }}"
-      register: k8s_auth_results
-      when: openshift_username is defined
 
-    - set_fact:
-        k8s_auth: "{{ k8s_auth_results.k8s_auth }}"
+    - when: openshift_username is defined
+      block:
+        - name: Login to remote OpenShift using robot credentials
+          k8s_auth:
+            host: "{{ openshift_host }}"
+            username: "{{ openshift_username }}"
+            password: "{{ openshift_password }}"
+          register: k8s_auth_results
 
-    - name: Create .kube directory
-      file:
-        path: /opt/deployment/.kube
-        state: directory
-        mode: '0700'
+        - set_fact:
+            k8s_auth: "{{ k8s_auth_results.k8s_auth }}"
+          when: openshift_username is defined
 
-    - name: Create .kube/config
-      template:
-        src: kube_config.yaml.j2
-        dest: /opt/deployment/.kube/config
+        - name: Create .kube directory
+          file:
+            path: /opt/deployment/.kube
+            state: directory
+            mode: '0700'
 
-    - name: Create values.yaml for Helm (config)
-      blockinfile:
-        path: '/dev/shm/{{ cluster_name }}/values.yaml'
-        create: yes
-        mode: '0600'
-        marker: "# {mark} Ansible generated values"
-        block: "{{ helm_config }}"
+        - name: Create .kube/config
+          template:
+            src: kube_config.yaml.j2
+            dest: /opt/deployment/.kube/config
 
-    - name: Create values.yaml for Helm (backend passwords)
-      blockinfile:
-        path: '/dev/shm/{{ cluster_name }}/values.yaml'
-        create: yes
-        mode: '0600'
-        marker: "# {mark} Ansible generated backend passwords"
-        block: "{{ helm_backend_passwords }}"
+        - name: Create values.yaml for Helm (config)
+          blockinfile:
+            path: '/dev/shm/{{ cluster_name }}/values.yaml'
+            create: yes
+            mode: '0600'
+            marker: "# {mark} Ansible generated values"
+            block: "{{ helm_config }}"
+
+        - name: Create values.yaml for Helm (backend passwords)
+          blockinfile:
+            path: '/dev/shm/{{ cluster_name }}/values.yaml'
+            create: yes
+            mode: '0600'
+            marker: "# {mark} Ansible generated backend passwords"
+            block: "{{ helm_backend_passwords }}"
+    # end block

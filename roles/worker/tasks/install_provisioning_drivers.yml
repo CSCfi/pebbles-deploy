@@ -1,8 +1,9 @@
 ---
 
 - name: Install OpenStack client from PIP
-  pip: name={{ item }} virtualenv={{ virtualenv_path }}
-  with_items:
+  pip:
+    virtualenv: "{{ virtualenv_path }}"
+    name:
       - python-novaclient
       - python-cinderclient
 

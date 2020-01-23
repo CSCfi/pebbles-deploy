@@ -15,14 +15,13 @@
   yum:
     state: installed
     name:
-      - centos-release-openstack-pike
       - bind-utils
       - git
       - python-devel
       - python-setuptools
-      - python-novaclient
       - libffi-devel
       - openssl-devel
+      - python-docker-py
   become: True
 
 - name: check out project using git
@@ -32,6 +31,16 @@
     dest: "{{ docker_host_app_root }}"
   become: false
   register: git_status
+  when: git_repo_source | default('public_repo') == 'public_repo'
+
+- name: copy local git repo
+  synchronize:
+    src: /opt/deployment/pebbles/
+    dest: /home/cloud-user/pebbles
+    rsync_opts:
+      - "--exclude=__pycache__"
+      - "--exclude=*.pyc"
+  when: git_repo_source | default('public_repo') == 'local_directory'
 
 #for some reason the root dir belongs to root anyway
 - name: make sure cloud-user owns git
@@ -51,22 +60,6 @@
     state: latest
   become: True
 
-- name: pip install ansible (fixed version)
-  pip:
-    version: "{{ ansible_version.full }}"
-    name: ansible
-    state: present
-  become: True
-
-# see here for reason https://github.com/ansible/ansible/issues/20776
-- name: pip install docker-py (fixed version)
-  pip:
-    version: 1.10.6
-    name: docker-py
-    state: present
-  become: True
-
-
 # move over credentials file from localhost, where it should be
 - name: ensure in-memory filesystem
   file:
@@ -82,10 +75,8 @@
     - /run/shm/
     - /run/
 
-
 # we could check that local file exists but lack of m2m creds is an error at
 # the time of this writing
-
 - name: copy local creds to remote virtual filesystem
   copy:
     src: "{{ local_m2m_credentials_path }}"
@@ -95,7 +86,6 @@
     setype: svirt_sandbox_file_t
     mode: 0644
   become: True
-
 
 - name: Create ssl dir
   file:
@@ -129,11 +119,13 @@
     -out {{ docker_host_cert_dir }}/server.crt
     creates={{ docker_host_cert_dir }}/server.crt
   register: self_signed_cert
-  when: stat_local_ssl_key.stat.exists == False or stat_local_ssl_crt.stat.exists == False
+  when: >
+    stat_local_ssl_key.stat.exists == False
+    or stat_local_ssl_crt.stat.exists == False
 
 - name: Use self-signed SSL cert as a dummy file for chain
   command: cp {{ docker_host_cert_dir }}/server.crt {{ docker_host_cert_dir }}/chain.crt
-  when: self_signed_cert is defined and self_signed_cert | changed
+  when: self_signed_cert is defined and self_signed_cert is changed
 
 - name: Upload fixed certificate
   copy:
@@ -146,8 +138,6 @@
     dest: "{{ docker_host_cert_dir }}/server.key"
     src: "{{ local_ssl_key }}"
   when: stat_local_ssl_key.stat.exists == True and  stat_local_ssl_crt.stat.exists == True
-
-
 
 - name: create SSO directory
   file:
@@ -164,7 +154,6 @@
     - sp_cert.pem
     - idp_cert.pem
   when: use_sso == True
-
 
 - name: make temporary directory for image build
   tempfile:
@@ -184,14 +173,14 @@
 
 - name: prepare docker image source (public key)
   copy:
-    src: ~/.ssh/id_rsa.pub
+    src: "/dev/shm/{{ cluster_name }}/id_rsa.pub"
     dest: "{{ ubuntu_build.path }}/id_rsa.pub"
   when: not ansible_check_mode
 
 - name: check or build image
   docker_image:
     path: "{{ ubuntu_build.path }}"
-    name: "{{ image_name }}"
+    name: "{{ docker_image_name }}"
     state: present
     docker_host: unix:///var/run/docker.sock
   when: not ansible_check_mode
@@ -199,7 +188,6 @@
 - name: remove temp image build directory
   file: name={{ ubuntu_build.path }} state=absent
   when: not ansible_check_mode
-
 
 - name: make temporary directory for image build
   tempfile:
@@ -215,7 +203,6 @@
   with_items:
     - "{{ docker_image_redis }}"
     - "{{ docker_image_postgres }}"
-
 
 - name: Allow access to mounted host directories (CentOS)
   file:
@@ -255,8 +242,7 @@
 - name: combine common and separate environment variables
   set_fact:
     api_env: "{{ pebbles_environment_config|combine(pebbles_api_config) }}"
-    worker_env: "{{ pebbles_environment_config|combine(pebbles_worker_config)
-     }}"
+    worker_env: "{{ pebbles_environment_config|combine(pebbles_worker_config) }}"
   tags:
     - worker
     - api
@@ -265,7 +251,7 @@
 - name: Bring up container for api
   docker_container:
     hostname: api
-    image: "{{ image_name }}"
+    image: "{{ docker_image_name }}"
     state: started
     recreate: "{{ recreate_volatile_containers|default('no') }}"
     restart_policy: always
@@ -301,11 +287,10 @@
   # when: item.Config.Hostname == "www" and item.State.Running == True
   # with_items: docker_containers
 
-
 - name: Bring up container for sso
   docker_container:
     hostname: sso
-    image: "{{ image_name }}"
+    image: "{{ docker_image_name }}"
     state: started
     restart_policy: always
     name: sso
@@ -344,7 +329,7 @@
 - name: Bring up container for frontend
   docker_container:
     hostname: frontend
-    image: "{{ image_name }}"
+    image: "{{ docker_image_name }}"
     state: started
     restart_policy: always
     name: frontend
@@ -375,11 +360,10 @@
     - always
     - frontend
 
-
 - name: Bring up container for worker
   docker_container:
     hostname: worker
-    image: "{{ image_name }}"
+    image: "{{ docker_image_name }}"
     state: started
     recreate: "{{ recreate_volatile_containers|default('no') }}"
 
@@ -401,8 +385,6 @@
     - worker
     - config
 
-
-
 - name: add worker to inventory
   add_host:
     name: worker
@@ -416,16 +398,16 @@
 
 - name: Add aliases to local ssh config
   blockinfile:
-    dest:  "{{ pebbles_ssh_config }}"
+    dest:  "{{ ssh_config_file }}"
     backup: yes
     mode: 0700
     create: yes
     block: |
       Host {{ installation_prefix }}{{ item.name }}
-      StrictHostKeyChecking no
-      User {{ ansible_user }}
-      HostName {{ ansible_default_ipv4.address }}
-      Port {{ item.port }}
+          StrictHostKeyChecking no
+          User {{ ansible_user }}
+          HostName {{ ansible_default_ipv4.address }}
+          Port {{ item.port }}
     marker: "# {mark} ANSIBLE MANAGED BLOCK {{installation_prefix}}{{ item.name }}"
   with_items:
     - { name: api, port: 2222}

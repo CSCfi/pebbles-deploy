@@ -10,28 +10,28 @@
     dest: "/dev/shm/{{ cluster_name }}/openrc.sh"
     mode: 0600
     content: |
-      export OS_AUTH_URL="{{ openshift_cloudprovider_openstack_auth_url }}"
+      export OS_AUTH_URL="{{ openstack_auth_url }}"
       export OS_IDENTITY_API_VERSION=3
-      export OS_USERNAME="{{ openshift_cloudprovider_openstack_username }}"
-      export OS_USER_DOMAIN_NAME="{{ openshift_cloudprovider_openstack_domain_name }}"
-      export OS_PASSWORD="{{ openshift_cloudprovider_openstack_password }}"
-      export OS_TENANT_ID="{{ openshift_cloudprovider_openstack_tenant_id }}"
-      export OS_TENANT_NAME="{{ openshift_cloudprovider_openstack_tenant_name }}"
-      export OS_REGION="{{ openshift_cloudprovider_openstack_region }}"
-  when: openshift_cloudprovider_openstack_auth_url | default('') | regex_search('(/v3)')
+      export OS_USERNAME="{{ openstack_username }}"
+      export OS_USER_DOMAIN_NAME="{{ openstack_domain_name }}"
+      export OS_PASSWORD="{{ openstack_password }}"
+      export OS_TENANT_ID="{{ openstack_tenant_id }}"
+      export OS_TENANT_NAME="{{ openstack_tenant_name }}"
+      export OS_REGION="{{ openstack_region }}"
+  when: openstack_auth_url | default('') | regex_search('(/v3)')
 
 - name: Create OpenStack openrc.sh for Keystone API v2.0
   copy:
     dest: "/dev/shm/{{ cluster_name }}/openrc.sh"
     mode: 0600
     content: |
-      export OS_AUTH_URL="{{ openshift_cloudprovider_openstack_auth_url }}"
-      export OS_USERNAME="{{ openshift_cloudprovider_openstack_username }}"
-      export OS_PASSWORD="{{ openshift_cloudprovider_openstack_password }}"
-      export OS_TENANT_ID="{{ openshift_cloudprovider_openstack_tenant_id }}"
-      export OS_TENANT_NAME="{{ openshift_cloudprovider_openstack_tenant_name }}"
-      export OS_REGION="{{ openshift_cloudprovider_openstack_region }}"
-  when: openshift_cloudprovider_openstack_auth_url | default('') | regex_search('(/v2.0)')
+      export OS_AUTH_URL="{{ openstack_auth_url }}"
+      export OS_USERNAME="{{ openstack_username }}"
+      export OS_PASSWORD="{{ openstack_password }}"
+      export OS_TENANT_ID="{{ openstack_tenant_id }}"
+      export OS_TENANT_NAME="{{ openstack_tenant_name }}"
+      export OS_REGION="{{ openstack_region }}"
+  when: openstack_auth_url | default('') | regex_search('(/v2.0)')
 
 - name: Copy ssh private key
   copy:
@@ -44,3 +44,14 @@
 - name: Create ssh public key
   shell: ssh-keygen -y -f /dev/shm/{{ cluster_name }}/id_rsa > /dev/shm/{{ cluster_name }}/id_rsa.pub
   when: copy_private_key.changed
+
+- name: Create $HOME/.ssh/
+  file:
+    dest: "{{lookup('env', 'HOME')}}/.ssh/"
+    state: directory
+
+- name: Link public key to $HOME/.ssh
+  file:
+    src: "/dev/shm/{{ cluster_name }}/id_rsa.pub"
+    dest: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa.pub"
+    state: link

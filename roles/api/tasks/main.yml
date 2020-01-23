@@ -1,21 +1,19 @@
 ---
 - name: Install package dependencies
   apt:
-    pkg={{ item }}
-    state=present
-  with_items:
-    - postgresql-client
-    - libpq-dev
-    - python-psycopg2
+    state: present
+    pkg:
+      - postgresql-client
+      - libpq-dev
+      - python-psycopg2
 
 - name: Install package dependencies (devel)
   apt:
-    pkg={{ item }}
-    state=present
-  with_items:
-    - postgresql
-    - libpq-dev
-    - redis-server
+    state: present
+    pkg:
+      - postgresql
+      - libpq-dev
+      - redis-server
   when: deploy_mode == "devel"
 
 - name: start and enable postgresql service
@@ -46,11 +44,6 @@
     password: "{{ application_database_password }}"
     priv: "ALL"
   when: deploy_mode == "devel"
-
-- name: Install psycopg from pip to virtualenv
-  pip: name={{ item }} virtualenv={{ virtualenv_path }}
-  with_items:
-      - psycopg2-binary
 
 - name: Set redis to listen to all interfaces
   lineinfile:

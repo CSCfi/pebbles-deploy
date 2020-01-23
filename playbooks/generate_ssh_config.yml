@@ -1,0 +1,59 @@
+---
+- name: Generate ssh config
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: check if stack has been provisioned already
+      shell: openstack stack show {{ cluster_name }}
+      register: stack_output_base
+      failed_when: false
+      changed_when: false
+      no_log: True
+
+    - when: stack_output_base.stderr.find('Stack not found') == -1
+      block:
+        - name: create $HOME/.ssh/
+          file:
+            dest: "{{lookup('env', 'HOME')}}/.ssh/"
+            state: directory
+
+        - name: add cluster common ssh config
+          blockinfile:
+            create: yes
+            mode: '0600'
+            dest: "{{ ssh_config_file }}"
+            block: |
+              Host {{ cluster_name }}-* {{  pebbles_network_prefix }}.* {{ jump_host_public_ip }}
+                User cloud-user
+                ForwardAgent no
+                GSSAPIAuthentication no
+                StrictHostKeyChecking no
+                UserKnownHostsFile /dev/null
+                IdentityFile /dev/shm/{{ cluster_name }}/id_rsa
+            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} common"
+
+        - name: add ssh config entry for jump host
+          blockinfile:
+            create: yes
+            mode: '0600'
+            dest: "{{ ssh_config_file }}"
+            block: |
+              Host {{ cluster_name }}-jump {{ jump_host_public_ip }} {{ hostvars[groups['jump_host'][0]].ansible_ssh_host }}
+                  HostName {{ jump_host_public_ip }}
+            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: jump"
+
+        - name: add ssh config entry for docker host
+          blockinfile:
+            create: yes
+            mode: '0600'
+            dest: "{{ ssh_config_file }}"
+            block: |
+              Host {{ docker_host_inventory_hostname }} {{ hostvars[docker_host_inventory_hostname].ansible_ssh_host }}
+                  ProxyCommand ssh -q cloud-user@{{ jump_host_public_ip }} nc %h %p
+                  HostName {{ hostvars[docker_host_inventory_hostname].ansible_ssh_host }}
+            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: {{ docker_host_inventory_hostname }}"
+          when:
+            - docker_host_inventory_hostname in hostvars
