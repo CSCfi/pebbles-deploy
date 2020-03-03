@@ -6,6 +6,7 @@ NUM_WORKERS={{ gunicorn_num_workers }}
 MAX_REQUESTS={{ gunicorn_max_requests }}
 USER={{ application_user }}
 GROUP={{ application_group }}
+MAX_HEADERS={{ gunicorn_max_headers }}
 
 echo "Starting $NAME as `whoami`"
 
@@ -17,6 +18,7 @@ exec env DB_AUTOMIGRATION=1 gunicorn 'pebbles.server:app' \
         --workers $NUM_WORKERS \
         --name $NAME \
         --max-requests $MAX_REQUESTS \
+        --limit-request-fields $MAX_HEADERS \
         --user=$USER --group=$GROUP \
         --bind=$GUNICORN_BIND_ENDPOINT \
         --log-level=info \
