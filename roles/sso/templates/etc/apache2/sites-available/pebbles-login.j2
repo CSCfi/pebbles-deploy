@@ -7,6 +7,7 @@
 
     <Location /login>
         AuthType shibboleth
+        ShibRequestSetting requireSessionWith Login
         ShibRequestSetting requireSession 1
         ShibUseHeaders On
         require shib-session
