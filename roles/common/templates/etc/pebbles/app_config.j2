@@ -18,6 +18,7 @@ INTERNAL_API_BASE_URL: 'http://api:{{ gunicorn_bind_port_worker }}/api/v1'
 {% if enable_shibboleth | d() | bool %}
 ENABLE_SHIBBOLETH_LOGIN: True
 {% endif %}
+CSC_LOGIN_AUTH_METHOD: '{{ csc_login_auth_method }}'
 PROVISIONING_NUM_WORKERS: {{ provisioning_num_workers }}
 
 {% if sender_email is defined %}
