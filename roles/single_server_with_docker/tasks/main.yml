@@ -167,9 +167,13 @@
     dest: "{{ ubuntu_build.path }}/{{ item }}"
   with_items:
     - ansible-sudo
-    - Dockerfile
     - supervisord.conf
   when: not ansible_check_mode
+
+- name: prepare docker image source (Dockerfile)
+  copy:
+    src: "Dockerfile"
+    dest: "{{ ubuntu_build.path }}/Dockerfile"
 
 - name: prepare docker image source (public key)
   copy:
@@ -177,11 +181,13 @@
     dest: "{{ ubuntu_build.path }}/id_rsa.pub"
   when: not ansible_check_mode
 
-- name: check or build image
+- name: build image
   docker_image:
+    state: present
+    source: build
+    force_source: yes
     path: "{{ ubuntu_build.path }}"
     name: "{{ docker_image_name }}"
-    state: present
     docker_host: unix:///var/run/docker.sock
   when: not ansible_check_mode
 

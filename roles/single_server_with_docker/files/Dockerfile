@@ -1,4 +1,4 @@
-FROM    ubuntu:16.04
+FROM    ubuntu:18.04
 MAINTAINER Olli Tourunen "olli.tourunen@csc.fi"
 
 RUN apt-get update
@@ -6,13 +6,25 @@ RUN apt-get update
 RUN apt-get install -y sudo
 
 # base requirements
-RUN apt-get install -y openssh-server supervisor
+RUN apt-get install -y openssh-server
 
 # tools for admistration
 RUN apt-get install -y tmux tree dstat lsof bash-completion time vim nano
 
 # common packages for containers
-RUN apt-get install -y git python python-pip python-dev python-virtualenv supervisor libffi-dev libssl-dev
+RUN apt-get install -y git python3 python3-pip python3-dev python-virtualenv libffi-dev libssl-dev
+
+# make python3 the default
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
+RUN update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+
+# supervisor 4 to support python3
+RUN pip install supervisor==4.1.0
+
+# create supervisor config dir
+RUN mkdir -p /etc/supervisor/conf.d
+COPY supervisord.conf /etc/supervisord.conf
+RUN mkdir -p /var/log/supervisor
 
 RUN mkdir -p /var/run/sshd
 RUN chmod 0755 /var/run/sshd
@@ -27,7 +39,4 @@ RUN usermod -p '*' ansible
 
 EXPOSE 22
 
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-RUN mkdir -p /var/log/supervisor
-
-CMD ["/usr/bin/supervisord"]
+CMD ["/usr/local/bin/supervisord"]

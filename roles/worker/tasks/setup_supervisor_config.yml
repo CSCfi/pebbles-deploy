@@ -18,11 +18,11 @@
             }}"
   with_sequence: count={{ provisioning_num_workers}}
 
-# this is so that we can easily controll all the workers with a single
+# this is so that we can easily control all the workers with a single
 # supervisorctl command e.g. when updating
-- name: add process group tu supervisor
+- name: add process group to supervisor
   blockinfile:
-    dest: /etc/supervisor/conf.d/supervisord.conf
+    dest: /etc/supervisord.conf
     block: |
         [group:{{ application_name }}_workers]
         programs={{ provisioning_workers|join(',') }}
@@ -32,6 +32,3 @@
 
 - name: Update Supervisor to add the app in the process group
   command: supervisorctl update
-
-- name: Restart Supervisor
-  command: supervisorctl restart {{ application_name }}-worker
