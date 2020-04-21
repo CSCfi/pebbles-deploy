@@ -58,7 +58,7 @@ server {
     }
 
 {% if enable_shibboleth | bool %}
-    location ~* /(login|csclogin|Shibboleth.sso).* {
+    location ~* /(login|csclogin|virtulogin|Shibboleth.sso).* {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
         proxy_set_header Host $http_host;
