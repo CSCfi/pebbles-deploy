@@ -18,7 +18,9 @@ INTERNAL_API_BASE_URL: 'http://api:{{ gunicorn_bind_port_worker }}/api/v1'
 {% if enable_shibboleth | d() | bool %}
 ENABLE_SHIBBOLETH_LOGIN: True
 {% endif %}
+HAKA_LOGIN_AUTH_METHOD: '{{ haka_login_auth_method }}'
 CSC_LOGIN_AUTH_METHOD: '{{ csc_login_auth_method }}'
+VIRTU_LOGIN_AUTH_METHOD: '{{ virtu_login_auth_method }}'
 PROVISIONING_NUM_WORKERS: {{ provisioning_num_workers }}
 
 {% if sender_email is defined %}

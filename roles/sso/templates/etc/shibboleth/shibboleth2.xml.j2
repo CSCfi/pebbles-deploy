@@ -58,6 +58,11 @@
             authnContextClassRef="{{ shibboleth_idp_url2 }}">
               <SessionInitiator type="SAML2" acsIndex="1" template="bindingTemplate.html" forceAuthn="true"/>
         </SessionInitiator>
+        <SessionInitiator type="Chaining" Location="/virtulogin" id="virtuidp"
+            relayState="cookie" entityID="{{ shibboleth_entity_idp }}"
+            authnContextClassRef="{{ shibboleth_idp_url3 }}">
+              <SessionInitiator type="SAML2" acsIndex="1" template="bindingTemplate.html" forceAuthn="true"/>
+        </SessionInitiator>
 
             <!--
 	    <md:AssertionConsumerService Location="/api/v1/acs" index="1"
