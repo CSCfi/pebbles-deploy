@@ -25,5 +25,15 @@
         ProxyPass http://api:{{ gunicorn_bind_port }}/login
         ProxyPassReverse http://api:{{ gunicorn_bind_port }}/login
     </Location>
+    <Location /virtulogin>
+        AuthType shibboleth
+        ShibRequestSetting requireSessionWith virtuidp
+        ShibRequestSetting requireSession 1
+        ShibUseHeaders On
+        require shib-session
+
+        ProxyPass http://api:{{ gunicorn_bind_port }}/login
+        ProxyPassReverse http://api:{{ gunicorn_bind_port }}/login
+    </Location>
 
 </VirtualHost>
