@@ -223,6 +223,7 @@
     - "{{ docker_host_m2m_credentials_dir }}"
     - "{{ docker_host_sso_dir }}"
     - "{{ docker_host_database_dir }}"
+    - "{{ docker_host_docker_driver_cert_dir }}"
   when: ansible_lsb.id=="CentOS"
 
 - name: Bring up container for db
@@ -386,6 +387,7 @@
       - "{{ docker_host_app_root }}:/shared_folder/source:ro"
       - "{{ docker_host_m2m_credentials_dir }}:{{ application_m2m_credentials_dir }}:ro"
       - "{{ docker_host_image_dir }}:/images:ro"
+      - "{{ docker_host_docker_driver_cert_dir }}:/webapps/{{ application_name }}/docker_driver_certs"
     env:  "{{ worker_env }}"
   tags:
     - worker
