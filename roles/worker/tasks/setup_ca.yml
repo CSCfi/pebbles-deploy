@@ -14,11 +14,15 @@
       -out {{ docker_cert_dir }}/client.csr
     creates: "{{ docker_cert_dir }}/client_key.pem"
 
+- name: Touch signing config to avoid having too specific SELinux attributes. Ugly.
+  shell:
+    cmd: "echo 'extendedKeyUsage = clientAuth' > {{ docker_cert_dir }}/extfile.cnf"
+    creates: "{{ docker_cert_dir }}/extfile.cnf"
+
 - name: Generate signing config
   lineinfile:
     dest: "{{ docker_cert_dir }}/extfile.cnf"
     line: "extendedKeyUsage = clientAuth"
-    create: yes
 
 - name: Sign client certificate
   command:

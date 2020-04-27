@@ -22,16 +22,13 @@
       content: "{{ private_ssl_key }}"
       mode: 0700
 
-
-# file is assembled in alphabetical order of file names
-- name: assemble certificate chain to remote machine
+- name: copy certificate chain to remote machine
   local_action:
       module: copy
       dest: "{{ secrets_path }}/server.crt.chained"
       content: "{{ public_ssl_cert_chain }}"
       mode: 0700
   when: state == "present"
-
 
 - name: copy private SSO key to in-memory file
   local_action:

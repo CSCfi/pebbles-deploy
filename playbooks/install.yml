@@ -52,8 +52,7 @@
     - reload_on_git_update
   vars:
     - application_secret_key: "{{ pb_application_secret_key }}"
-    - git_status: "{{hostvars[docker_host_inventory_hostname]['git_status
-    ']|default({})}}"
+    - git_status: "{{ hostvars[docker_host_inventory_hostname]['git_status']|default({}) }}"
     - programs:
       - gunicorn_app
       - gunicorn_worker_app
@@ -68,8 +67,7 @@
     - reload_on_git_update
   vars:
     - application_secret_key: "{{ pb_application_secret_key }}"
-    - git_status: "{{hostvars[docker_host_inventory_hostname]['git_status
-    ']|default({})}}"
+    - git_status: "{{ hostvars[docker_host_inventory_hostname]['git_status']|default({}) }}"
     - programs:
       - "{{ application_name }}_workers:"
       - "{{ application_name }}-system-worker"
