@@ -224,6 +224,7 @@
     - "{{ docker_host_sso_dir }}"
     - "{{ docker_host_database_dir }}"
     - "{{ docker_host_docker_driver_cert_dir }}"
+    - "{{ docker_host_frontend_dir }}"
   when: ansible_lsb.id=="CentOS"
 
 - name: Bring up container for db
@@ -351,6 +352,7 @@
     links: "{{ frontend_links }}"
     volumes:
       - "{{ docker_host_cert_dir }}:/etc/nginx/ssl:ro"
+      - "{{ docker_host_frontend_dir }}:{{ frontend_proxy_config_dir }}"
     volumes_from:
       - api:ro
   tags:
