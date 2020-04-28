@@ -49,13 +49,14 @@
         </SSO>
         -->
 
-        <SessionInitiator type="Chaining" Location="/Login" id="Login">
+        <SessionInitiator type="Chaining" Location="/Login" id="Login"
+            entityID="{{ shibboleth_entity_idp }}" authnContextClassRef="{{ shibboleth_idp_url1 }}">
               <SessionInitiator type="SAML2" template="bindingTemplate.html" forceAuthn="true"/>
-              <SessionInitiator type="SAMLDS" URL="{{ shibboleth_idp_url1 }}" />
         </SessionInitiator>
         <SessionInitiator type="Chaining" Location="/csclogin" id="customeridp"
-           relayState="cookie" entityID="{{ shibboleth_idp_url2 }}">
-              <SessionInitiator type="SAML2" defaultACSIndex="1" template="bindingTemplate.html" forceAuthn="true"/>
+            relayState="cookie" entityID="{{ shibboleth_entity_idp }}"
+            authnContextClassRef="{{ shibboleth_idp_url2 }}">
+              <SessionInitiator type="SAML2" acsIndex="1" template="bindingTemplate.html" forceAuthn="true"/>
         </SessionInitiator>
 
             <!--
@@ -101,13 +102,8 @@
             styleSheet="/shibboleth-sp/main.css"/>
 
         <!-- Example of remotely supplied batch of signed metadata. -->
-        <MetadataProvider type="XML" uri="{{ shibboleth_metadata_url }}"
-               backingFilePath="metadata.xml" reloadInterval="7200">
-            <MetadataFilter type="RequireValidUntil" maxValidityInterval="2419200"/>
-            <MetadataFilter type="Signature" certificate="idp_cert.pem"/>
-        </MetadataProvider>
-        <MetadataProvider type="XML" uri="{{ shibboleth_metadata2_url }}"
-               backingFile="{{ shibboleth_metadata2_file }}" reloadInterval="7200" />
+
+       <MetadataProvider type="XML" validate="true" path="{{ shibboleth_metadata_file }}"/>
 
         <!-- Map to extract attributes from SAML assertions. -->
         <AttributeExtractor type="XML" validate="true" reloadChanges="false" path="/etc/shibboleth/attribute-map.xml"/>

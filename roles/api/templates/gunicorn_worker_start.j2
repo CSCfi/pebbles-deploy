@@ -6,6 +6,7 @@ NUM_WORKERS={{ gunicorn_num_workers }}
 MAX_REQUESTS={{ gunicorn_max_requests }}
 USER={{ application_user }}
 GROUP={{ application_group }}
+MAX_HEADERS={{ gunicorn_max_headers }}
 
 echo "Starting $NAME (worker endpoint) as `whoami`"
 
@@ -13,10 +14,11 @@ cd {{ application_path }}
 source {{ virtualenv_path }}/bin/activate
 export PYTHONPATH={{ application_path }}:$PYTHONPATH
 
-exec gunicorn 'pebbles.server:app' \
+exec env DB_AUTOMIGRATION=1 gunicorn 'pebbles.server:app' \
         --workers $NUM_WORKERS \
         --name $NAME \
         --max-requests $MAX_REQUESTS \
+        --limit-request-fields $MAX_HEADERS \
         --user=$USER --group=$GROUP \
         --bind=$GUNICORN_BIND_ENDPOINT \
         --log-level=info \
