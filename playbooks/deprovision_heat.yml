@@ -16,12 +16,12 @@
         state: absent
     - name: Disassociate floating IP from pebbles node
       os_floating_ip:
-        server: "{{ cluster_name }}-pebbles"
+        server: "{{ cluster_name }}-server"
         floating_ip_address: "{{ pebbles_public_ip }}"
         state: absent
-    - name: disassociate volumes with pebbles node
+    - name: disassociate volumes with server node
       os_server_volume:
-          server: "{{ cluster_name}}-pebbles"
+          server: "{{ cluster_name}}-server"
           state: absent
           volume: "{{ item }}"
       with_items:

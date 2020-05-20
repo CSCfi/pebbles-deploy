@@ -63,3 +63,4 @@
     mode: 0600
     content: |
       export DEPLOYMENT_TYPE="{{ deployment_type | d('helm') }}"
+      export PUBLIC_DOMAIN_NAME="{{ domain_name | d('domain_name_not_set')}}"

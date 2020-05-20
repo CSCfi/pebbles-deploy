@@ -418,7 +418,7 @@
           User {{ ansible_user }}
           HostName {{ ansible_default_ipv4.address }}
           Port {{ item.port }}
-    marker: "# {mark} ANSIBLE MANAGED BLOCK {{installation_prefix}}{{ item.name }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ installation_prefix }}{{ item.name }}"
   with_items:
     - { name: api, port: 2222}
     - { name: worker, port: 2223}

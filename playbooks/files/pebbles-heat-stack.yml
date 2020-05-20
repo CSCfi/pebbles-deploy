@@ -49,6 +49,10 @@ parameters:
     description: >
       What OpenStack flavor to use for the bastion host.
     type: string
+  jump_host_vm_ip:
+    description: >
+      Private IP for the jump host
+    type: string
   jump_host_cloud_config:
     description: >
       Configuration for cloud-init for the bastion host.
@@ -69,6 +73,10 @@ parameters:
   pebbles_vm_flavor:
     description: >
       What OpenStack flavor to use for master VMs.
+    type: string
+  pebbles_vm_ip:
+    description: >
+      Private IP for the server host
     type: string
 
 resources:
@@ -180,6 +188,7 @@ resources:
       image: { get_param: jump_host_vm_image }
       networks:
         - network: { get_resource: pebbles_network }
+          fixed_ip: { get_param: jump_host_vm_ip }
       flavor: { get_param: jump_host_vm_flavor }
       metadata:
         group: "jump_host"
@@ -192,7 +201,7 @@ resources:
 
 
   #-----------------------------------
-  # Actual Pebbles VM
+  # Actual Pebbles server VM
   #-----------------------------------
 
   pebbles_host:
@@ -204,13 +213,14 @@ resources:
           template: env_name-name_suffix
           params:
             env_name: { get_param: env_name }
-            name_suffix: "pebbles"
+            name_suffix: "server"
       image: { get_param: pebbles_vm_image }
       networks:
         - network: { get_resource: pebbles_network }
+          fixed_ip: { get_param: pebbles_vm_ip }
       flavor: { get_param: pebbles_vm_flavor }
       metadata:
-        groups: "pebbles,docker_host"
+        groups: "docker_host"
         stack: { get_param: env_name }
       key_name: { get_param: key_name }
       security_groups:

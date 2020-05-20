@@ -16,8 +16,9 @@
       register: stack_output
       failed_when: false
       changed_when: false
+
     - when:
-        - stack_output.stderr.find('Stack not found') != -1
+        - stack_output.stderr.find('Stack not found') != -1 or force_heat_stack_update | d() | bool
       block:
         - name: Build the Pebbles Heat stack
           register: heat_stack
@@ -39,32 +40,26 @@
               key_name: "{{ cluster_name }}"
               jump_host_vm_image: "{{ jump_host_vm_image }}"
               jump_host_vm_flavor: "{{ jump_host_vm_flavor }}"
+              jump_host_vm_ip: "{{ pebbles_network_prefix }}.10"
               jump_host_cloud_config: "{{ jump_host_cloud_config|default({}) }}"
               pebbles_vm_image: "{{ pebbles_vm_image }}"
               pebbles_vm_flavor: "{{ pebbles_vm_flavor }}"
-        - name: Associate fixed floating IP with first pebbles node
+              pebbles_vm_ip: "{{ pebbles_network_prefix }}.11"
+
+        - name: Associate fixed floating IP with server node
           os_floating_ip:
-            server: "{{ cluster_name }}-pebbles"
+            server: "{{ cluster_name }}-server"
             floating_ip_address: "{{ pebbles_public_ip }}"
-          when: pebbles_public_ip is defined
-        - name: Associate random floating IP with first pebbles node
-          os_floating_ip:
-            server: "{{ cluster_name }}-pebbles"
-            reuse: yes
-          when: not pebbles_public_ip is defined
+
         - name: Associate fixed floating IP with first jump host
           os_floating_ip:
             server: "{{ cluster_name }}-jump"
             floating_ip_address: "{{ jump_host_public_ip }}"
           when: jump_host_public_ip is defined
-        - name: Associate random floating IP with first jump host
-          os_floating_ip:
-            server: "{{ cluster_name }}-jump"
-            reuse: yes
-          when: not jump_host_public_ip is defined
-        - name: Associate volumes with pebbles node
+
+        - name: Associate volumes with server node
           os_server_volume:
-            server: "{{ cluster_name}}-pebbles"
+            server: "{{ cluster_name}}-server"
             state: present
             volume: "{{ item }}"
           with_items:
@@ -74,8 +69,6 @@
           when:
             - permanent_volumes
 
-        - name: Refresh dynamic inventory
-          meta: refresh_inventory
       # endblock
 
 - include: generate_ssh_config.yml
