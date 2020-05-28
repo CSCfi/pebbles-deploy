@@ -80,3 +80,8 @@
     src: backup.sh
     owner: cloud-user
     mode: 0744
+
+- name: disable auto-updates on Pouta
+  file:
+    name: /etc/cron.daily/automatic_updates
+    state: absent
