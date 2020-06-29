@@ -131,6 +131,7 @@ apiImagePullPolicy: IfNotPresent
 #mountHostSrc: /CHANGE_ME/src/gitlab.csc.fi/pebbles/pebbles
 #useSourceVolume: true
 apiDevelopmentMode: true
+apiDisableCORS: true
 #remoteDebugServerWorker: host.docker.internal
 #remoteDebugServerApi: host.docker.internal
 ingressHost: localhost

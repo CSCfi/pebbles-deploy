@@ -56,6 +56,10 @@ spec:
             - name: REMOTE_DEBUG_SERVER
               value: {{ .Values.remoteDebugServerApi }}
             {{- end }}
+            {{- if .Values.apiDisableCORS }}
+            - name: DISABLE_CORS
+              value: "{{ .Values.apiDisableCORS }}"
+            {{- end }}
             - name: PB_SECRET_KEY
               valueFrom:
                 secretKeyRef:

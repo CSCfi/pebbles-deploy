@@ -49,6 +49,9 @@ ingressHost: localhost
 # Run api with just one thread and reload mode
 #apiDevelopmentMode: true
 
+# Disable CORS for API for local UI development
+#apiDisableCORS: true
+
 # Mount a ReadWriteMany volume as the source. Useful for remote development
 #useSourceVolume: true
 
