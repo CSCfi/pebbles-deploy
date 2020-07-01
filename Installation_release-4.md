@@ -18,7 +18,7 @@ We have a deployment container with all dependencies preinstalled. To build the 
 run the build script located in `pebbles-deploy/container-src/pebbles-deployer`:
 
 ```bash
-cd ~/src/gitlab.csc.fi/pebbles/pebbles-deploy/container-src/poc-deployer
+cd ~/src/gitlab.csc.fi/pebbles/pebbles-deploy/container-src/pebbles-deployer
 
 # use sudo if needed
 ./build.bash

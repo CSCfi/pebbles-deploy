@@ -26,17 +26,19 @@ RUN pip3 install --no-cache-dir -r /root/requirements.txt
 RUN cd /tmp/ \
     && curl -LOs https://git.io/get_helm.sh \
     && chmod 700 get_helm.sh \
-    && ./get_helm.sh -v v3.0.2 \
+    && ./get_helm.sh -v v3.2.4 \
     && rm /tmp/get_helm.sh
 RUN /usr/local/bin/helm completion bash > /etc/bash_completion.d/helm
 
 # Install oc and kubectl
+# Temporarily use oc binary uploaded to Allas and extracted with:
+# oc adm release extract --command=oc --command-os=linux registry.svc.ci.openshift.org/origin/release:4.4.0-0.okd-2020-03-24-091256
+# Once OKD 4 client binary releases are out, we can switch to those
 RUN cd /tmp/ \
- && curl -LOs https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz \
- && tar xf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz \
- && cp openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc /usr/local/bin/. \
- && cp openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/kubectl /usr/local/bin/. \
- && rm -rf /tmp/openshift-origin-client-tools-*
+ && curl -LOs https://a3s.fi/notebooks-devel-public/oc-4.4.0-0.okd-2020-03-24-091256 \
+ && install oc-4.4.0-0.okd-2020-03-24-091256 /usr/local/bin/oc \
+ && install oc-4.4.0-0.okd-2020-03-24-091256 /usr/local/bin/kubectl \
+ && rm /tmp/oc-4.4.0-0.okd-2020-03-24-091256
 RUN /usr/local/bin/oc completion bash > /etc/bash_completion.d/oc
 
 # Choose an arbitrary GID so that vault password can be made group readable when mounted as a volume

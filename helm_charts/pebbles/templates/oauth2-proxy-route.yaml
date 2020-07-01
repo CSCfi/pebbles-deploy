@@ -10,10 +10,12 @@ spec:
   to:
     kind: Service
     name: oauth2-proxy
+    weight: 100
   port:
     targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect
     termination: edge
-
+status:
+  ingress: []
 {{- end}}
