@@ -40,11 +40,11 @@
             marker: "# {mark} Ansible generated values"
             block: "{{ helm_config }}"
 
-        - name: Create values.yaml for Helm (backend passwords)
+        - name: Create values.yaml for Helm (cluster passwords)
           blockinfile:
             path: '/dev/shm/{{ cluster_name }}/values.yaml'
             create: yes
             mode: '0600'
-            marker: "# {mark} Ansible generated backend passwords"
-            block: "{{ helm_backend_passwords }}"
+            marker: "# {mark} Ansible generated cluster passwords"
+            block: "{{ helm_cluster_passwords }}"
     # end block

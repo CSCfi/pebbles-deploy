@@ -58,12 +58,12 @@ ingressHost: localhost
 # Enable or disable running database automigration on API startup
 #dbAutomigration: true
 
-# Backend config is provided in local values
-backendConfig: |
+# Cluster config is provided in local values
+clusterConfig: |
   - name: example
 
-# Passwords for backends are provided in local values
-backendPasswords: |
+# Passwords for clusters are provided in local values
+clusterPasswords: |
   example: "not very secret"
 
 # ----------------------------------------------------------------------------

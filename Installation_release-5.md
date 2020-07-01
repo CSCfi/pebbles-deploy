@@ -143,8 +143,8 @@ oauth2ProxySecret: ""
 oauth2ProxyClientId: ""
 oauth2ProxyClientSecret: ""
 
-backendConfig: |
-  backends:
+clusterConfig: |
+  clusters:
     - name: local_kubernetes
       driver: KubernetesLocalDriver
 ```
@@ -194,7 +194,7 @@ helm upgrade pebbles helm_charts/pebbles -f local_values/local_k8s.yaml
 
 ## Open database shell
 ```bash
-oc rsh deployment/db bash -c 'psql -d pebbles'
+oc rsh $(oc get pod -o name -l name=db) bash -c 'psql -d pebbles'
 ```
 
 ## Pycharm remote debugging

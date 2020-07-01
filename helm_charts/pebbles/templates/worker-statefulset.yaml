@@ -71,12 +71,12 @@ spec:
               value: {{ .Values.remoteDebugServerWorker }}
             {{- end }}
           volumeMounts:
-            - name: backend-config
-              mountPath: "/run/secrets/pebbles/backend-config.yaml"
-              subPath: backend-config.yaml
-            - name: backend-passwords
-              mountPath: "/run/secrets/pebbles/backend-passwords.yaml"
-              subPath: backend-passwords.yaml
+            - name: cluster-config
+              mountPath: "/run/secrets/pebbles/cluster-config.yaml"
+              subPath: cluster-config.yaml
+            - name: cluster-passwords
+              mountPath: "/run/secrets/pebbles/cluster-passwords.yaml"
+              subPath: cluster-passwords.yaml
             - name: log
               mountPath: /opt/log
           {{- if or .Values.mountHostSrc .Values.useSourceVolume }}
@@ -101,12 +101,12 @@ spec:
               name: log
         {{- end }}
       volumes:
-        - name: backend-config
+        - name: cluster-config
           secret:
-            secretName: backend-config
-        - name: backend-passwords
+            secretName: cluster-config
+        - name: cluster-passwords
           secret:
-            secretName: backend-passwords
+            secretName: cluster-passwords
         - name: log
           emptyDir: {}
       {{- if .Values.mountHostSrc }}
