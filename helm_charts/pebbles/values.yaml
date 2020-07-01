@@ -70,14 +70,14 @@ backendPasswords: |
 # Optional central logging
 
 # deploy logstash and filebeat sidecar containers
-deployCentralLogging: True
+deployCentralLogging: true
 
 # logstashStorageClass: standard-rwo
 logstashVolumeSize: 1Gi
 
 # ----------------------------------------------------------------------------
 # Optional oauth2 settings
-oauth2LoginEnabled: False
+oauth2LoginEnabled: false
 
 # This is the shared secret between the API and the proxy. It must be defined.
 #oauth2ProxySecret: change_me
