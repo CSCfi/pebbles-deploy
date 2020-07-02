@@ -1,0 +1,128 @@
+---
+- name: disable auto-updates on Pouta
+  file:
+    name: /etc/cron.daily/automatic_updates
+    state: absent
+
+- when:
+    - lib_docker_device is defined
+  become: True
+  block:
+    - name: format docker storage device when using overlay2 storage driver
+      filesystem:
+        dev: "{{ lib_docker_device }}"
+        fstype: xfs
+
+    - name: mount docker storage device when using overlay2 storage driver
+      mount:
+        name: "/var/lib/docker"
+        src: "{{ lib_docker_device }}"
+        state: mounted
+        fstype: xfs
+
+- name: install docker
+  yum:
+    name:
+     - docker
+     - python-docker-py
+    state: present
+
+- name: start and enable docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: add docker config directory
+  file:
+    dest: /root/.docker
+    state: directory
+    mode: "0600"
+
+- name: add docker config
+  copy:
+    dest: /root/.docker/config.json
+    content: "{{ root_docker_config | to_json }}"
+    mode: "0600"
+
+- name: setup repo for gitlab runner
+  template:
+    src: etc/yum.repos.d/runner_gitlab-runner.repo
+    dest: /etc/yum.repos.d/runner_gitlab-runner.repo
+
+- name: install runner
+  yum:
+    name: gitlab-runner
+    state: present
+
+- name: set concurrency in config.toml
+  lineinfile:
+    path:  /etc/gitlab-runner/config.toml
+    line: 'concurrent = {{ gitlab_runner_concurrency }}'
+    regexp: '^concurrent ='
+    state: present
+    insertbefore: 'BOF'
+    create: yes
+
+- name: delete old runners from config
+  shell: >
+      gitlab-runner verify --delete
+
+- name: check if we have docker runner in config.toml
+  shell: >
+    cat /etc/gitlab-runner/config.toml
+  register: config_contents
+
+- name: register runner if not found
+  shell: >
+    gitlab-runner register
+    --non-interactive
+    --url="https://gitlab.ci.csc.fi/"
+    --registration-token="{{ gitlab_registration_token }}"
+    --env="{{ runner_env }}"
+    --executor="docker"
+    {% for volume in runner_volumes %}
+    --docker-volumes="{{ volume }}"
+    {% endfor %}
+    --docker-privileged="true"
+    --docker-image="alpine:latest"
+    --description="docker-runner"
+    --tag-list="docker"
+    --run-untagged="true"
+    --locked="false"
+    --access-level="not_protected"
+    --cache-type="s3"
+    --cache-shared
+    --cache-s3-server-address="192.168.200.11:19005"
+    --cache-s3-access-key="pebbles-runner-cache"
+    --cache-s3-secret-key="pebbles-runner-cache"
+    --cache-s3-bucket-name="runner"
+    --cache-s3-insecure="true"
+  when:
+    - config_contents.stdout.find('docker-runner') == -1
+
+- name: minimal minio container for caching
+  docker_container:
+    name: minio
+    image: minio/minio:RELEASE.2020-07-02T00-15-09Z
+    command: ["server", "/data"]
+    state: started
+    restart_policy: always
+    published_ports:
+      - 19005:9000
+    env:
+      MINIO_ACCESS_KEY: 'pebbles-runner-cache'
+      MINIO_SECRET_KEY: 'pebbles-runner-cache'
+
+- name: create a bucket for runner
+  shell: docker exec -i minio sh -c 'mkdir -p /data/runner'
+
+- name: cron job to prune unused docker volumes and clear runner containers every week
+  copy:
+    dest: /etc/cron.weekly/docker_cleanup
+    mode: "0755"
+    content: |
+      #!/bin/env sh
+
+      /usr/bin/docker volume prune --force
+      /usr/share/gitlab-runner/clear-docker-cache

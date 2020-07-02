@@ -1,0 +1,8 @@
+# number of concurrent jobs
+gitlab_runner_concurrency: 1
+
+# extra volumes to mount
+runner_volumes: []
+
+# /root/.docker/config.json content in yaml format, used for credentials
+root_docker_config: {}

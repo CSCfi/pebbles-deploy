@@ -1,0 +1,66 @@
+---
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: Add public key to OpenStack for {{ cluster_name }}
+      os_keypair:
+        state: present
+        name: "{{ cluster_name }}"
+        public_key_file: "/dev/shm/{{ cluster_name }}/id_rsa.pub"
+
+    - name: check if stack has been provisioned already
+      shell: openstack stack show {{ cluster_name }}
+      register: stack_output
+      failed_when: false
+      changed_when: false
+
+    - when:
+        - stack_output.stderr.find('Stack not found') != -1 or force_heat_stack_update | d() | bool
+      block:
+        - name: Build gitlab runner stack
+          register: heat_stack
+          os_stack:
+            name: "{{ cluster_name }}"
+            state: present
+            template: "files/gitlab-runner-heat-stack.yml"
+            wait: yes
+            parameters:
+              env_name: "{{ cluster_name }}"
+              ssh_allow_cidrs: "{{ ssh_allow_cidrs }}"
+              network_cidr: "{{ network_cidr }}"
+              network_dns_servers: "{{ network_dns_servers }}"
+              network_router: "{{ network_router }}"
+              key_name: "{{ cluster_name }}"
+              vm_image: "{{ vm_image }}"
+              vm_flavor: "{{ vm_flavor }}"
+              vm_ip: "{{ network_prefix }}.11"
+
+        - name: Associate fixed floating IP with server node
+          os_floating_ip:
+            server: "{{ cluster_name }}"
+            floating_ip_address: "{{ public_ip }}"
+
+- include: generate_ssh_config.yml
+
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - name: Wait for SSH to work
+      shell: >
+        ssh {{ public_ip }}
+        'echo success'
+      register: result
+      until: result.stdout.find('success') != -1
+      retries: 30
+      delay: 5
+      changed_when: false
+
+- hosts: runner
+  become: yes
+  roles:
+    - pebbles_facts
+    - gitlab_runner

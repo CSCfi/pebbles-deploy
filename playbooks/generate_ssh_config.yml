@@ -13,7 +13,10 @@
       changed_when: false
       no_log: True
 
-    - when: stack_output_base.stderr.find('Stack not found') == -1
+    # standard ssh config generation
+    - when:
+      - stack_output_base.stderr.find('Stack not found') == -1
+      - deployment_type in ('heat',)
       block:
         - name: create $HOME/.ssh/
           file:
@@ -57,3 +60,29 @@
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: {{ docker_host_inventory_hostname }}"
           when:
             - docker_host_inventory_hostname in hostvars
+
+    # gitlab-runner single VM config generation
+    - when:
+      - stack_output_base.stderr.find('Stack not found') == -1
+      - deployment_type in ('gitlab-runner-heat',)
+      block:
+        - name: create $HOME/.ssh/
+          file:
+            dest: "{{lookup('env', 'HOME')}}/.ssh/"
+            state: directory
+
+        - name: add ssh config entry for runner
+          blockinfile:
+            create: yes
+            mode: '0600'
+            dest: "{{ ssh_config_file }}"
+            block: |
+              Host {{ cluster_name }} {{ public_ip }} {{ hostvars[groups['runner'][0]].ansible_ssh_host }}
+                HostName {{ public_ip }}
+                User cloud-user
+                ForwardAgent no
+                GSSAPIAuthentication no
+                StrictHostKeyChecking no
+                UserKnownHostsFile /dev/null
+                IdentityFile /dev/shm/{{ cluster_name }}/id_rsa
+            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}"

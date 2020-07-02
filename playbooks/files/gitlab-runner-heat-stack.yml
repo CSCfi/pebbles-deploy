@@ -1,0 +1,113 @@
+---
+heat_template_version: 2015-10-15
+
+description: >
+  Provision resources for gitlab runner.
+
+parameters:
+  env_name:
+    description: >
+      A name for the runner environment to be used for naming resources.
+    type: string
+    default: { get_param: 'OS::stack_name' }
+  ssh_allow_cidrs:
+    description: >
+      The CIDRs of the networks where ssh should be open to
+    type: comma_delimited_list
+  network_cidr:
+    description: >
+      What CIDR to use for the dedicated cluster network. Must be unique within the tenant.
+    type: string
+  network_dns_servers:
+    description: >
+      What DNS servers to use in the dedicated cluster network.
+    type: comma_delimited_list
+  network_router:
+    description: >
+      The router to which the dedicated cluster network should be connected to
+      for external access.
+    type: string
+  key_name:
+    description: >
+      The name of the SSH key to initially insert into VMs.
+    type: string
+  vm_image:
+    description: >
+      What OpenStack image to use for master hosts.
+    type: string
+  vm_flavor:
+    description: >
+      What OpenStack flavor to use for master VMs.
+    type: string
+  vm_ip:
+    description: >
+      Private IP for the server host
+    type: string
+
+resources:
+
+  #-----------------------------------
+  # Security groups
+  #-----------------------------------
+  runner_secgroup:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: { get_param: env_name }
+      rules:
+        repeat:
+          for_each:
+            <%cidr%>: { get_param: ssh_allow_cidrs }
+          template:
+            protocol: tcp
+            port_range_min: 22
+            port_range_max: 22
+            remote_ip_prefix: <%cidr%>
+
+  #-----------------------------------
+  # Dedicated cluster network
+  #-----------------------------------
+
+  runner_network:
+    type: OS::Neutron::Net
+    properties:
+       name:
+         str_replace:
+            template: env_name-name_suffix
+            params:
+              env_name: { get_param: env_name }
+              name_suffix: "network"
+
+  runner_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: runner_network }
+      cidr: { get_param: network_cidr }
+      dns_nameservers: { get_param: network_dns_servers }
+
+  runner_subnet_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router: { get_param: network_router }
+      subnet: { get_resource: runner_subnet }
+
+  #-----------------------------------
+  # Actual runner server VM
+  #-----------------------------------
+
+  runner_host:
+    type: OS::Nova::Server
+    depends_on: "runner_subnet"
+    properties:
+      name: { get_param: env_name }
+      image: { get_param: vm_image }
+      networks:
+        - network: { get_resource: runner_network }
+          fixed_ip: { get_param: vm_ip }
+      flavor: { get_param: vm_flavor }
+      metadata:
+        stack: { get_param: env_name }
+      key_name: { get_param: key_name }
+      security_groups:
+        - { get_resource: runner_secgroup }
+
+outputs:
