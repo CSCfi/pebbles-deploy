@@ -34,22 +34,26 @@ echo "ANSIBLE_INVENTORY set to $ANSIBLE_INVENTORY"
 if [[ ! -z ${CI_COMMIT_REF_NAME} ]]; then
     print_header 'CI initialization starts'
     pushd . > /dev/null
-    # copy source in place
-    cp -r ${CI_PROJECT_DIR} /opt/deployment/pebbles
-    # checkout pebbles-environments. match branch name if it exists
+    # pebbles: clone and checkout branch if it exists
     cd /opt/deployment
-    git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.csc.fi/pebbles/pebbles-environments.git
-    cd /opt/deployment/pebbles-environments
-    git checkout -b ${CI_COMMIT_REF_NAME} -t origin/${CI_COMMIT_REF_NAME} || true
+    git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/pebbles/pebbles.git
+    cd /opt/deployment/pebbles
+    git checkout -b ${PEBBLES_COMMIT_REF_NAME} -t origin/${PEBBLES_COMMIT_REF_NAME} || true
     git pull
-    # checkout pebbles-deploy. match branch name if it exists
+    # pebbles-environments: clone and checkout branch if it exists
     cd /opt/deployment
-    git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.csc.fi/pebbles/pebbles-deploy.git
+    git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/pebbles/pebbles-environments.git
+    cd /opt/deployment/pebbles-environments
+    git checkout -b ${PEBBLES_ENVIRONMENTS_COMMIT_REF_NAME} -t origin/${PEBBLES_ENVIRONMENTS_COMMIT_REF_NAME} || true
+    git pull
+    # pebbles-deploy: clone and checkout branch if it exists
+    cd /opt/deployment
+    git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/pebbles/pebbles-deploy.git
     cd /opt/deployment/pebbles-deploy
-    git checkout -b ${CI_COMMIT_REF_NAME} -t origin/${CI_COMMIT_REF_NAME} || true
+    git checkout -b ${PEBBLES_DEPLOY_COMMIT_REF_NAME} -t origin/${PEBBLES_DEPLOY_COMMIT_REF_NAME} || true
     git pull
     popd > /dev/null
-    echo 'CI container initialization done'
+    echo 'CI initialization done'
 fi
 
 pushd /opt/deployment/pebbles-deploy/playbooks > /dev/null

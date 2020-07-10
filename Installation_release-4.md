@@ -7,18 +7,18 @@ Here we have instructions to deploy a VM based pebbles release-4 with Heat.
 Clone pebbles, pebbles-deploy and pebbles-environments.
 
 ```bash
-mkdir -p ~/src/gitlab.csc.fi/pebbles
-cd ~/src/gitlab.csc.fi/pebbles/
-git clone https://gitlab.csc.fi/pebbles/pebbles
-git clone https://gitlab.csc.fi/pebbles/pebbles-deploy
-git clone https://gitlab.csc.fi/pebbles/pebbles-environments
+mkdir -p ~/src/gitlab.ci.csc.fi/pebbles
+cd ~/src/gitlab.ci.csc.fi/pebbles/
+git clone https://gitlab.ci.csc.fi/pebbles/pebbles
+git clone https://gitlab.ci.csc.fi/pebbles/pebbles-deploy
+git clone https://gitlab.ci.csc.fi/pebbles/pebbles-environments
 ```
 
 We have a deployment container with all dependencies preinstalled. To build the container,
 run the build script located in `pebbles-deploy/container-src/pebbles-deployer`:
 
 ```bash
-cd ~/src/gitlab.csc.fi/pebbles/pebbles-deploy/container-src/pebbles-deployer
+cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/container-src/pebbles-deployer
 
 # use sudo if needed
 ./build.bash
@@ -29,7 +29,7 @@ may not be able to access the volumes by default. To enable access from containe
 processes, change the labels on the mounted directories:
 
 ```bash
-cd ~/src/gitlab.csc.fi/pebbles/
+cd ~/src/gitlab.ci.csc.fi/pebbles/
 chcon -Rt svirt_sandbox_file_t pebbles*
 ```
 ## Launching a deployment container
@@ -39,7 +39,7 @@ Deployments are done in a dedicated Docker container. Different environments wil
 Here we launch a container for development environment called 'notebooks-dev'.
 
 ```bash
-cd ~/src/gitlab.csc.fi/pebbles/pebbles-deploy/
+cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/
 ./scripts/run_deployment_container.bash -e notebooks-dev 
 
 ```

@@ -31,18 +31,7 @@ build-image-all() {
     build-image-filebeat
 }
 
-install-pebbles() {
-    if [[ -z $1 ]]; then
-        echo 'install-pebbles needs admin password as an argument' > /dev/stderr
-        return
-    fi
-
-    build-image-all
-
-    helm status pebbles 2>&1 > /dev/null ||
-     (cd ~/pebbles-deploy &&
-      helm install pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml --set overrideSecret=1)
-
+initialize-pebbles() {
     while echo 'wait for api readiness'; do
         # we grep for readiness for deployments with a single container or with a logging sidecar container
         oc get pod -l name=api | egrep '1/1|2/2' | grep Running && break
@@ -56,4 +45,19 @@ install-pebbles() {
         oc get pod worker-0 | egrep '1/1|2/2' | grep Running && break
         sleep 5
     done
+}
+
+install-pebbles() {
+    if [[ -z $1 ]]; then
+        echo 'install-pebbles needs admin password as an argument' > /dev/stderr
+        return
+    fi
+
+    build-image-all
+
+    helm status pebbles 2>&1 > /dev/null ||
+     (cd ~/pebbles-deploy &&
+      helm install pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml --set overrideSecret=1)
+
+    initialize-pebbles $1
 }

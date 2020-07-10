@@ -49,6 +49,10 @@ spec:
               name: data
       volumes:
         - name: data
+        {{- if .Values.logstashVolumeSize }}
           persistentVolumeClaim:
             claimName: logstash
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
 {{- end }}

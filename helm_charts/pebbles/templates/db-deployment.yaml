@@ -63,5 +63,9 @@ spec:
               name: db-data
       volumes:
         - name: db-data
+        {{- if .Values.databaseVolumeSize }}
           persistentVolumeClaim:
             claimName: db
+        {{- else }}
+          emptyDir: {}
+        {{- end }}

@@ -33,7 +33,7 @@ if docker ps | grep -q ${env_name}-deployer; then
     echo
     docker exec -it ${env_name}-deployer bash
 else
-    # Check the OS to find the vaultpass path
+    # Check the OS to find the ramdisk path
     OS="$(uname -s)"
 
     case "${OS}" in
@@ -50,13 +50,14 @@ else
     esac
     echo
     echo "Launching a new deployment container '${env_name}-deployer'"
+    vaultpass_opt=''
     if [[ -e "${ramdisk}/secret/vaultpass-${env_name}" ]]; then
-        vaultpass_path="${ramdisk}/secret/vaultpass-${env_name}"
+        vaultpass_opt="-p ${ramdisk}/secret/vaultpass-${env_name}"
         echo "    using environment specific vaultpass-${env_name}"
-    else
-        vaultpass_path="${ramdisk}/secret/vaultpass"
+    elif [[ -e "${ramdisk}/secret/vaultpass" ]]; then
+        vaultpass_opt="-p ${ramdisk}/secret/vaultpass"
+        echo "    using generic vaultpass"
     fi
     echo
-
-    ${script_dir}/run_deployment_container.bash -p $vaultpass_path -e $env_name
+    ${script_dir}/run_deployment_container.bash $vaultpass_opt -e $env_name
 fi

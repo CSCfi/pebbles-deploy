@@ -53,11 +53,11 @@ see https://github.com/openshift/origin/releases/tag/v3.11.0
 Check out repositories checked out in golang style directory structure
 
 ```bash
-mkdir -p ~/src/gitlab.csc.fi/pebbles/
-cd  ~/src/gitlab.csc.fi/pebbles/
-git clone https://gitlab.csc.fi/pebbles/pebbles
-git clone https://gitlab.csc.fi/pebbles/pebbles-deploy
-git clone https://gitlab.csc.fi/pebbles/pebbles-environments
+mkdir -p ~/src/gitlab.ci.csc.fi/pebbles/
+cd  ~/src/gitlab.ci.csc.fi/pebbles/
+git clone https://gitlab.ci.csc.fi/pebbles/pebbles
+git clone https://gitlab.ci.csc.fi/pebbles/pebbles-deploy
+git clone https://gitlab.ci.csc.fi/pebbles/pebbles-environments
 ```
 
 ## Install tools
@@ -101,7 +101,7 @@ brew install helm
 Check out release-5:
 
 ```bash
-cd  ~/src/gitlab.csc.fi/pebbles/pebbles
+cd  ~/src/gitlab.ci.csc.fi/pebbles/pebbles
 git checkout release-5
 ```
 
@@ -115,7 +115,7 @@ eval $(minikube docker-env)
 Actual build:
 
 ```bash
-pushd ~/src/gitlab.csc.fi/pebbles/pebbles && s2i build . --copy -e UPGRADE_PIP_TO_LATEST=1 centos/python-36-centos7 pebbles && popd
+pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && s2i build . --copy -e UPGRADE_PIP_TO_LATEST=1 centos/python-38-centos7 pebbles && popd
 ```
 
 
@@ -128,13 +128,14 @@ Create local_values/local_k8s.yaml file with the following contents:
 ```yaml
 workerImagePullPolicy: IfNotPresent
 apiImagePullPolicy: IfNotPresent
-#mountHostSrc: /CHANGE_ME/src/gitlab.csc.fi/pebbles/pebbles
+#mountHostSrc: /CHANGE_ME/src/gitlab.ci.csc.fi/pebbles/pebbles
 #useSourceVolume: true
 apiDevelopmentMode: true
 apiDisableCORS: true
 #remoteDebugServerWorker: host.docker.internal
 #remoteDebugServerApi: host.docker.internal
 ingressHost: localhost
+databaseVolumeSize: 1Gi
 
 deployCentralLogging: false
 
@@ -152,7 +153,7 @@ clusterConfig: |
 ## Deploy Pebbles
 
 ```bash
-cd ~/src/gitlab.csc.fi/pebbles/pebbles-deploy
+cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy
 helm install pebbles helm_charts/pebbles -f local_values/local_k8s.yaml --set overrideSecret=1
 
 # check that api pod is Running 
@@ -184,7 +185,7 @@ Also, add your minikube IP to /etc/hosts as an alias for the web server/API.
 
 Uncomment and modify your local_values/local_k8s.yaml, key 'mountHostSrc'. Note that you need to adapt the path based
 on which folder your source is in. It also varies by platform, in Docker for Mac it would be 
-/Users/username/src/gitlab.csc.fi/...
+/Users/username/src/gitlab.ci.csc.fi/...
 
 Then update your deployment:
 
@@ -214,6 +215,6 @@ Your API will now contact pycharm remote debugger at startup, so it won't start 
 `Python Remote Debugging` configuration in PyCharm:
  
  * set the port to 12345
- * set the source code mappings to YOUR_HOME_DIRECTORY_HERE/src/gitlab.csc.fi/pebbles/pebbles=/opt/app-root/src
+ * set the source code mappings to YOUR_HOME_DIRECTORY_HERE/src/gitlab.ci.csc.fi/pebbles/pebbles=/opt/app-root/src
 
 Start debug, and the API container should connect and start.
