@@ -62,7 +62,21 @@ git clone https://gitlab.ci.csc.fi/pebbles/pebbles-environments
 
 ## Install tools
 
-### s2i
+### Helm 3
+
+Linux:
+
+```bash
+curl -LO https://git.io/get_helm.sh
+bash ./get_helm.sh -v v3.0.3
+```
+
+Mac:
+```bash
+brew install helm
+```
+
+### s2i (optional)
 On Linux, to install s2i
 
 ```bash
@@ -77,20 +91,6 @@ On a Mac, you can use
 
 ```bash
 brew install source-to-image
-```
-
-### Helm 3
-
-Linux:
-
-```bash
-curl -LO https://git.io/get_helm.sh
-bash ./get_helm.sh -v v3.0.3
-```
-
-Mac:
-```bash
-brew install helm
 ```
 
 
@@ -115,9 +115,14 @@ eval $(minikube docker-env)
 Actual build:
 
 ```bash
-pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && s2i build . --copy -e UPGRADE_PIP_TO_LATEST=1 centos/python-38-centos7 pebbles && popd
+pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && docker build --tag pebbles:latest . --file=deployment/pebbles-s2i.Dockerfile && popd
 ```
 
+Alternative: You can also use `s2i` to build the image
+
+```bash
+pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && s2i build . --copy -e UPGRADE_PIP_TO_LATEST=1 centos/python-38-centos7 pebbles && popd
+```
 
 # Deploying with Helm
 
@@ -154,6 +159,11 @@ clusterConfig: |
 
 ```bash
 cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy
+
+# create namespace if not present
+oc get namespace pebbles || oc create namespace pebbles
+
+# deploy with helm
 helm install pebbles helm_charts/pebbles -f local_values/local_k8s.yaml --set overrideSecret=1
 
 # check that api pod is Running 
