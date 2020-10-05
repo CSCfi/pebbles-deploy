@@ -5,11 +5,14 @@ dbImage: centos/postgresql-95-centos7:latest
 imagePrefix: ''
 apiImage: pebbles:latest
 workerImage: pebbles:latest
+frontendImage: pebbles-frontend:latest
 
 # To avoid remote pulling with local kubernetes, you can set these to 'IfNotPresent'
 dbImagePullPolicy: Always
 apiImagePullPolicy: Always
 workerImagePullPolicy: Always
+frontendImagePullPolicy: Always
+
 
 # Database volume size (undefined or empty means no persistent storage)
 #databaseVolumeSize: 1Gi

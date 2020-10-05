@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: frontend
+  strategy:
+    type: RollingUpdate
+
+  template:
+    metadata:
+      labels:
+        name: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: {{ .Values.imagePrefix }}{{ .Values.frontendImage }}
+          imagePullPolicy: {{ .Values.frontendImagePullPolicy }}
+          ports:
+          - containerPort: 8080
