@@ -19,7 +19,7 @@ short_cwd() {
 }
 
 branch-info() {
-    for repo in pebbles pebbles-deploy pebbles-environments; do
+    for repo in pebbles pebbles-deploy pebbles-environments pebbles-frontend; do
         branch=$(cd /opt/deployment/$repo && parse_git_branch)
         printf "%23s: %s\n" $repo $branch
     done

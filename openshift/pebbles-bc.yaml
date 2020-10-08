@@ -13,8 +13,6 @@ spec:
     git:
       uri: https://github.com/CSCfi/pebbles/
   strategy:
-    sourceStrategy:
-      from:
-        kind: DockerImage
-        name: centos/python-36-centos7:latest
-    type: Source
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: deployment/pebbles-s2i.Dockerfile

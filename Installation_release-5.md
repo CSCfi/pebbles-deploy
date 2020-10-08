@@ -133,6 +133,7 @@ Create local_values/local_k8s.yaml file with the following contents:
 ```yaml
 workerImagePullPolicy: IfNotPresent
 apiImagePullPolicy: IfNotPresent
+frontendImagePullPolicy: IfNotPresent
 #mountHostSrc: /CHANGE_ME/src/gitlab.ci.csc.fi/pebbles/pebbles
 #useSourceVolume: true
 apiDevelopmentMode: true

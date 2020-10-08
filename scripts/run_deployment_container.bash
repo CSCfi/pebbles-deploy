@@ -65,6 +65,7 @@ docker run --rm \
     -v $SCRIPT_DIR/../../pebbles:/opt/deployment/pebbles:ro \
     -v $SCRIPT_DIR/../../pebbles-environments:/opt/deployment/pebbles-environments:ro \
     -v $SCRIPT_DIR/../../pebbles-deploy:/opt/deployment/pebbles-deploy:ro \
+    -v $SCRIPT_DIR/../../pebbles-frontend:/opt/deployment/pebbles-frontend:ro \
     --name ${env_name}-deployer \
     $docker_opts \
     $container_image $*
