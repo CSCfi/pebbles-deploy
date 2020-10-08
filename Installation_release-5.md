@@ -169,7 +169,11 @@ helm install pebbles helm_charts/pebbles -f local_values/local_k8s.yaml --set ov
 # check that api pod is Running 
 oc get pods
 
-# initialize system
+# initialize system with either 
+# a) development data that sets up a basic set of users and environments 
+oc rsh $(oc get pod -o name -l name=api) bash -c 'python manage.py create_database; python manage.py load_test_data devel_dataset.yaml; python manage.py reset_worker_password'
+
+# b) just bare minimum
 oc rsh $(oc get pod -o name -l name=api) python manage.py initialize_system -e admin@example.org -p admin
 ```
 
