@@ -39,9 +39,9 @@ echo "Branches, view with 'branch-info'":
 echo
 branch-info
 echo
-echo "Install and initialize Pebbles in an empty namespace:"
+echo "Build, install and initialize Pebbles in an empty namespace with initial data defined in inventory:"
 echo
-echo "  install-pebbles <admin password>"
+echo "  install-pebbles"
 echo
 echo "Update an existing installation:"
 echo

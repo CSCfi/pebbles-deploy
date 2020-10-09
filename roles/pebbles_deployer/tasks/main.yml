@@ -64,3 +64,10 @@
     content: |
       export DEPLOYMENT_TYPE="{{ deployment_type | d('helm') }}"
       export PUBLIC_DOMAIN_NAME="{{ domain_name | d('domain_name_not_set')}}"
+
+- name: Export initial data
+  when: initial_data is defined
+  copy:
+    dest: "/dev/shm/{{ cluster_name }}/initial_data.yaml"
+    content: "{{ initial_data }}"
+    mode: 0600
