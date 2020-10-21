@@ -95,6 +95,9 @@ spec:
             initialDelaySeconds: 3
             timeoutSeconds: 3
           volumeMounts:
+            - name: cluster-config
+              mountPath: "/run/secrets/pebbles/cluster-config.yaml"
+              subPath: cluster-config.yaml
             - mountPath: /opt/log
               name: log
           {{- if .Values.mountHostSrc }}
@@ -119,6 +122,9 @@ spec:
               name: log
         {{- end }}
       volumes:
+        - name: cluster-config
+          secret:
+            secretName: cluster-config
         - name: log
           emptyDir: {}
       {{- if .Values.mountHostSrc }}
