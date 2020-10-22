@@ -12,27 +12,27 @@ For Linux, install Minikube.
 ## Local Kubernetes
 List the contexts for kubernetes
 
-```bash
+```shell script
 kubectl config get-contexts
 ```
 
-Switch context
+Switch context to the relevant one, on Docker Desktop for Mac 2.4.0.0 for example: 
 
-```bash
-kubectl config use-context docker-for-desktop
+```shell script
+kubectl config use-context docker-desktop
 ```
 
 Here is how to deploy nginx ingress controller for docker for mac
 
 https://kubernetes.github.io/ingress-nginx/deploy/
 
-```bash
+```shell script
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-0.32.0/deploy/static/provider/cloud/deploy.yaml
 ```
 
 And here is how you enable it on minikube:
 
-```bash
+```shell script
 minikube addons enable ingress
 ```
 
@@ -40,7 +40,7 @@ minikube addons enable ingress
 
 Mac:
 
-```bash
+```shell script
 brew install openshift-cli
 ```
 
@@ -52,12 +52,13 @@ see https://github.com/openshift/origin/releases/tag/v3.11.0
 
 Check out repositories checked out in golang style directory structure
 
-```bash
+```shell script
 mkdir -p ~/src/gitlab.ci.csc.fi/pebbles/
 cd  ~/src/gitlab.ci.csc.fi/pebbles/
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-deploy
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-environments
+git clone https://gitlab.ci.csc.fi/pebbles/pebbles-frontend
 ```
 
 ## Install tools
@@ -66,20 +67,20 @@ git clone https://gitlab.ci.csc.fi/pebbles/pebbles-environments
 
 Linux:
 
-```bash
+```shell script
 curl -LO https://git.io/get_helm.sh
 bash ./get_helm.sh -v v3.0.3
 ```
 
 Mac:
-```bash
+```shell script
 brew install helm
 ```
 
 ### s2i (optional)
 On Linux, to install s2i
 
-```bash
+```shell script
 cd /tmp
 wget https://github.com/openshift/source-to-image/releases/download/v1.1.14/source-to-image-v1.1.14-874754de-linux-amd64.tar.gz
 tar xvf source-to-image-v1.1.14-874754de-linux-amd64.tar.gz
@@ -89,39 +90,57 @@ cd
 
 On a Mac, you can use
 
-```bash
+```shell script
 brew install source-to-image
 ```
 
 
 # Building
 
-## Building pebbles image
+The idea here is to build images locally so that they are available to the local Kubernetes without
+having to pull them from any registry.
 
-Check out release-5:
-
-```bash
-cd  ~/src/gitlab.ci.csc.fi/pebbles/pebbles
-git checkout release-5
-```
-
-On Linux + minikube, you can change the docker context to point to the docker inside minikube VM 
+On Linux + minikube, you will need change the docker context to point to the docker inside minikube VM 
 (sudo -i if needed):
 
-```bash
+```shell script
 eval $(minikube docker-env)
 ```
 
-Actual build:
+## Building pebbles image
 
-```bash
+Build using pebbles dockerfile:
+
+```shell script
 pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && docker build --tag pebbles:latest . --file=deployment/pebbles-s2i.Dockerfile && popd
 ```
 
 Alternative: You can also use `s2i` to build the image
 
-```bash
+```shell script
 pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && s2i build . --copy -e UPGRADE_PIP_TO_LATEST=1 centos/python-38-centos7 pebbles && popd
+```
+
+## Building pebbles-frontend image
+
+This is taken from pebbles-frontend/deployment/building.md "Build with old AngularJS code included":
+
+```shell script
+# change to project root directory
+cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-frontend/
+
+# install dependencies
+npm install
+
+# build the application (production build here)
+npm run-script build:prod
+
+# copy AngularJS code from Pebbles-repo, assuming it is cloned as sibling directory
+cp -r ../pebbles/pebbles/static/index.html dist/pebbles-frontend/admin.html
+cp -r ../pebbles/pebbles/static/{img,js,css,fonts,partials} dist/pebbles-frontend/.
+
+# create runtime image by copying the compiled application in it
+docker build . -t pebbles-frontend:latest -f deployment/Dockerfile.runtime
 ```
 
 # Deploying with Helm
@@ -156,9 +175,11 @@ clusterConfig: |
       driver: KubernetesLocalDriver
 ```
 
+Note the image pull policies that make it possible to use locally build images already present in Docker.
+
 ## Deploy Pebbles
 
-```bash
+```shell script
 cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy
 
 # create namespace if not present
@@ -167,12 +188,14 @@ oc get namespace pebbles || oc create namespace pebbles
 # deploy with helm
 helm install pebbles helm_charts/pebbles -f local_values/local_k8s.yaml --set overrideSecret=1
 
-# check that api pod is Running 
-oc get pods
+# wait until api pod is running
+while ! oc get pod -l name=api | egrep '1/1|2/2' | grep 'Running'; do echo 'Waiting for api pod'; sleep 5; done
 
 # initialize system with either 
 # a) development data that sets up a basic set of users and environments 
-oc rsh $(oc get pod -o name -l name=api) bash -c 'python manage.py create_database; python manage.py load_test_data devel_dataset.yaml; python manage.py reset_worker_password'
+oc rsh $(oc get pod -o name -l name=api) bash -c 'python manage.py create_database'
+oc rsh $(oc get pod -o name -l name=api) bash -c 'python manage.py load_test_data /dev/stdin' < ../pebbles/devel_dataset.yaml
+oc rsh $(oc get pod -o name -l name=api) bash -c 'python manage.py reset_worker_password'
 
 # b) just bare minimum
 oc rsh $(oc get pod -o name -l name=api) python manage.py initialize_system -e admin@example.org -p admin
@@ -188,7 +211,7 @@ above.
 If ingress is not listening on localhost/127.0.0.1, the default application domain will not work for accessing the instances.
 You can update the helm installation by
 
-```bash
+```shell script
 helm upgrade pebbles deployment/helm_charts/pebbles --set instanceAppDomain=YOUR-MINIKUBE-IP-WITH-DASHES.nip.io
 ```
 
@@ -204,12 +227,12 @@ on which folder your source is in. It also varies by platform, in Docker for Mac
 
 Then update your deployment:
 
-```bash
+```shell script
 helm upgrade pebbles helm_charts/pebbles -f local_values/local_k8s.yaml
 ```
 
 ## Open database shell
-```bash
+```shell script
 oc rsh $(oc get pod -o name -l name=db) bash -c 'psql -d pebbles'
 ```
 
@@ -222,7 +245,7 @@ name, the example works on MacOS.
 
 Then update your deployment:
 
-```bash
+```shell script
 helm upgrade pebbles helm_charts/pebbles -f local_values/local_k8s.yaml
 ```
 
@@ -233,3 +256,11 @@ Your API will now contact pycharm remote debugger at startup, so it won't start 
  * set the source code mappings to YOUR_HOME_DIRECTORY_HERE/src/gitlab.ci.csc.fi/pebbles/pebbles=/opt/app-root/src
 
 Start debug, and the API container should connect and start.
+
+# Deleting the deployment 
+
+Delete the local installation including data, and the shared secrets.
+
+```shell script
+oc delete namespace pebbles
+```
