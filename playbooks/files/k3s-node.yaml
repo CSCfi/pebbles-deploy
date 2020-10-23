@@ -1,0 +1,49 @@
+---
+heat_template_version: queens
+
+parameters:
+  env_name:
+    type: string
+  compute_node_ids:
+    type: comma_delimited_list
+  index:
+    type: number
+  image:
+    type: string
+  network:
+    type: string
+  flavor:
+    type: string
+  key_name:
+    type: string
+  security_groups:
+    type: json
+
+resources:
+  node:
+    type: OS::Nova::Server
+    properties:
+      name:
+        str_replace:
+          template: env_name-node-id
+          params:
+            env_name: { get_param: env_name }
+            id: { get_param: [compute_node_ids, { get_param: index }]}
+      image: { get_param: image }
+      networks:
+        - network: { get_param: network }
+          fixed_ip:
+            str_replace:
+              template: '192.168.12.id'
+              params:
+                id: { get_param: [compute_node_ids, { get_param: index }]}
+
+      metadata:
+        foo: { get_param: compute_node_ids }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      security_groups: { get_param: security_groups }
+
+outputs:
+  OS::stack_id:
+    value: { get_resource: node }

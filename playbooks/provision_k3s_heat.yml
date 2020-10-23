@@ -1,0 +1,111 @@
+---
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: add public key to OpenStack for {{ cluster_name }}
+      os_keypair:
+        state: present
+        name: "{{ cluster_name }}"
+        public_key_file: "/dev/shm/{{ cluster_name }}/id_rsa.pub"
+
+    - name: check if stack has been provisioned already
+      shell: openstack stack show {{ cluster_name }}
+      register: stack_output
+      failed_when: false
+      changed_when: false
+
+    - when:
+        - stack_output.stderr.find('Stack not found') != -1 or force_heat_stack_update | d() | bool
+      block:
+
+        - name: build K3s Heat stack
+          register: heat_stack
+          os_stack:
+            name: "{{ cluster_name }}"
+            state: present
+            template: "files/k3s-heat-stack.yml"
+            wait: yes
+            parameters:
+              env_name: "{{ cluster_name }}"
+              jump_host_allow_ports: "{{ jump_host_allow_ports }}"
+              jump_host_allow_cidrs: "{{ jump_host_allow_cidrs }}"
+              master_allow_cidrs: "{{ master_allow_cidrs }}"
+              master_allow_ports: "{{ master_allow_ports }}"
+              network_dns_servers: "{{ network_dns_servers }}"
+              secgroup_ext_access_rules: "{{ secgroup_ext_access_rules }}"
+              network_cidr: "{{ network_cidr }}"
+              router: "{{ router }}"
+              key_name: "{{ cluster_name }}"
+              jump_host_vm_image: "{{ jump_host_vm_image }}"
+              jump_host_vm_flavor: "{{ jump_host_vm_flavor }}"
+              jump_host_vm_ip: "{{ network_prefix }}.10"
+              jump_host_cloud_config: "{{ jump_host_cloud_config|default({}) }}"
+              master_vm_image: "{{ master_vm_image }}"
+              master_vm_flavor: "{{ master_vm_flavor }}"
+              master_vm_ip: "{{ network_prefix }}.11"
+              compute_node_name_suffix: "node"
+              compute_node_count: "{{ compute_node_count|default(2) }}"
+              compute_node_image: "{{ compute_node_image }}"
+              compute_node_flavor: "{{ compute_node_flavor }}"
+              compute_node_ids: "{{ compute_node_ids }}"
+
+        - name: associate floating IP with master node
+          os_floating_ip:
+            server: "{{ cluster_name }}-master"
+            floating_ip_address: "{{ master_public_ip }}"
+
+        - name: associate floating IP with first jump host
+          os_floating_ip:
+            server: "{{ cluster_name }}-jump"
+            floating_ip_address: "{{ jump_host_public_ip }}"
+          when: jump_host_public_ip is defined
+
+        - name: associate volumes with master node
+          os_server_volume:
+            server: "{{ cluster_name}}-master"
+            state: present
+            volume: "{{ item }}"
+          with_items:
+            - "{{ cluster_name }}-docker"
+            - "{{ cluster_name }}-backup"
+            - "{{ cluster_name }}-images"
+          when:
+            - permanent_volumes
+      # endblock
+
+- include: generate_ssh_config.yml
+
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - name: wait for connectivity on port 22 on the jump_host
+      wait_for:
+        host: "{{ jump_host_public_ip }}"
+        port: 22
+        search_regex: "OpenSSH"
+        delay: 5
+        timeout: 900
+
+    - name: wait for SSH to work
+      shell: >
+        ssh {{ jump_host_public_ip }}
+        'echo success'
+      register: result
+      until: result.stdout.find('success') != -1
+      retries: 30
+      delay: 5
+      changed_when: false
+
+- name: install nmap-ncat on bastion if need be
+  hosts: jump_host
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Install nmap-ncat
+      yum:
+        name: nmap-ncat
+        state: present

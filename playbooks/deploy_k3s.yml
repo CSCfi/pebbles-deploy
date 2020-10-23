@@ -1,0 +1,88 @@
+- hosts: masters
+  gather_facts: yes
+  become: yes
+  vars:
+    master_ip: "{{ master_public_ip }}"
+  roles:
+    - pebbles_facts
+
+    - name: volumes
+      vars:
+        vol_containerd_device: "{{ containerd_device|d() }}"
+        vol_backup_device: "{{ backup_device|d() }}"
+        vol_image_device: "{{ image_device|d() }}"
+
+    - k3s
+
+- import_playbook: fetch_k3s_kubeconfig.yml
+
+- hosts: nodes
+  gather_facts: yes
+  become: yes
+  roles:
+    - pebbles_facts
+    - name: volumes
+      vars:
+        vol_containerd_device: "{{ containerd_device|default(omit) }}"
+    - k3s
+
+- hosts: localhost
+  gather_facts: no
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: wait for nodes to be ready
+      shell: >
+        oc get node {{ item }}
+      register: result
+      until: result.stdout.find(' Ready ') != -1
+      retries: 30
+      delay: 5
+      changed_when: false
+      with_items: "{{ groups.nodes }}"
+
+    - name: label kube-system namespace for network policy selection
+      k8s:
+        kind: Namespace
+        api_version: v1
+        name: kube-system
+        definition:
+          metadata:
+            labels:
+              name: kube-system
+
+    - name: label nodes for user workloads
+      k8s:
+        kind: Node
+        api_version: v1
+        name: "{{ item }}"
+        definition:
+          metadata:
+            labels:
+              role: user
+      with_items: "{{ groups.nodes }}"
+
+    - name: label nodes for user workloads
+      k8s:
+        kind: Node
+        api_version: v1
+        name: "{{ item }}"
+        definition:
+          spec:
+            taints:
+              - effect: NoSchedule
+                key: role
+                value: user
+      with_items: "{{ groups.nodes }}"
+      when: taint_nodes_for_user_workloads | d(true) | bool
+
+- hosts: masters
+  become: yes
+  tasks:
+    - name: update traefik manifest with our custom one
+      template:
+        src: "k3s/traefik.yaml.j2"
+        dest: "/var/lib/rancher/k3s/server/manifests/traefik.yaml"
+        owner: root
+        group: root
+        mode: 0755

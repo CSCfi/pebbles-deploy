@@ -1,4 +1,4 @@
-# Installation of GitLab runner for CI/CD
+# Installing GitLab runner for CI/CD
 
 Here we have instructions to deploy a VM based GitLab runner.
 
@@ -10,11 +10,11 @@ checking out the repositories and launching a deployment container.
 ## Provisioning and configuring
 
 Open a deployment container for the gitlab runner environment (called 'gitlab-runner' or similar).
-Change to pebbles-deploy directory and run gitlab_runner.yml 
+Change to pebbles-deploy directory and run site_gitlab_runner.yml 
 
 ```bash
 cd pebbles-deploy
-ansible-playbook -v playbooks/gitlab_runner.yml
+ansible-playbook -v playbooks/site_gitlab_runner.yml
 ```
 
 ## Deprovisioning

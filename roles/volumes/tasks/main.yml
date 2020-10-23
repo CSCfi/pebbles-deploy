@@ -1,0 +1,100 @@
+- name: get rid of /mnt/ -mount created by cloud-init
+  mount:
+    name: /mnt
+    state: absent
+
+- name: format new image volume
+  filesystem:
+    dev: "{{ vol_image_device }}"
+    fstype: xfs
+    opts: "-L IMAGES"
+  when: vol_image_device|d()
+  become: True
+
+- name: mount image device
+  mount:
+    name: /var/lib/pb
+    src: "LABEL=IMAGES"
+    state: mounted
+    fstype: xfs
+  when: vol_image_device|d()
+  become: True
+
+  # this is for convenience so cloud-user can copy things directly and not
+  # have to upload to temp and copy as super user
+- name: set permissions on image volume mount
+  file:
+    name: /var/lib/pb/docker_images
+    state: directory
+    owner: cloud-user
+    group: cloud-user
+    recurse: true
+  when: vol_image_device|d()
+  become: True
+
+- name: format backup volume
+  filesystem:
+    dev: "{{ vol_backup_device }}"
+    fstype: xfs
+    opts: "-L BACKUP"
+  when: vol_backup_device|d()
+  become: True
+
+- name: set backup dir location
+  set_fact:
+    backup_dir: /var/lib/pb/backup/
+  when: vol_backup_device|d()
+
+- name: mount backup device
+  mount:
+    name: "{{ backup_dir }}"
+    src: "LABEL=BACKUP"
+    state: mounted
+    fstype: xfs
+  when: vol_backup_device|d()
+  become: True
+
+- name: set permissions on backup volume mount
+  file:
+    name: "{{ backup_dir }}"
+    state: directory
+    owner: cloud-user
+    group: cloud-user
+  when: vol_backup_device|d()
+  become: True
+
+- when:
+    - docker_storage_driver | default('overlay2') == 'overlay2'
+    - vol_lib_docker_device|d()
+  become: True
+  block:
+    - name: format docker storage device when using overlay2 storage driver
+      filesystem:
+        dev: "{{ vol_lib_docker_device }}"
+        fstype: xfs
+        opts: "-L DOCKER"
+
+    - name: mount docker storage device when using overlay2 storage driver
+      mount:
+        name: "/var/lib/docker"
+        src: "LABEL=DOCKER"
+        state: mounted
+        fstype: xfs
+
+- when: vol_containerd_device|d()
+  become: True
+  block:
+    - name: format containerd storage device
+      filesystem:
+        dev: "{{ vol_containerd_device }}"
+        fstype: xfs
+        opts: "-L CONTAINERD"
+        force: yes
+      failed_when: false
+
+    - name: mount containerd storage
+      mount:
+        name: "/run/k3s/containerd"
+        src: "LABEL=CONTAINERD"
+        state: mounted
+        fstype: xfs

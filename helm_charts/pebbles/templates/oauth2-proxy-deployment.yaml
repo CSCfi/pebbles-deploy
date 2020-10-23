@@ -18,6 +18,12 @@ spec:
       labels:
         name: oauth2-proxy
     spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- range $key, $value := .Values.nodeSelector }}
+        {{ $key }}: "{{ $value}}"
+        {{- end }}
+      {{- end }}
       containers:
         - name: oauth2-proxy
           args:

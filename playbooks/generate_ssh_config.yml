@@ -16,7 +16,7 @@
     # standard ssh config generation
     - when:
       - stack_output_base.stderr.find('Stack not found') == -1
-      - deployment_type in ('heat',)
+      - deployment_type in ('heat', )
       block:
         - name: create $HOME/.ssh/
           file:
@@ -29,7 +29,7 @@
             mode: '0600'
             dest: "{{ ssh_config_file }}"
             block: |
-              Host {{ cluster_name }}-* {{  pebbles_network_prefix }}.* {{ jump_host_public_ip }}
+              Host {{ cluster_name }}-* {{ network_prefix }}.* {{ jump_host_public_ip }}
                 User cloud-user
                 ForwardAgent no
                 GSSAPIAuthentication no
@@ -86,3 +86,61 @@
                 UserKnownHostsFile /dev/null
                 IdentityFile /dev/shm/{{ cluster_name }}/id_rsa
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}"
+
+    # K3s config generation
+    - when:
+      - stack_output_base.stderr.find('Stack not found') == -1
+      - deployment_type in ('k3s',)
+      block:
+        - name: create $HOME/.ssh/
+          file:
+            dest: "{{lookup('env', 'HOME')}}/.ssh/"
+            state: directory
+
+        - name: add cluster common ssh config
+          blockinfile:
+            create: yes
+            mode: '0600'
+            dest: "{{ ssh_config_file }}"
+            block: |
+              Host {{ cluster_name }}-* {{  network_prefix }}.* {{ jump_host_public_ip }}
+                User cloud-user
+                ForwardAgent no
+                GSSAPIAuthentication no
+                StrictHostKeyChecking no
+                UserKnownHostsFile /dev/null
+                IdentityFile /dev/shm/{{ cluster_name }}/id_rsa
+            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} common"
+
+        - name: add ssh config entry for jump host
+          blockinfile:
+            create: yes
+            mode: '0600'
+            dest: "{{ ssh_config_file }}"
+            block: |
+              Host {{ cluster_name }}-jump {{ jump_host_public_ip }} {{ hostvars[cluster_name + '-jump'].ansible_ssh_host }}
+                  HostName {{ jump_host_public_ip }}
+            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: jump"
+
+        - name: add ssh config entry for master
+          blockinfile:
+            create: yes
+            mode: '0600'
+            dest: "{{ ssh_config_file }}"
+            block: |
+              Host {{ cluster_name }}-master {{ hostvars[cluster_name + '-master'].ansible_ssh_host }}
+                  ProxyCommand ssh -q cloud-user@{{ jump_host_public_ip }} nc %h %p
+                  HostName {{ hostvars[cluster_name + '-master'].ansible_ssh_host }}
+            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: master"
+
+        - name: add ssh config entry for nodes
+          blockinfile:
+            create: yes
+            mode: '0600'
+            dest: "{{ ssh_config_file }}"
+            block: |
+              Host {{ item }} {{ hostvars[item].ansible_ssh_host }}
+                  ProxyCommand ssh -q cloud-user@{{ jump_host_public_ip }} nc %h %p
+                  HostName {{ hostvars[item].ansible_ssh_host }}
+            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: {{ item }}"
+          with_items: "{{ groups.nodes }}"

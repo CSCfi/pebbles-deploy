@@ -1,0 +1,2 @@
+- src: https://a3s.fi/notebooks-devel-public/ansible-role-k3s-38aeebe.tar.gz
+  name: k3s

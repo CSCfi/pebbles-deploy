@@ -1,0 +1,4 @@
+---
+- include: provision_k3s_heat_volumes.yml
+- include: provision_k3s_heat.yml
+- include: deploy_k3s.yml

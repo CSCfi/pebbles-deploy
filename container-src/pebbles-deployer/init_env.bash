@@ -60,7 +60,7 @@ pushd /opt/deployment/pebbles-deploy/playbooks > /dev/null
 
 if [[ -e requirements.yml ]]; then
     print_header "Installing galaxy-roles"
-    ansible-galaxy install -f -p $HOME/galaxy-roles -r requirements.yml
+    ansible-galaxy install -i -v -p $HOME/galaxy-roles -r requirements.yml
 fi
 
 if [[ ! -e /dev/shm/${env_name}/deployment_data.sh ]]; then

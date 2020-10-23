@@ -61,6 +61,18 @@ ingressHost: localhost
 # Enable or disable running database automigration on API startup
 #dbAutomigration: true
 
+# Require a node label for deployments. Useful for running all the pods on a
+# system node like 'master' in a self-hosted cluster.
+# nodeSelector:
+#   node-role.kubernetes.io/master: "true"
+
+# The level of access for the worker service account. If the service account
+# needs to be able to create namespaces, cluster admin rights are needed.
+# This is the case when provisioning instances to local cluster to non-fixed namespaces,
+# in a cluster where RBAC is active, for example K3s + KubernetesLocalDriver + group namespaces.
+workerServiceAccountClusterAdmin: False
+
+
 # Cluster config is provided in local values
 clusterConfig: |
   - name: example
@@ -68,6 +80,10 @@ clusterConfig: |
 # Passwords for clusters are provided in local values
 clusterPasswords: |
   example: "not very secret"
+
+# Kubeconfig for connecting to remote kubernetes clusters
+clusterKubeconfig: |
+  placeholder: "replace me with real kubeconfig"
 
 # ----------------------------------------------------------------------------
 # Optional central logging

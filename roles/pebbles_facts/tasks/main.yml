@@ -1,10 +1,43 @@
-- name: Set facts for environment context
+- name: set facts for environment context
   set_fact:
     os_env_path: "{{ os_env_path|default('/opt/deployment/pebbles-environments') }}"
 
-- name: Get context for current environment
+- name: get context for current environment
   include_vars:
     dir: "{{ os_env_path }}/group_vars/{{ cluster_name }}"
   no_log: True
 
-- set_fact: ssh_config_file={{lookup('env', 'HOME')}}/.ssh/config
+- name: figure out ssh_config_file location
+  set_fact:
+    ssh_config_file: "{{lookup('env', 'HOME')}}/.ssh/config"
+
+- when:
+    - deployment_type in ('k3s',)
+    - groups.nodes | length == 0
+  block:
+    - name: populate K3s compute_node_ids for Heat to look up
+      set_fact:
+        compute_node_ids: "{{ compute_node_ids | d('101') + ',' + item }}"
+      with_sequence: start=2 end="{{ compute_node_count | d(2) }}" format="1%02x"
+
+    - name: add nodes to inventory
+      add_host:
+        name: "{{ cluster_name }}-node-{{ item }}"
+        groups: nodes
+        ansible_ssh_host: "{{ network_prefix }}.{{ item }}"
+      with_items: "{{ compute_node_ids.split(',') }}"
+
+# check for deprecated pebbles_network_prefix and provide backwards compatibility
+- when:
+    - network_prefix is not defined
+    - pebbles_network_prefix is defined
+  block:
+    - debug:
+        msg: Setting network_prefix for backwards compatibility for legacy deployments
+
+    - pause:
+        seconds: 2
+
+    - name: Setting network_prefix for backwards compatibility for legacy deployments
+      set_fact:
+        network_prefix: "{{ pebbles_network_prefix }}"

@@ -1,0 +1,282 @@
+---
+heat_template_version: queens
+
+description: >
+  Provision resources for a K3s cluster. Assumes volumes are
+  provisioned in separate stacks and attached outside heat.
+
+parameters:
+  env_name:
+    description: >
+      A name for the environment to be used for naming resources.
+    type: string
+    default: { get_param: 'OS::stack_name' }
+  jump_host_allow_ports:
+    description: >
+      Which ports to allow connections to on thejump_host host.
+    type: comma_delimited_list
+  jump_host_allow_cidrs:
+    description: >
+      The CIDRs of the networks where the bastion host should be accessible
+      from.
+    type: comma_delimited_list
+  secgroup_ext_access_rules:
+    description: >
+      Rules for the security group that governs external access to the system.
+    type: json
+  network_cidr:
+    description: >
+      What CIDR to use for the dedicated cluster network. Must be unique within the tenant.
+    type: string
+  network_dns_servers:
+    description: >
+      What DNS servers to use in the dedicated cluster network.
+    type: comma_delimited_list
+  router:
+    description: >
+      The router to which the dedicated cluster network should be connected to
+      for external access.
+    type: string
+  key_name:
+    description: >
+      The name of the SSH key to initially insert into VMs.
+    type: string
+  jump_host_vm_image:
+    description: >
+      What OpenStack image to use for the bastion host.
+    type: string
+  jump_host_vm_flavor:
+    description: >
+      What OpenStack flavor to use for the bastion host.
+    type: string
+  jump_host_vm_ip:
+    description: >
+      Private IP for the jump host
+    type: string
+  jump_host_cloud_config:
+    description: >
+      Configuration for cloud-init for the bastion host.
+    type: json
+  master_allow_cidrs:
+    description: >
+      The CIDRs of the networks where the master host should be accessible
+      from via HTTP(S).
+    type: comma_delimited_list
+  master_allow_ports:
+    description: >
+      Which ports to allow connections to on the master host.
+    type: comma_delimited_list
+  master_vm_image:
+    description: >
+      What OpenStack image to use for master hosts.
+    type: string
+  master_vm_flavor:
+    description: >
+      What OpenStack flavor to use for master VMs.
+    type: string
+  master_vm_ip:
+    description: >
+      Private IP for the master host
+    type: string
+  compute_node_name_suffix:
+    description: >
+      What OpenStack flavor to use for master VMs.
+    type: string
+  compute_node_count:
+    description: >
+      How many compute nodes to start.
+    type: number
+  compute_node_image:
+    description: >
+      What OpenStack image to use for these compute nodes.
+    type: string
+  compute_node_flavor:
+    description: >
+      What OpenStack flavor to use for compute nodes.
+    type: string
+  compute_node_ids:
+    description: >
+      Comma separated list of IDS for Heat to look up
+    type: string
+
+resources:
+
+  #-----------------------------------
+  # Security groups
+  #-----------------------------------
+
+  secgroup_jump:
+    type: secgroup.yaml
+    properties:
+      env_name: { get_param: env_name }
+      name_suffix: "bastion"
+      rules:
+        repeat:
+          for_each:
+            <%port%>: { get_param: jump_host_allow_ports }
+            <%cidr%>: { get_param: jump_host_allow_cidrs }
+          template:
+            protocol: tcp
+            port_range_min: <%port%>
+            port_range_max: <%port%>
+            remote_ip_prefix: <%cidr%>
+
+  secgroup_common:
+    type: secgroup.yaml
+    properties:
+      env_name: { get_param: env_name }
+      name_suffix: "common"
+      rules:
+        - remote_mode: remote_group_id
+          remote_group_id: { get_resource: secgroup_jump }
+        - remote_mode: remote_group_id
+          protocol: icmp
+        # https://rancher.com/docs/k3s/latest/en/installation/installation-requirements/#networking
+        # K3s flannel
+        - remote_mode: remote_group_id
+          protocol: udp
+          port_range_min: 8472
+          port_range_max: 8472
+        # metrics
+        - remote_mode: remote_group_id
+          protocol: tcp
+          port_range_min: 10250
+          port_range_max: 10250
+
+  secgroup_master:
+    type: secgroup.yaml
+    properties:
+      env_name: { get_param: env_name }
+      name_suffix: master
+      rules:
+        repeat:
+          for_each:
+            <%port%>: { get_param: master_allow_ports }
+            <%cidr%>: { get_param: master_allow_cidrs }
+          template:
+            protocol: tcp
+            port_range_min: <%port%>
+            port_range_max: <%port%>
+            remote_ip_prefix: <%cidr%>
+
+  secgroup_infra:
+    type: secgroup.yaml
+    properties:
+      env_name: { get_param: env_name }
+      name_suffix: "infra"
+      rules:
+        - remote_mode: remote_group_id
+          remote_group_id: { get_resource: secgroup_common }
+          protocol: tcp
+          port_range_min: 6443
+          port_range_max: 6443
+
+
+  #-----------------------------------
+  # Dedicated cluster network
+  #-----------------------------------
+
+  cluster_network:
+    type: OS::Neutron::Net
+    properties:
+       name:
+         str_replace:
+            template: env_name-name_suffix
+            params:
+              env_name: { get_param: env_name }
+              name_suffix: "network"
+
+  cluster_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: cluster_network }
+      cidr: { get_param: network_cidr }
+      dns_nameservers: { get_param: network_dns_servers }
+
+  cluster_subnet_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router: { get_param: router }
+      subnet: { get_resource: cluster_subnet }
+
+  #-----------------------------------
+  # Jump Host VM
+  #-----------------------------------
+
+  jump_host_cloud_config_resource:
+    type: "OS::Heat::CloudConfig"
+    properties:
+      cloud_config: { get_param: jump_host_cloud_config }
+
+  jump_host:
+    type: OS::Nova::Server
+    depends_on: "cluster_subnet"
+    properties:
+      name:
+        str_replace:
+          template: env_name-name_suffix
+          params:
+            env_name: { get_param: env_name }
+            name_suffix: "jump"
+      image: { get_param: jump_host_vm_image }
+      networks:
+        - network: { get_resource: cluster_network }
+          fixed_ip: { get_param: jump_host_vm_ip }
+      flavor: { get_param: jump_host_vm_flavor }
+      metadata:
+        group: "jump_host"
+        stack: { get_param: env_name }
+      key_name: { get_param: key_name }
+      security_groups:
+        - { get_resource: secgroup_jump}
+      user_data: { get_resource: jump_host_cloud_config_resource }
+      user_data_format: RAW
+
+
+  #-----------------------------------
+  # Finally cluster VMs
+  #-----------------------------------
+
+  master_host:
+    type: OS::Nova::Server
+    depends_on: "cluster_subnet"
+    properties:
+      name:
+        str_replace:
+          template: env_name-name_suffix
+          params:
+            env_name: { get_param: env_name }
+            name_suffix: "master"
+      image: { get_param: master_vm_image }
+      networks:
+        - network: { get_resource: cluster_network }
+          fixed_ip: { get_param: master_vm_ip }
+      flavor: { get_param: master_vm_flavor }
+      metadata:
+        groups: "pebbles,master"
+        stack: { get_param: env_name }
+      key_name: { get_param: key_name }
+      security_groups:
+        - { get_resource: secgroup_common }
+        - { get_resource: secgroup_master }
+        - { get_resource: secgroup_infra }
+
+  compute_node_group:
+    type: OS::Heat::ResourceGroup
+    depends_on: "cluster_subnet"
+    properties:
+      count: { get_param: compute_node_count }
+      resource_def:
+        type: "k3s-node.yaml"
+        properties:
+          env_name: { get_param: env_name }
+          index: '%index%'
+          compute_node_ids: { get_param: compute_node_ids }
+          image: { get_param: compute_node_image }
+          network: { get_resource: cluster_network }
+          flavor: { get_param: compute_node_flavor }
+          key_name: { get_param: key_name }
+          security_groups:
+            - { get_resource: secgroup_common }
+
+outputs:

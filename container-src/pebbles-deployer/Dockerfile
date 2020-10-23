@@ -59,4 +59,8 @@ COPY init_env.bash init_env.bash
 COPY bashrc .bashrc
 COPY deploy_functions.bash deploy_functions.bash
 
+# bake k3s role in the image to reduce dependencies
+RUN mkdir -p /opt/deployment/galaxy-roles/k3s \
+ && curl https://a3s.fi/notebooks-devel-public/ansible-role-k3s-38aeebe.tar.gz | tar xz -C /opt/deployment/galaxy-roles/k3s
+
 CMD /bin/bash

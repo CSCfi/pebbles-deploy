@@ -192,7 +192,8 @@ helm install pebbles helm_charts/pebbles -f local_values/local_k8s.yaml --set ov
 while ! oc get pod -l name=api | egrep '1/1|2/2' | grep 'Running'; do echo 'Waiting for api pod'; sleep 5; done
 
 # initialize system with either 
-# a) development data that sets up a basic set of users and environments 
+# a) development data that sets up a basic set of users and environments
+# NOTE: due to interactive prompt, paste these ONE LINE at the time
 oc rsh $(oc get pod -o name -l name=api) bash -c 'python manage.py create_database'
 oc rsh $(oc get pod -o name -l name=api) bash -c 'python manage.py load_test_data /dev/stdin' < ../pebbles/devel_dataset.yaml
 oc rsh $(oc get pod -o name -l name=api) bash -c 'python manage.py reset_worker_password'
@@ -256,6 +257,51 @@ Your API will now contact pycharm remote debugger at startup, so it won't start 
  * set the source code mappings to YOUR_HOME_DIRECTORY_HERE/src/gitlab.ci.csc.fi/pebbles/pebbles=/opt/app-root/src
 
 Start debug, and the API container should connect and start.
+
+# Adding cluster resources for running the Environments
+
+## Example: remote K3s
+
+If you want to add a remote K3s to your installation, you need to add the corresponding `.kube/config` file in 
+Helm values.
+
+In this example, we add a `clusterKubeconfig` entry with a single development cluster deployed from the deployment 
+container as a `k3s` type deployment. You can obtain the configuration by launching a deployment container for the 
+respective environment ("notebooks-dev-2-k3s" in this case) and copying the contents of `/opt/deployment/.kube/config`.
+
+```yaml
+clusterConfig: | 
+  clusters:
+    ...
+    - name: notebooks-dev-2-k3s
+      driver: KubernetesRemoteDriver
+      url: https://REDACTED:6443
+      appDomain: REDACTED.nip.io
+
+clusterKubeconfig: |
+  apiVersion: v1
+  clusters:
+    - name: notebooks-dev-2-k3s
+      cluster:
+        certificate-authority-data: REDACTED
+        server: https://REDACTED:6443
+  contexts:
+    - context:
+        cluster: notebooks-dev-2-k3s
+        user: notebooks-dev-2-k3s
+      name: notebooks-dev-2-k3s
+  current-context: notebooks-dev-2-k3s
+  kind: Config
+  preferences: { }
+  users:
+    - name: notebooks-dev-2-k3s
+      user:
+        client-certificate-data: REDACTED
+        client-key-data: REDACTED
+```
+
+In `clusterKubeconfig`, you need to change the cluster name, context name and user name to match the cluster name in 
+`clusterConfig`. 
 
 # Deleting the deployment 
 

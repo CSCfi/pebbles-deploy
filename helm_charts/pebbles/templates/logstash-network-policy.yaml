@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: access-logstash
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          logstashAccess: "true"
+  podSelector:
+    matchLabels:
+      name: logstash
+  policyTypes:
+  - Ingress

@@ -14,9 +14,17 @@ spec:
   template:
     metadata:
       labels:
-        name: api
+        name: "api"
+        dbAccess: "true"
+        logstashAccess: "true"
       name: api
     spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- range $key, $value := .Values.nodeSelector }}
+        {{ $key }}: "{{ $value}}"
+        {{- end }}
+      {{- end }}
       initContainers:
         - name: wait-for-db
           image: {{ .Values.dbImage }}

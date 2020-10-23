@@ -39,6 +39,12 @@ echo "Branches, view with 'branch-info'":
 echo
 branch-info
 echo
+echo "Deploy K3s on OpenStack followed by Pebbles:"
+echo
+echo "  cd pebbles-deploy"
+echo "  ansible-playbook playbooks/site_k3s.yml"
+echo "  helm-install-pebbles && initialize-pebbles $(openssl rand -hex 16)"
+echo
 echo "Build, install and initialize Pebbles in an empty namespace with initial data defined in inventory:"
 echo
 echo "  install-pebbles"
