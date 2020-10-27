@@ -9,7 +9,7 @@ cffi==1.10.0
 chardet==3.0.4
 cliff==2.3.0
 cmd2==0.6.9
-cryptography==1.9
+cryptography==3.2
 debtcollector==1.10.0
 decorator==4.0.11
 dnspython==1.15.0
