@@ -71,6 +71,27 @@ spec:
             - name: PB_OAUTH2_PROXY_SECRET
               value: {{ .Values.oauth2ProxySecret }}
             {{- end }}
+            {{- if .Values.agreementTitle }}
+            - name: PB_AGREEMENT_TITLE
+              value: {{ .Values.agreementTitle }}
+            {{- end }}
+            {{- if .Values.agreementTermsPath }}
+            - name: PB_AGREEMENT_TERMS_PATH
+              value: {{ .Values.agreementTermsPath }}
+            {{- end }}
+            {{- if .Values.agreementCookiesPath }}
+            - name: PB_AGREEMENT_COOKIES_PATH
+              value: {{ .Values.agreementCookiesPath }}
+            {{- end }}
+            {{- if .Values.agreementPrivacyPath  }}
+            - name: PB_AGREEMENT_PRIVACY_PATH
+              value: {{ .Values.agreementPrivacyPath }}
+            {{- end }}
+            {{- if .Values.agreementLogoPath }}
+            - name: PB_AGREEMENT_LOGO_PATH
+              value: {{ .Values.agreementLogoPath }}
+            {{- end }}
+
           image: {{ .Values.imagePrefix }}{{ .Values.apiImage }}
           imagePullPolicy: {{ .Values.apiImagePullPolicy }}
           resources:

@@ -100,6 +100,13 @@ oauth2ProxyRedirectUrl: http://localhost/oauth2/callback
 #oauth2ProxyProvider: 'oidc'
 #oauth2ProxyOidcIssuerUrl: 'https://test-user-auth.csc.fi'
 
+# Optionally set title, privacy policy link and image logo path for agreement acceptance dialog.
+#agreementTitle: Service_name
+#agreementTermsPath: https://terms-link
+#agreementCookiesPath: https://cookies-link
+#agreementPrivacyPath: https://privacy-link
+#agreementLogoPath: assets/images/login/csc_front_logo.jpg
+
 # Set a persistent cookie secret if needed. Because only the login access to create a new session
 # goes through oauth2-proxy in Pebbles, it is also ok to leave this undefined and let Helm generate
 # a random value every time the deployment is upgraded.
