@@ -91,6 +91,10 @@ spec:
             - name: PB_AGREEMENT_LOGO_PATH
               value: {{ .Values.agreementLogoPath }}
             {{- end }}
+            {{- if .Values.baseUrl }}
+            - name: PB_BASE_URL
+              value: {{ .Values.baseUrl }}
+            {{- end }}
 
           image: {{ .Values.imagePrefix }}{{ .Values.apiImage }}
           imagePullPolicy: {{ .Values.apiImagePullPolicy }}
