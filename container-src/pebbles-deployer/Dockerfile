@@ -11,6 +11,7 @@ RUN dnf install -y \
         tmux less git man bash-completion \
         rsync \
         glibc-langpack-en \
+        which \
     && \
     dnf clean all
 
