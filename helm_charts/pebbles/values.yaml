@@ -37,6 +37,9 @@ ingressType: Ingress
 # Ingress host
 ingressHost: localhost
 
+# IP whitelist for limiting connectivity to given ranges
+#ipWhitelist: '192.168.1.0/24 10.0.0.1'
+
 # Storage class for database
 #dbStorageClass: standard-rwo
 

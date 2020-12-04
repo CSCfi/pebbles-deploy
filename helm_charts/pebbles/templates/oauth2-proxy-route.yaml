@@ -4,6 +4,10 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: oauth2-proxy
+  {{- if .Values.ipWhitelist }}
+  annotations:
+    haproxy.router.openshift.io/ip_whitelist: {{ .Values.ipWhitelist }}
+  {{- end }}
 spec:
   host: {{ .Values.ingressHost }}
   path: /oauth2

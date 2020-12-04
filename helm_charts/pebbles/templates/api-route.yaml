@@ -3,6 +3,10 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: api
+  {{- if .Values.ipWhitelist }}
+  annotations:
+    haproxy.router.openshift.io/ip_whitelist: {{ .Values.ipWhitelist }}
+  {{- end }}
 spec:
   {{- if .Values.ingressHost }}
   host: {{ .Values.ingressHost }}
