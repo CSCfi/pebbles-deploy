@@ -28,6 +28,10 @@ parameters:
     description: >
       What CIDR to use for the dedicated cluster network. Must be unique within the tenant.
     type: string
+  network_prefix:
+    description: >
+      Prefix that matches with CIDR, without trailing dot, like "192.168.102" for CIDR "192.168.102.0/24"
+    type: string
   network_dns_servers:
     description: >
       What DNS servers to use in the dedicated cluster network.
@@ -274,6 +278,7 @@ resources:
           compute_node_ids: { get_param: compute_node_ids }
           image: { get_param: compute_node_image }
           network: { get_resource: cluster_network }
+          network_prefix: { get_param: network_prefix }
           flavor: { get_param: compute_node_flavor }
           key_name: { get_param: key_name }
           security_groups:

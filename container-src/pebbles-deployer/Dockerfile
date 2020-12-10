@@ -12,6 +12,7 @@ RUN dnf install -y \
         rsync \
         glibc-langpack-en \
         which \
+        bind-utils \
     && \
     dnf clean all
 

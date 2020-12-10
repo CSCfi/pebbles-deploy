@@ -12,6 +12,8 @@ parameters:
     type: string
   network:
     type: string
+  network_prefix:
+    type: string
   flavor:
     type: string
   key_name:
@@ -34,9 +36,10 @@ resources:
         - network: { get_param: network }
           fixed_ip:
             str_replace:
-              template: '192.168.12.id'
+              template: 'network_prefix.id'
               params:
                 id: { get_param: [compute_node_ids, { get_param: index }]}
+                network_prefix: { get_param: network_prefix }
 
       metadata:
         foo: { get_param: compute_node_ids }

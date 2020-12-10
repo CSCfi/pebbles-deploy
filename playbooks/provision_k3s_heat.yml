@@ -37,6 +37,7 @@
               network_dns_servers: "{{ network_dns_servers }}"
               secgroup_ext_access_rules: "{{ secgroup_ext_access_rules }}"
               network_cidr: "{{ network_cidr }}"
+              network_prefix: "{{ network_prefix }}"
               router: "{{ router }}"
               key_name: "{{ cluster_name }}"
               jump_host_vm_image: "{{ jump_host_vm_image }}"
