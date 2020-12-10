@@ -52,4 +52,14 @@
             marker: "# {mark} Ansible generated cluster passwords"
             block: "{{ helm_cluster_passwords }}"
           when: helm_cluster_passwords is defined
+
+        - name: Create values.yaml for Helm (cluster kubeconfig)
+          blockinfile:
+            path: '/dev/shm/{{ cluster_name }}/values.yaml'
+            create: yes
+            mode: '0600'
+            marker: "# {mark} Ansible generated cluster kubeconfig"
+            block: "{{ helm_cluster_kubeconfig }}"
+          when: helm_cluster_kubeconfig is defined
+
     # end block
