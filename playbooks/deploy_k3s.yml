@@ -86,3 +86,15 @@
         owner: root
         group: root
         mode: 0755
+
+- hosts: localhost
+  tasks:
+    - name: Cleanup traefik in compute nodes
+      k8s:
+        state: absent
+        api_version: v1
+        kind: Pod
+        namespace: kube-system
+        name: "{{ item['metadata']['name'] }}"
+      with_items: "{{ lookup('k8s', kind='Pod', namespace='kube-system', label_selector='app=svclb-traefik') }}"
+      when: item['spec']['nodeName'] != cluster_name + '-master'
