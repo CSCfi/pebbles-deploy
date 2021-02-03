@@ -1,0 +1,53 @@
+---
+- when:
+    - public_image_name is defined
+    - forked_image_name is defined
+  block:
+  - name: check existence of public image
+    os_image_facts:
+      image: "{{ public_image_name }}"
+    failed_when: false
+    changed_when: false
+    when: public_image_name is defined
+
+  - fail:
+      msg: "No public image found for forking with name {{ public_image_name }}"
+    when: not openstack_image
+
+  - name: get id of public image
+    set_fact:
+      public_image_id: "{{ openstack_image.id }}"
+
+  - name: check existence of forked image
+    os_image_facts:
+      image: "{{ forked_image_name }}"
+    failed_when: false
+    changed_when: false
+
+  - when: not openstack_image
+    block:
+    - name: create temp directory for image download
+      command: mktemp -d
+      register: image_dl_temp_dir
+      changed_when: false
+
+    - name: download public image
+      command: glance image-download --file {{ image_dl_temp_dir.stdout }}/public_image.img {{ public_image_id }}
+
+    - name: create fork from public image
+      os_image:
+        name: "{{ forked_image_name }}"
+        is_public: no
+        container_format: bare
+        disk_format: qcow2
+        state: present
+        filename: "{{ image_dl_temp_dir.stdout }}/public_image.img"
+        properties: "{{ image_properties }}"
+
+    always:
+    - name: delete temp directory
+      file:
+        path: "{{ image_dl_temp_dir.stdout }}"
+        state: absent
+      changed_when: false
+      check_mode: no

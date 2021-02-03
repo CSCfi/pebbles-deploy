@@ -5,6 +5,13 @@
   roles:
     - pebbles_facts
   tasks:
+    - name: fork OpenStack image for VMs
+      include_role:
+        name: fork_openstack_image
+      vars:
+        forked_image_name: "{{ image_name }}"
+      when: public_image_name is defined
+
     - name: add public key to OpenStack for {{ cluster_name }}
       os_keypair:
         state: present
