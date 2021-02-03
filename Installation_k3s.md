@@ -17,6 +17,11 @@ cd pebbles-deploy
 ansible-playbook -v playbooks/site_k3s.yml
 ```
 
+For initial installation, you can also specify additional variable `server_update_and_reboot=1`, that will
+update all OS packages on the hosts and reboot if any changes were detected. Do *not* use this for a *running* 
+system that has any workloads. Also note that you may need to retry the step, OS update could take a very long time
+and ssh connection problems might occur.
+
 ## Deprovisioning
 
 Remove the Heat stacks for the environment in question. 
