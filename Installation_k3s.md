@@ -22,8 +22,8 @@ ansible-playbook -v playbooks/site_k3s.yml
 Remove the Heat stacks for the environment in question. 
 
 ```bash
-openstack stack delete -y --wait notebooks-dev-2-k3s 
-openstack stack delete -y --wait notebooks-dev-2-k3s-volumes
+openstack stack delete -y --wait notebooks-dev-X-k3s 
+openstack stack delete -y --wait notebooks-dev-X-k3s-volumes
 ```
 
 *NOTE:* Deleting the volume stack will delete all data in the environment.
