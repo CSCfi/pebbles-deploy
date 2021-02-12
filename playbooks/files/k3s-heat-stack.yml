@@ -11,6 +11,10 @@ parameters:
       A name for the environment to be used for naming resources.
     type: string
     default: { get_param: 'OS::stack_name' }
+  cloud_config:
+    description: >
+      Configuration for cloud-init
+    type: json
   jump_host_allow_ports:
     description: >
       Which ports to allow connections to on thejump_host host.
@@ -57,10 +61,6 @@ parameters:
     description: >
       Private IP for the jump host
     type: string
-  jump_host_cloud_config:
-    description: >
-      Configuration for cloud-init for the bastion host.
-    type: json
   master_allow_cidrs:
     description: >
       The CIDRs of the networks where the master host should be accessible
@@ -116,6 +116,16 @@ parameters:
     type: string
 
 resources:
+
+  #-----------------------------------
+  # Common cloud config
+  #-----------------------------------
+
+  cloud_config_resource:
+    type: "OS::Heat::CloudConfig"
+    properties:
+      cloud_config: { get_param: cloud_config }
+
 
   #-----------------------------------
   # Security groups
@@ -231,11 +241,6 @@ resources:
   # Jump Host VM
   #-----------------------------------
 
-  jump_host_cloud_config_resource:
-    type: "OS::Heat::CloudConfig"
-    properties:
-      cloud_config: { get_param: jump_host_cloud_config }
-
   jump_host:
     type: OS::Nova::Server
     depends_on: "cluster_subnet"
@@ -257,8 +262,8 @@ resources:
       key_name: { get_param: key_name }
       security_groups:
         - { get_resource: secgroup_jump}
-      user_data: { get_resource: jump_host_cloud_config_resource }
       user_data_format: RAW
+      user_data: { get_resource: cloud_config_resource }
 
 
   #-----------------------------------
@@ -288,6 +293,8 @@ resources:
         - { get_resource: secgroup_common }
         - { get_resource: secgroup_master }
         - { get_resource: secgroup_infra }
+      user_data_format: RAW
+      user_data: { get_resource: cloud_config_resource }
 
   nfs_host:
     type: OS::Nova::Server
@@ -311,6 +318,18 @@ resources:
       security_groups:
         - { get_resource: secgroup_common }
         - { get_resource: secgroup_nfs }
+      user_data_format: RAW
+      user_data: { get_resource: cloud_config_resource }
+
+  compute_node_server_group:
+    type: OS::Nova::ServerGroup
+    properties:
+      name:
+        str_replace:
+          template: compute_node-name_suffix
+          params:
+            name_suffix: { get_param: env_name }
+      policies: ['anti-affinity']
 
   compute_node_group:
     type: OS::Heat::ResourceGroup
@@ -330,5 +349,6 @@ resources:
           key_name: { get_param: key_name }
           security_groups:
             - { get_resource: secgroup_common }
-
+          server_group: { get_resource: compute_node_server_group }
+          cloud_config: { get_param: cloud_config }
 outputs:

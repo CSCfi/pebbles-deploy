@@ -19,3 +19,5 @@ For Pebbles release-5 version, see [Installation_release-5.md](Installation_rele
 (only instructions for local deployment now, remote OpenShift/K8s TODO)
 
 For deploying a GitLab runner, see [Installation_gitlab_runner.md](Installation_gitlab_runner.md). 
+
+For deploying K3s for deploying user workloads and/or Pebbles, see [Installation_k3s.md](Installation_k3s.md). 

@@ -37,6 +37,7 @@
             wait: yes
             parameters:
               env_name: "{{ cluster_name }}"
+              cloud_config: "{{ cloud_config|default({}) }}"
               jump_host_allow_ports: "{{ jump_host_allow_ports }}"
               jump_host_allow_cidrs: "{{ jump_host_allow_cidrs }}"
               master_allow_cidrs: "{{ master_allow_cidrs }}"
@@ -50,7 +51,6 @@
               jump_host_vm_image: "{{ jump_host_vm_image }}"
               jump_host_vm_flavor: "{{ jump_host_vm_flavor }}"
               jump_host_vm_ip: "{{ network_prefix }}.10"
-              jump_host_cloud_config: "{{ jump_host_cloud_config|default({}) }}"
               master_vm_image: "{{ master_vm_image }}"
               master_vm_flavor: "{{ master_vm_flavor }}"
               master_vm_ip: "{{ network_prefix }}.11"
