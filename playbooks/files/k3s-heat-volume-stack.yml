@@ -24,6 +24,11 @@ parameters:
       Size of image store volume
     type: string
     default: '200'
+  nfs_vol_size:
+    description: >
+      Size of image store volume
+    type: string
+    default: '10'
 
 resources:
     docker_volume:
@@ -44,3 +49,9 @@ resources:
         name:
           list_join: ['-', [{ get_param: env_name }, 'images']]
         size: { get_param: images_vol_size }
+    nfs_volume:
+      type: OS::Cinder::Volume
+      properties:
+        name:
+          list_join: ['-', [{ get_param: env_name }, 'nfs']]
+        size: { get_param: nfs_vol_size }

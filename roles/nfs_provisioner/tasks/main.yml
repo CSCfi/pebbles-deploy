@@ -1,0 +1,50 @@
+---
+- name: copy provisioner binary
+  get_url:
+    url: https://a3s.fi/notebooks-devel-public/nfs-provisioner-9cb4fa916f5b037fa6b99fcb72668ac0fe0efa2b
+    dest: /usr/local/sbin/nfs-provisioner
+    mode: '0755'
+
+- name: make a log directory
+  file:
+    name: /var/log/nfs-provisioner
+    state: directory
+    mode: '0755'
+
+- name: copy kubeconfig from master
+  slurp:
+    src: /etc/rancher/k3s/k3s.yaml
+  register: _admin_kube_config
+  delegate_to: "{{ cluster_name }}-master"
+  no_log: true
+
+- name: upload kubeconfig to nfs
+  copy:
+    content: >
+      {{
+        _admin_kube_config.content
+        | b64decode
+        | replace('https://127.0.0.1', 'https://' +  hostvars[cluster_name + '-master'].ansible_ssh_host)
+      }}
+    dest: /usr/local/etc/nfs-provisioner.kube_config
+    mode: "0600"
+  no_log: true
+
+- name: install systemd service
+  template:
+    src: nfs-provisioner.service.j2
+    dest: /etc/systemd/system/nfs-provisioner.service
+    mode: '0644'
+  register: _provisioner_service
+
+- name: reread systemd unit files
+  systemd:
+    daemon_reload: yes
+  when:
+    - _provisioner_service.changed
+
+- name: enable and start nfs-provisioner
+  systemd:
+    name: nfs-provisioner
+    enabled: true
+    state: started

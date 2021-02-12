@@ -54,6 +54,9 @@
               master_vm_image: "{{ master_vm_image }}"
               master_vm_flavor: "{{ master_vm_flavor }}"
               master_vm_ip: "{{ network_prefix }}.11"
+              nfs_vm_image: "{{ nfs_vm_image }}"
+              nfs_vm_flavor: "{{ nfs_vm_flavor }}"
+              nfs_vm_ip: "{{ network_prefix }}.21"
               compute_node_name_suffix: "node"
               compute_node_count: "{{ compute_node_count|default(2) }}"
               compute_node_image: "{{ compute_node_image }}"
@@ -80,8 +83,13 @@
             - "{{ cluster_name }}-docker"
             - "{{ cluster_name }}-backup"
             - "{{ cluster_name }}-images"
-          when:
-            - permanent_volumes
+
+        - name: associate nfs volume
+          os_server_volume:
+            server: "{{ cluster_name}}-nfs"
+            state: present
+            volume: "{{ cluster_name}}-nfs"
+
       # endblock
 
 - include: generate_ssh_config.yml

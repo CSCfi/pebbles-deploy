@@ -28,8 +28,6 @@
           - "{{ cluster_name }}-docker"
           - "{{ cluster_name }}-backup"
           - "{{ cluster_name }}-images"
-      when:
-        - permanent_volumes
     - name: Delete public key
       os_keypair:
         state: absent

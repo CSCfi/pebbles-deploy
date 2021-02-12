@@ -72,15 +72,27 @@ parameters:
     type: comma_delimited_list
   master_vm_image:
     description: >
-      What OpenStack image to use for master hosts.
+      What OpenStack image to use for master host.
     type: string
   master_vm_flavor:
     description: >
-      What OpenStack flavor to use for master VMs.
+      What OpenStack flavor to use for master host.
     type: string
   master_vm_ip:
     description: >
-      Private IP for the master host
+      Private IP for the master host.
+    type: string
+  nfs_vm_image:
+    description: >
+      What OpenStack image to use for nfs host.
+    type: string
+  nfs_vm_flavor:
+    description: >
+      What OpenStack flavor to use for nfs host.
+    type: string
+  nfs_vm_ip:
+    description: >
+      Private IP for the nfs host.
     type: string
   compute_node_name_suffix:
     description: >
@@ -162,6 +174,18 @@ resources:
             port_range_min: <%port%>
             port_range_max: <%port%>
             remote_ip_prefix: <%cidr%>
+
+  secgroup_nfs:
+    type: secgroup.yaml
+    properties:
+      env_name: { get_param: env_name }
+      name_suffix: "nfs"
+      rules:
+        - remote_mode: remote_group_id
+          remote_group_id: { get_resource: secgroup_common }
+          protocol: tcp
+          port_range_min: 2049
+          port_range_max: 2049
 
   secgroup_infra:
     type: secgroup.yaml
@@ -264,6 +288,29 @@ resources:
         - { get_resource: secgroup_common }
         - { get_resource: secgroup_master }
         - { get_resource: secgroup_infra }
+
+  nfs_host:
+    type: OS::Nova::Server
+    depends_on: "cluster_subnet"
+    properties:
+      name:
+        str_replace:
+          template: env_name-name_suffix
+          params:
+            env_name: { get_param: env_name }
+            name_suffix: "nfs"
+      image: { get_param: nfs_vm_image }
+      networks:
+        - network: { get_resource: cluster_network }
+          fixed_ip: { get_param: nfs_vm_ip }
+      flavor: { get_param: nfs_vm_flavor }
+      metadata:
+        groups: "pebbles,nfs"
+        stack: { get_param: env_name }
+      key_name: { get_param: key_name }
+      security_groups:
+        - { get_resource: secgroup_common }
+        - { get_resource: secgroup_nfs }
 
   compute_node_group:
     type: OS::Heat::ResourceGroup

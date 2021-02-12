@@ -133,6 +133,17 @@
                   HostName {{ hostvars[cluster_name + '-master'].ansible_ssh_host }}
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: master"
 
+        - name: add ssh config entry for nfs
+          blockinfile:
+            create: yes
+            mode: '0600'
+            dest: "{{ ssh_config_file }}"
+            block: |
+              Host {{ cluster_name }}-nfs {{ hostvars[cluster_name + '-nfs'].ansible_ssh_host }}
+                  ProxyCommand ssh -q cloud-user@{{ jump_host_public_ip }} nc %h %p
+                  HostName {{ hostvars[cluster_name + '-nfs'].ansible_ssh_host }}
+            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: nfs"
+
         - name: add ssh config entry for nodes
           blockinfile:
             create: yes

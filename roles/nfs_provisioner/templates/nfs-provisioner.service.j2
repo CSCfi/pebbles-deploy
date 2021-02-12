@@ -1,0 +1,25 @@
+[Unit]
+Description=NFS provisioner daemon
+Wants=network-online.target
+After=network-online.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=exec
+KillMode=process
+Restart=always
+RestartSec=5
+
+# "-log_dir" does not work ATM, change the temporary directory to write the logs to log directory
+Environment=TMPDIR=/var/log/nfs-provisioner
+
+ExecStart=/usr/local/sbin/nfs-provisioner \
+  -kubeconfig={{ kube_config_file }} \
+  -run-server=false \
+  -use-ganesha=false \
+  -enable-xfs-quota=true \
+  -server-hostname={{ ansible_ssh_host }} \
+  -export-subnet={{ network_prefix }}.* \
+  -provisioner={{ provisioner_name }}

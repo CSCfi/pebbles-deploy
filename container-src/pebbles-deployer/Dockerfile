@@ -1,4 +1,4 @@
-FROM centos:8
+FROM centos:centos8.3.2011
 
 LABEL maintainer="CSC Notebooks Team"
 
@@ -21,6 +21,7 @@ RUN alternatives --set python /usr/bin/python3
 
 # Install python requirements
 COPY requirements.txt /root/requirements.txt
+RUN pip3 install --no-cache-dir -U pip
 RUN pip3 install --no-cache-dir -U setuptools
 RUN pip3 install --no-cache-dir -r /root/requirements.txt
 
@@ -60,8 +61,11 @@ COPY init_env.bash init_env.bash
 COPY bashrc .bashrc
 COPY deploy_functions.bash deploy_functions.bash
 
-# bake k3s role in the image to reduce dependencies
-RUN mkdir -p /opt/deployment/galaxy-roles/k3s \
- && curl https://a3s.fi/notebooks-devel-public/ansible-role-k3s-38aeebe.tar.gz | tar xz -C /opt/deployment/galaxy-roles/k3s
+# bake roles in the image to reduce dependencies
+RUN mkdir -p /opt/deployment/galaxy-roles/{k3s,nfs} \
+ && curl https://a3s.fi/notebooks-devel-public/ansible-role-k3s-38aeebe.tar.gz \
+  | tar xz -C /opt/deployment/galaxy-roles/k3s \
+ && curl -L https://github.com/geerlingguy/ansible-role-nfs/archive/11e9802153ffe19709e1fd3d1e49beb0d641d760.tar.gz \
+  | tar xz --strip-components=1 -C /opt/deployment/galaxy-roles/nfs
 
 CMD /bin/bash

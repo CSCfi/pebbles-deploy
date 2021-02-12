@@ -16,6 +16,22 @@
 
 - import_playbook: fetch_k3s_kubeconfig.yml
 
+- hosts: nfs
+  become: yes
+  roles:
+    - name: pebbles_facts
+    - name: volumes
+      vars:
+        vol_nfs_device: "{{ nfs_device|d() }}"
+    - name: nfs
+    - name: nfs_provisioner
+  tasks:
+    - name: start and enable nfs-server (nfs role won't do it if there are no exports)
+      systemd:
+        name: nfs-server
+        state: started
+        enabled: yes
+
 - hosts: nodes
   gather_facts: yes
   become: yes
@@ -75,6 +91,16 @@
                 value: user
       with_items: "{{ groups.nodes }}"
       when: taint_nodes_for_user_workloads | d(true) | bool
+
+    - name: add nfs-1 storage class
+      k8s:
+        kind: StorageClass
+        api_version: storage.k8s.io/v1
+        name: nfs-1
+        definition:
+          provisioner: notebooks.csc.fi/nfs-1
+          mountOptions:
+            - vers=4.1
 
 - hosts: masters
   become: yes

@@ -1,0 +1,3 @@
+---
+kube_config_file: "/usr/local/etc/nfs-provisioner.kube_config"
+provisioner_name: "notebooks.csc.fi/nfs-1"

@@ -98,3 +98,52 @@
         src: "LABEL=CONTAINERD"
         state: mounted
         fstype: xfs
+
+- when: vol_nfs_device|d()
+  become: True
+  block:
+    - name: install LVM tools
+      dnf:
+        name: lvm2
+        state: present
+
+    # return code will be 5 if the VG does not exist
+    - name: scan for nfs volume group
+      command: vgdisplay vg_nfs
+      register: test_vg
+      ignore_errors: yes
+      failed_when: false
+      changed_when: false
+
+    - name: pvcreate NFS device
+      shell: "pvcreate {{ vol_nfs_device }}"
+      when: test_vg.rc==5
+
+    - name: Create volume group vg_nfs on {{ vol_nfs_device }}
+      lvg:
+        vg: vg_nfs
+        pvs: "{{ vol_nfs_device }}"
+      when: test_vg.rc==5
+
+    - name: Create logical volume vg_nfs/data
+      lvol:
+        vg: vg_nfs
+        lv: data
+        size: "99%VG"
+        shrink: false
+      when: test_vg.rc==5
+
+    - name: format NFS export storage device
+      filesystem:
+        dev: "/dev/vg_nfs/data"
+        fstype: xfs
+        opts: "-L NFSEXPORT"
+      when: test_vg.rc==5
+
+    - name: mount NFS export storage storage
+      mount:
+        name: "/export"
+        src: "LABEL=NFSEXPORT"
+        state: mounted
+        fstype: xfs
+        opts: defaults,pquota
