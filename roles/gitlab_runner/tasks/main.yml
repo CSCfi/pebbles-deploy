@@ -4,6 +4,11 @@
     name: /etc/cron.daily/automatic_updates
     state: absent
 
+- name: get rid of /mnt/ -mount created by cloud-init
+  mount:
+    name: /mnt
+    state: absent
+
 - when:
     - lib_docker_device is defined
   become: True
@@ -12,6 +17,7 @@
       filesystem:
         dev: "{{ lib_docker_device }}"
         fstype: xfs
+        force: yes
 
     - name: mount docker storage device when using overlay2 storage driver
       mount:
