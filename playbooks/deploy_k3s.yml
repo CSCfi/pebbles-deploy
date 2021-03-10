@@ -123,4 +123,6 @@
         namespace: kube-system
         name: "{{ item['metadata']['name'] }}"
       with_items: "{{ lookup('k8s', kind='Pod', namespace='kube-system', label_selector='app=svclb-traefik') }}"
-      when: item['spec']['nodeName'] != cluster_name + '-master'
+      when:
+        - item.spec is defined # checks if returned with only one item in a list
+        - item['spec']['nodeName'] != cluster_name + '-master'
