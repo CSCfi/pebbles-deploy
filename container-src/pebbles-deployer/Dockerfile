@@ -13,6 +13,7 @@ RUN dnf install -y \
         glibc-langpack-en \
         which \
         bind-utils \
+        diffutils \
     && \
     dnf clean all
 
