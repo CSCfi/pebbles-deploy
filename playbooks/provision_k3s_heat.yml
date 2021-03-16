@@ -132,22 +132,23 @@
     - nodes
     - nfs
   tasks:
-    - when:
+    - name: update OS packages
+      dnf:
+        name: '*'
+        state: latest
+      register: _os_packages_updated
+      become: true
+      when:
         - server_update_and_reboot|default(false)|bool
-      block:
-        - name: update OS packages
-          dnf:
-            name: '*'
-            state: latest
-          register: _os_packages_updated
-          become: true
 
+    - when: _os_packages_updated.changed or server_update_force_reboot|default(false)|bool
+      block:
         - name: reboot hosts
           shell: ( /bin/sleep 5 ; shutdown -r now "Ansible triggered reboot" ) &
           async: 30
           poll: 0
           ignore_errors: true
-          when: _os_packages_updated.changed
+          when: >
           become: true
 
         - name: wait for hosts to go down
@@ -157,7 +158,6 @@
             port: 22
             timeout: 300
           delegate_to: "{{ hostvars[cluster_name + '-jump']['ansible_ssh_host'] }}"
-          when: _os_packages_updated.changed
 
         - name: wait for connectivity on port 22 on hosts
           shell: ssh -o ControlMaster=no {{ ansible_ssh_host }} 'echo success'
@@ -167,5 +167,4 @@
           delay: 10
           changed_when: false
           delegate_to: localhost
-          when: _os_packages_updated.changed
       #endblock
