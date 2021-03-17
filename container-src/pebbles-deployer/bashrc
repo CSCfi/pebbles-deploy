@@ -25,6 +25,28 @@ branch-info() {
     done
 }
 
+restart-pebbles() {
+    if [ -z "$1" ]; then
+      oc rollout restart deployment
+      oc rollout restart statefulset
+    else 
+      if [ "$1" = "worker" ]; then
+         oc rollout restart statefulset/worker
+      else
+         oc rollout restart deployment/$1
+      fi
+    fi
+}
+
+db-shell() {
+   oc rsh $(oc get pod -o name -l name=db) bash -c 'psql -d pebbles'
+}
+
+# Useful when developing Helm charts when generated values.yaml needs to be updated after inventory changes.
+refresh-ramdisk() {
+  (cd /opt/deployment/pebbles-deploy && ansible-playbook playbooks/initialize_ramdisk.yml)
+}
+
 # All non-printable output should be enclosed in '\[\]' to avoid bash evaluating the prompt length wrong,
 # which will in turn cause line wrapping issues
 # https://unix.stackexchange.com/questions/105958/terminal-prompt-not-wrapping-correctly
@@ -57,4 +79,17 @@ echo
 echo "Completely remove a development environment, including all data:"
 echo
 echo "  helm delete pebbles; oc delete all --all; oc delete pvc --all; oc delete secret pebbles"
+echo
+echo "To restart pods"
+echo "OPTION can be api/db/worker/frontend/logstash/oauth2-proxy. If empty restarts all."
+echo
+echo "  restart-pebbles [OPTION]"
+echo
+echo "To enter database shell"
+echo
+echo "  db-shell"
+echo
+echo "refresh helm values from pebbles-environments"
+echo
+echo "  refresh-ramdisk"
 echo

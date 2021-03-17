@@ -1,9 +1,4 @@
 # Function for recreating files on ramdisk from ansible-inventory.
-# Useful when developing Helm charts when generated values.yaml needs to be updated after inventory changes.
-refresh-ramdisk() {
-  (cd /opt/deployment/pebbles-deploy && ansible-playbook playbooks/initialize_ramdisk.yml)
-}
-
 # builds logstash in the current OpenShift namespace
 build-image-logstash() {
     # create buildconfig and imagestream if missing
