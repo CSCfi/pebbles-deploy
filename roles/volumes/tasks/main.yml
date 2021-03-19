@@ -81,21 +81,21 @@
         state: mounted
         fstype: xfs
 
-- when: vol_containerd_device|d()
+- when: vol_k3srun_device|d()
   become: True
   block:
-    - name: format containerd storage device
+    - name: format k3srun storage device
       filesystem:
-        dev: "{{ vol_containerd_device }}"
+        dev: "{{ vol_k3srun_device }}"
         fstype: xfs
-        opts: "-L CONTAINERD"
+        opts: "-L K3SRUN"
         force: yes
       failed_when: false
 
-    - name: mount containerd storage
+    - name: mount k3srun storage
       mount:
-        name: "/run/k3s/containerd"
-        src: "LABEL=CONTAINERD"
+        name: "/run/k3s"
+        src: "LABEL=K3SRUN"
         state: mounted
         fstype: xfs
 

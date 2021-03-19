@@ -8,7 +8,7 @@
 
     - name: volumes
       vars:
-        vol_containerd_device: "{{ containerd_device|d() }}"
+        vol_k3srun_device: "{{ k3srun_device|d() }}"
         vol_backup_device: "{{ backup_device|d() }}"
         vol_image_device: "{{ image_device|d() }}"
 
@@ -39,8 +39,25 @@
     - pebbles_facts
     - name: volumes
       vars:
-        vol_containerd_device: "{{ containerd_device|default(omit) }}"
+        vol_k3srun_device: "{{ k3srun_device|d() }}"
     - k3s
+
+- hosts: masters, nodes
+  gather_facts: yes
+  become: yes
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: create custom local storage directory
+      file:
+        dest: "{{ custom_local_storage_dir }}"
+        state: directory
+        seuser: system_u
+        serole: object_r
+        setype: container_file_t
+        selevel: s0
+      when:
+        - custom_local_storage_dir is defined
 
 - hosts: localhost
   gather_facts: no
@@ -105,13 +122,25 @@
 - hosts: masters
   become: yes
   tasks:
-    - name: update traefik manifest with our custom one
+    - name: custom manifest templates
       template:
-        src: "k3s/traefik.yaml.j2"
-        dest: "/var/lib/rancher/k3s/server/manifests/traefik.yaml"
+        src: "/opt/deployment/pebbles-environments/data/k3s-manifests/{{ item }}"
+        dest: "/var/lib/rancher/k3s/server/manifests/{{ item | splitext | first }}"
         owner: root
         group: root
-        mode: 0755
+        mode: 0644
+      when: item | splitext | last == '.j2'
+      with_items: "{{ custom_manifests|d([ ]) }}"
+
+    - name: custom manifest files
+      copy:
+        src: "/opt/deployment/pebbles-environments/data/k3s-manifests/{{ item }}"
+        dest: "/var/lib/rancher/k3s/server/manifests/{{ item }}"
+        owner: root
+        group: root
+        mode: 0644
+      when: item | splitext | last in ('.yaml', '.yml')
+      with_items: "{{ custom_manifests|d([ ]) }}"
 
 - hosts: localhost
   tasks:
