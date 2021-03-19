@@ -37,7 +37,7 @@ resources:
         name:
           list_join: ['-', [{ get_param: env_name }, 'docker']]
         size: { get_param: docker_vol_size }
-    backu_volume:
+    backup_volume:
       type: OS::Cinder::Volume
       properties:
         name:
