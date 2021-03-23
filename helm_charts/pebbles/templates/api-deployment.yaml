@@ -40,6 +40,8 @@ spec:
               value: /opt/app-root/src/deployment/run_gunicorn.bash
             - name: APP_MODULE
               value: pebbles.server:app
+            - name: FLASK_APP
+              value: pebbles.server:app
             - name: PB_SQLALCHEMY_DATABASE_URI
               value: postgresql://pebbles:__PASSWORD__@db/pebbles
             - name: PB_DATABASE_PASSWORD
@@ -48,7 +50,7 @@ spec:
                   name: pebbles
                   key: database-password
             - name: PB_DB_AUTOMIGRATION
-              value: {{ .Values.dbAutomigration | default '1' | quote }}
+              value: {{ .Values.dbAutomigration | default "1" | quote }}
             - name: PB_DEBUG
               value: '1'
             - name: PB_ENABLE_FILE_LOGGING
