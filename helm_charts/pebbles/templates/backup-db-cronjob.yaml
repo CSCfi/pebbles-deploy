@@ -1,0 +1,108 @@
+---
+{{- if .Values.backupEnabled }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: backup-db
+spec:
+  schedule: "{{ .Values.backup.dbBackupSchedule }}"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            parent: backup-db
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: db-export
+              image: {{ .Values.imagePrefix }}{{ .Values.backup.jobImage }}
+              imagePullPolicy: {{ .Values.backup.jobImagePullPolicy }}
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  # bail out on any error
+                  set -e
+
+                  start_ts=$(date +%s)
+                  echo "$(date -Is) backup starting"
+
+                  # construct backup file name
+                  BACKUP_DIR=/backup/{{ .Values.backup.name }}
+                  BACKUP_FILE_BASE="db-backup"
+                  BACKUP_FILE="${BACKUP_DIR}/${BACKUP_FILE_BASE}-$(date -Is).sql.gpg"
+
+                  # make sure backup directory exists
+                  mkdir -p ${BACKUP_DIR}
+
+                  echo "import public key and set trust"
+                  echo "$ENCRYPT_PUBLIC_KEY"  | gpg --batch --no-tty --import
+                  echo -e 'trust\n5\ny\n'  | gpg --batch --no-tty --command-fd 0 --edit-key backup
+
+                  echo "dumping the database and encrypt the contents on the fly"
+                  pg_dump --clean \
+                    | gpg --encrypt --batch --no-tty --recipient backup --compress-level 9 --output ${BACKUP_FILE}
+
+                  {{- if .Values.backup.keepDays }}
+
+                  echo "removing backups older than {{ .Values.backup.keepDays }} days"
+                  # note that using let/expr here would lead to script exiting under -e if the result is zero
+                  MTIME_DAYS=$(({{ .Values.backup.keepDays }} - 1))
+                  find ${BACKUP_DIR} -name "${BACKUP_FILE_BASE}*" -type f -mtime +$MTIME_DAYS -delete -print
+                  {{- end }}
+
+                  echo "contents of the backup directory"
+                  ls -lartsh ${BACKUP_DIR}
+
+                  echo "synchronizing to object storage"
+                  s3cmd -c /run/secret/s3cfg sync --delete-removed --delete-after \
+                     ${BACKUP_DIR} s3://{{ .Values.backup.s3BucketName }}
+
+                  # the end
+                  echo "$(date -Is) backup successful"
+
+                  # importing a private key and decryption to standard out would be
+                  # gpg --batch --no-tty --import
+                  # (paste private key followed by ctrl-d)
+                  # gpg --pinentry-mode=loopback --batch --passphrase=PASSPHRASE <  ${BACKUP_FILE}
+
+              env:
+                - name: PGHOST
+                  value: db
+                - name: PGDATABASE
+                  value: pebbles
+                - name: PGUSER
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-user
+                      name: pebbles
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: pebbles
+                - name: ENCRYPT_PUBLIC_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-secret
+                      key: encrypt-public-key
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+                - name: backup-secret
+                  mountPath: /run/secret/s3cfg
+                  subPath: s3cfg
+          volumes:
+            - name: backup
+              persistentVolumeClaim:
+                claimName: backup
+            - name: backup-secret
+              secret:
+                secretName: backup-secret
+
+{{- end }}

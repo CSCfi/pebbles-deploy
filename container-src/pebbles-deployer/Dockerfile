@@ -14,10 +14,16 @@ RUN dnf install -y \
         which \
         bind-utils \
         diffutils \
-    && \
-    dnf clean all
+        epel-release \
+        postgresql \
+ && dnf clean all
 
-# make python3 as the python for '#!/usr/bin/env python'
+# Add s3cmd from EPEL for dealing with Allas object storage with S3 credentials
+RUN dnf install -y \
+        s3cmd \
+ && dnf clean all
+
+# Make python3 as the python for '#!/usr/bin/env python'
 RUN alternatives --set python /usr/bin/python3
 
 # Install python requirements
@@ -28,10 +34,10 @@ RUN pip3 install --no-cache-dir -r /root/requirements.txt
 
 # Install helm
 RUN cd /tmp/ \
-    && curl -LOs https://git.io/get_helm.sh \
-    && chmod 700 get_helm.sh \
-    && ./get_helm.sh -v v3.2.4 \
-    && rm /tmp/get_helm.sh
+ && curl -LOs https://git.io/get_helm.sh \
+ && chmod 700 get_helm.sh \
+ && ./get_helm.sh -v v3.2.4 \
+ && rm /tmp/get_helm.sh
 RUN /usr/local/bin/helm completion bash > /etc/bash_completion.d/helm
 
 # Install oc and kubectl
@@ -50,6 +56,11 @@ RUN /usr/local/bin/oc completion bash > /etc/bash_completion.d/oc
 RUN groupadd -g 29295 deployer
 RUN useradd -u 29295 -g deployer -d /opt/deployment deployer
 
+# make home directory writable and accessible under openshift
+RUN chgrp -R root /opt/deployment \
+ && find /opt/deployment -type d -exec chmod g+rwx,o+rx {} \; \
+ && find /opt/deployment -type f -exec chmod g+rw {} \;
+
 # set pebbles-deploy ansible_dc.cfg as the default
 # when all deployments use pebbles-deploy, this can be unified to ansible.cfg
 ENV ANSIBLE_CONFIG=/opt/deployment/pebbles-deploy/ansible_dc.cfg
@@ -57,6 +68,7 @@ ENV ANSIBLE_CONFIG=/opt/deployment/pebbles-deploy/ansible_dc.cfg
 USER 29295
 
 WORKDIR /opt/deployment
+ENV HOME=/opt/deployment
 
 COPY init_env.bash init_env.bash
 COPY bashrc .bashrc

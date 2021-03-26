@@ -164,6 +164,8 @@ databaseVolumeSize: 1Gi
 
 deployCentralLogging: false
 
+backupEnabled: false
+
 oauth2LoginEnabled: false
 oauth2ProxySecret: ""
 oauth2ProxyClientId: ""

@@ -19,6 +19,16 @@ build-image-filebeat() {
     oc start-build filebeat --from-dir ~/pebbles-deploy --follow
 }
 
+# builds pebbles-deployer in the current OpenShift namespace
+build-image-pebbles-deployer() {
+    # create buildconfig and imagestream if missing
+    oc get buildconfig pebbles-deployer || oc create -f ~/pebbles-deploy/openshift/pebbles-deployer-bc.yaml
+    oc get imagestream pebbles-deployer || oc create -f ~/pebbles-deploy/openshift/pebbles-deployer-is.yaml
+
+    # the buildconfig has contextDir set, so build from root dir
+    oc start-build pebbles-deployer --from-dir ~/pebbles-deploy --follow
+}
+
 # builds pebbles in the current OpenShift namespace
 build-image-pebbles() {
     # create buildconfig and imagestream if missing
@@ -53,6 +63,7 @@ build-image-all() {
     build-image-pebbles-frontend
     build-image-logstash
     build-image-filebeat
+    build-image-pebbles-deployer
 }
 
 # blocks until API pod is ready
