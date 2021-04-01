@@ -110,11 +110,11 @@ spec:
           imagePullPolicy: {{ .Values.apiImagePullPolicy }}
           resources:
             requests:
-              cpu: 100m
-              memory: 200Mi
+              cpu: {{ .Values.apiCpuRequest }}
+              memory: {{ .Values.apiMemoryRequest }}
             limits:
-              cpu: 1900m
-              memory: 1Gi
+              cpu: {{ .Values.apiCpuLimit }}
+              memory: {{ .Values.apiMemoryLimit }}
           livenessProbe:
             httpGet:
               path: /

@@ -13,13 +13,34 @@ apiImagePullPolicy: Always
 workerImagePullPolicy: Always
 frontendImagePullPolicy: Always
 
-
 # Database volume size (undefined or empty means no persistent storage)
 #databaseVolumeSize: 1Gi
 
-# Replica counts for api and worker
+# Resources for api
 apiReplicas: 1
+apiMemoryRequest: 200Mi
+apiMemoryLimit: 200Mi
+apiCpuRequest: 100m
+apiCpuLimit: 1900m
+
+# Resources for worker
 workerReplicas: 1
+workerMemoryRequest: 200Mi
+workerMemoryLimit: 200Mi
+workerCpuRequest: 100m
+workerCpuLimit: 1900m
+
+# Resources for db
+dbMemoryRequest: 200Mi
+dbMemoryLimit: 200Mi
+dbCpuRequest: 100m
+dbCpuLimit: 1900m
+
+# Resources for frontend
+frontendMemoryRequest: 200Mi
+frontendMemoryLimit: 200Mi
+frontendCpuRequest: 100m
+frontendCpuLimit: 1900m
 
 # Database password. If not set, a random value is used.
 #databasePassword: pebbles
@@ -97,6 +118,12 @@ deployCentralLogging: true
 #logstashStorageClass: standard-rwo
 #logstashVolumeSize: 1Gi
 
+# Resources for logstash
+logstashMemoryRequest: 512Mi
+logstashMemoryLimit: 512Mi
+logstashCpuRequest: 100m
+logstashCpuLimit: 1900m
+
 # ----------------------------------------------------------------------------
 # Optional oauth2 settings
 oauth2LoginEnabled: false
@@ -107,6 +134,12 @@ oauth2LoginEnabled: false
 # oauth2-proxy basic deployment config
 oauth2ProxyReplicas: 1
 oauth2ProxyImage: quay.io/pusher/oauth2_proxy:v4.1.0
+
+# Resources for oauth2-proxy
+oauth2MemoryRequest: 512Mi
+oauth2MemoryLimit: 512Mi
+oauth2CpuRequest: 100m
+oauth2CpuLimit: 1900m
 
 # Callback URL for the proxy. The default is for local K8s deployment
 oauth2ProxyRedirectUrl: http://localhost/oauth2/callback

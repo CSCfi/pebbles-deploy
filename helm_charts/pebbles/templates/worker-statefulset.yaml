@@ -99,11 +99,11 @@ spec:
           imagePullPolicy: {{ .Values.workerImagePullPolicy }}
           resources:
             requests:
-              cpu: 100m
-              memory: 100Mi
+              cpu: {{ .Values.workerCpuRequest }}
+              memory: {{ .Values.workerMemoryRequest }}
             limits:
-              cpu: 100m
-              memory: 100Mi
+              cpu: {{ .Values.workerCpuLimit }}
+              memory: {{ .Values.workerMemoryLimit }}
           securityContext:
             runAsGroup: 0
           volumeMounts:

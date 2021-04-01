@@ -76,11 +76,11 @@ spec:
               protocol: TCP
           resources:
             requests:
-              cpu: 100m
-              memory: 200Mi
+              cpu: {{ .Values.oauth2CpuRequest }}
+              memory: {{ .Values.oauth2MemoryRequest }}
             limits:
-              cpu: 1900m
-              memory: 200Mi
+              cpu: {{ .Values.oauth2CpuLimit }}
+              memory: {{ .Values.oauth2MemoryLimit }}
           livenessProbe:
             httpGet:
               path: /ping

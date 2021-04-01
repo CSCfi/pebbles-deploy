@@ -27,11 +27,11 @@ spec:
           imagePullPolicy: IfNotPresent
           resources:
             requests:
-              cpu: 100m
-              memory: 512Mi
+              cpu: {{ .Values.logstashCpuRequest }}
+              memory: {{ .Values.logstashMemoryRequest }}
             limits:
-              cpu: 1000m
-              memory: 1Gi
+              cpu: {{ .Values.logstashCpuLimit }}
+              memory: {{ .Values.logstashMemoryLimit }}
           ports:
             - containerPort: 5044
               name: api

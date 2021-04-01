@@ -41,11 +41,11 @@ spec:
           imagePullPolicy: {{ .Values.dbImagePullPolicy }}
           resources:
             requests:
-              cpu: 100m
-              memory: 1Gi
+              cpu: {{ .Values.dbCpuRequest }}
+              memory: {{ .Values.dbMemoryRequest }}
             limits:
-              cpu: 1900m
-              memory: 1Gi
+              cpu: {{ .Values.dbCpuLimit }}
+              memory: {{ .Values.dbMemoryLimit }}
           livenessProbe:
             initialDelaySeconds: 30
             tcpSocket:
