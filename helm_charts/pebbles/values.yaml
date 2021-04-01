@@ -119,8 +119,8 @@ deployCentralLogging: true
 #logstashVolumeSize: 1Gi
 
 # Resources for logstash
-logstashMemoryRequest: 512Mi
-logstashMemoryLimit: 512Mi
+logstashMemoryRequest: 1024Mi
+logstashMemoryLimit: 1024Mi
 logstashCpuRequest: 100m
 logstashCpuLimit: 1900m
 

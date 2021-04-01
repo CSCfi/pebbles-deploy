@@ -49,11 +49,11 @@ spec:
           imagePullPolicy: {{ .Values.workerImagePullPolicy }}
           resources:
             requests:
-              cpu: 100m
-              memory: 200Mi
+              cpu: {{ .Values.workerCpuRequest }}
+              memory: {{ .Values.workerMemoryRequest }}
             limits:
-              cpu: "1"
-              memory: 200Mi
+              cpu: {{ .Values.workerCpuLimit }}
+              memory: {{ .Values.workerMemoryLimit }}
           command:
             - python
             - pebbles/worker/main.py
@@ -99,11 +99,11 @@ spec:
           imagePullPolicy: {{ .Values.workerImagePullPolicy }}
           resources:
             requests:
-              cpu: {{ .Values.workerCpuRequest }}
-              memory: {{ .Values.workerMemoryRequest }}
+              cpu: 100m
+              memory: 100Mi
             limits:
-              cpu: {{ .Values.workerCpuLimit }}
-              memory: {{ .Values.workerMemoryLimit }}
+              cpu: 100m
+              memory: 100Mi
           securityContext:
             runAsGroup: 0
           volumeMounts:
