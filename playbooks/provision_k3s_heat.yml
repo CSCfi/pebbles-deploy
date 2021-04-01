@@ -126,12 +126,18 @@
         name: nmap-ncat
         state: present
 
-- name: Update packages
+- name: Package updates
   hosts:
     - masters
     - nodes
     - nfs
   tasks:
+    - name: disable auto-updates on Pouta
+      file:
+        name: /etc/cron.daily/automatic_updates
+        state: absent
+      become: true
+
     - name: update OS packages
       dnf:
         name: '*'
