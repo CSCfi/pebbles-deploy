@@ -90,6 +90,9 @@ ingressHost: localhost
 # nodeSelector:
 #   node-role.kubernetes.io/master: "true"
 
+# gunicorn extra arguments for production mode
+apiGunicornExtraArgs: "--workers=4 --max-requests=200"
+
 # The level of access for the worker service account. If the service account
 # needs to be able to create namespaces, cluster admin rights are needed.
 # This is the case when provisioning instances to local cluster to non-fixed namespaces,

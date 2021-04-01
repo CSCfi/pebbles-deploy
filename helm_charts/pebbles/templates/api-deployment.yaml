@@ -57,10 +57,17 @@ spec:
               value: '1'
             {{- if .Values.apiDevelopmentMode }}
             - name: GUNICORN_CMD_ARGS
-              value: --access-logfile=/opt/log/access.log --log-file=/opt/log/error.log --workers=1 --reload
+              value: >-
+                --access-logfile=/opt/log/access.log
+                --log-file=/opt/log/error.log
+                --workers=1
+                --reload
             {{- else }}
             - name: GUNICORN_CMD_ARGS
-              value: --access-logfile=/opt/log/access.log --log-file=/opt/log/error.log
+              value: >-
+                --access-logfile=/opt/log/access.log
+                --log-file=/opt/log/error.log
+                {{ .Values.apiGunicornExtraArgs }}
             {{- end }}
             {{- if .Values.remoteDebugServerApi }}
             - name: REMOTE_DEBUG_SERVER
