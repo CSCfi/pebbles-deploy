@@ -18,8 +18,8 @@ frontendImagePullPolicy: Always
 
 # Resources for api
 apiReplicas: 1
-apiMemoryRequest: 200Mi
-apiMemoryLimit: 200Mi
+apiMemoryRequest: 300Mi
+apiMemoryLimit: 300Mi
 apiCpuRequest: 100m
 apiCpuLimit: 1900m
 
