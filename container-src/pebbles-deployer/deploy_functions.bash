@@ -48,11 +48,6 @@ build-image-pebbles-frontend() {
     # create an image for current source branch, copying old AngularJS files in as well
     # we don't want to upload the redundant node_modules/ (about 700MB) and dist/
     rsync -avi --exclude=node_modules --exclude=dist --delete ~/pebbles-frontend/* /tmp/pebbles-frontend
-    mkdir /tmp/pebbles-frontend/extra_content
-    cp -v ~/pebbles/pebbles/static/index.html /tmp/pebbles-frontend/extra_content/admin.html
-    for dir in img js css fonts partials; do
-      cp -rv ~/pebbles/pebbles/static/${dir} /tmp/pebbles-frontend/extra_content/.;
-    done
 
     oc start-build pebbles-frontend --from-dir /tmp/pebbles-frontend --follow
 }
