@@ -1,8 +1,6 @@
 - hosts: masters
   gather_facts: yes
   become: yes
-  vars:
-    master_ip: "{{ master_public_ip }}"
   roles:
     - pebbles_facts
 
@@ -12,6 +10,29 @@
         vol_backup_device: "{{ backup_device|d() }}"
         vol_image_device: "{{ image_device|d() }}"
 
+- hosts: masters
+  gather_facts: yes
+  become: yes
+  tasks:
+    # use /var/lib/rancher as an indicator of an already bootstrapped system
+    - name: restore master bootstrap data
+      shell: >
+        echo "{{ vaulted_master_bootstrap_data }}"
+        | base64 --decode
+        | tar xvz -C /
+      args:
+        creates: /var/lib/rancher
+      when:
+        - vaulted_master_bootstrap_data is defined
+        - restore_master_bootstrap_data | default(false) | bool
+
+- hosts: masters
+  gather_facts: yes
+  become: yes
+  vars:
+    master_ip: "{{ master_public_ip }}"
+  roles:
+    - pebbles_facts
     - k3s
 
 - import_playbook: fetch_k3s_kubeconfig.yml
