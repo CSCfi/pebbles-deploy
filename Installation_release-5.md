@@ -123,24 +123,14 @@ pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && s2i build . --copy -e UPGRADE_PI
 
 ## Building pebbles-frontend image
 
-This is taken from pebbles-frontend/deployment/building.md "Build with old AngularJS code included":
+This is taken from pebbles-frontend/deployment/building.md "Multi-stage build":
 
 ```shell script
 # change to project root directory
 cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-frontend/
 
-# install dependencies
-npm install
-
-# build the application (production build here)
-npm run-script build:prod
-
-# copy AngularJS code from Pebbles-repo, assuming it is cloned as sibling directory
-cp -r ../pebbles/pebbles/static/index.html dist/pebbles-frontend/admin.html
-cp -r ../pebbles/pebbles/static/{img,js,css,fonts,partials} dist/pebbles-frontend/.
-
-# create runtime image by copying the compiled application in it
-docker build . -t pebbles-frontend:latest -f deployment/Dockerfile.runtime
+# create runtime image with multi-stage
+docker build . -t pebbles-frontend:latest -f deployment/Dockerfile.multi-stage
 ```
 
 # Deploying with Helm
@@ -188,7 +178,7 @@ cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy
 oc get namespace pebbles || oc create namespace pebbles
 
 # deploy with helm
-helm install pebbles helm_charts/pebbles -f local_values/local_k8s.yaml --set overrideSecret=1
+helm upgrade -i pebbles helm_charts/pebbles -f local_values/local_k8s.yaml --set overrideSecret=1
 
 # wait until api pod is running
 while ! oc get pod -l name=api | egrep '1/1|2/2' | grep 'Running'; do echo 'Waiting for api pod'; sleep 5; done

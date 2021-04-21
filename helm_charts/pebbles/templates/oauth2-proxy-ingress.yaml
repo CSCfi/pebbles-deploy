@@ -1,19 +1,24 @@
 {{- if and .Values.oauth2LoginEnabled (eq .Values.ingressType "Ingress")  }}
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: oauth2-proxy
   labels:
     app: oauth2-proxy
-  name: oauth2-proxy
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   rules:
-  - host: {{ .Values.ingressHost | default "localhost" }}
-    http:
-      paths:
-      - backend:
-          serviceName: oauth2-proxy
-          servicePort: 80
-        path: /oauth2
+    - host: {{ .Values.ingressHost | default "localhost" }}
+      http:
+        paths:
+          - path: /oauth2
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: oauth2-proxy
+                port:
+                  number: 80
 
 {{- end }}

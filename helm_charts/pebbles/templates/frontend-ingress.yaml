@@ -1,9 +1,11 @@
 {{- if eq .Values.ingressType "Ingress" }}
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: frontend
+  labels:
+    app: frontend
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
@@ -11,8 +13,11 @@ spec:
     - host: {{ .Values.ingressHost }}
       http:
         paths:
-          - backend:
-              serviceName: frontend
-              servicePort: 8080
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 8080
 
 {{- end}}
