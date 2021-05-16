@@ -42,6 +42,10 @@ spec:
             {{- end }}
             - name: OAUTH2_PROXY_REDIRECT_URL
               value: {{ .Values.oauth2ProxyRedirectUrl }}
+            - name: OAUTH2_PROXY_PASS_BASIC_AUTH
+              value: "false"
+            - name: OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER
+              value: "true"
             - name: OAUTH2_PROXY_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -63,11 +67,6 @@ spec:
               value: "http://api:8080"
             - name: OAUTH2_PROXY_COOKIE_SECURE
               value: "false"
-            - name: OAUTH2_PROXY_BASIC_AUTH_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: oauth2-proxy
-                  key: basic-auth-password
           image: {{ .Values.oauth2ProxyImage }}
           imagePullPolicy: IfNotPresent
           ports:

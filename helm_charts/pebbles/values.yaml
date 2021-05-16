@@ -131,12 +131,9 @@ logstashCpuLimit: 1900m
 # Optional oauth2 settings
 oauth2LoginEnabled: false
 
-# This is the shared secret between the API and the proxy. It must be defined.
-#oauth2ProxySecret: change_me
-
 # oauth2-proxy basic deployment config
 oauth2ProxyReplicas: 1
-oauth2ProxyImage: quay.io/pusher/oauth2_proxy:v4.1.0
+oauth2ProxyImage: quay.io/oauth2-proxy/oauth2-proxy:v7.1.3
 
 # Resources for oauth2-proxy
 oauth2MemoryRequest: 512Mi
@@ -159,6 +156,15 @@ oauth2ProxyRedirectUrl: http://localhost/oauth2/callback
 # goes through oauth2-proxy in Pebbles, it is also ok to leave this undefined and let Helm generate
 # a random value every time the deployment is upgraded.
 #oauth2ProxyCookieSecret: change_me
+
+# Set openid-config url
+#oauth2OpenidConfigurationUrl: https:////test-user-auth.csc.fi/.well-known/openid-configuration
+
+# Provide array of methods to allow sso login
+#oauth2AuthMethods:
+#        - https://test-user-auth.csc.fi/LoginHakaTest
+#        - https://test-user-auth.csc.fi/LoginVirtuTest
+#        - https://test-user-auth.csc.fi/LoginCSC
 
 # Optionally set title, privacy policy link and image logo path for agreement acceptance dialog.
 #agreementTitle: Service_name

@@ -85,8 +85,16 @@ spec:
             {{- if .Values.oauth2LoginEnabled }}
             - name: PB_OAUTH2_LOGIN_ENABLED
               value: '1'
-            - name: PB_OAUTH2_PROXY_SECRET
-              value: {{ .Values.oauth2ProxySecret }}
+            {{- end }}
+            {{- if .Values.oauth2AuthMethods }}
+            - name: PB_OAUTH2_AUTH_METHODS
+              value: {{- range .Values.oauth2AuthMethods }}
+                     {{ . }}
+                     {{- end }}
+            {{- end }}
+            {{- if .Values.oauth2OpenidConfigurationUrl }}
+            - name: PB_OAUTH2_OPENID_CONFIGURATION_URL
+              value: {{ .Values.oauth2OpenidConfigurationUrl }}
             {{- end }}
             {{- if .Values.agreementTitle }}
             - name: PB_AGREEMENT_TITLE
