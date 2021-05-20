@@ -51,6 +51,10 @@ spec:
                   key: database-password
             - name: PB_DB_AUTOMIGRATION
               value: {{ .Values.dbAutomigration | default "1" | quote }}
+            {{- if .Values.instanceNamePrefix }}
+            - name: PB_INSTANCE_NAME_PREFIX
+              value: {{ .Values.instanceNamePrefix }}
+            {{- end }}
             - name: PB_DEBUG
               value: '1'
             - name: PB_ENABLE_FILE_LOGGING

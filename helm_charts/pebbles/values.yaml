@@ -99,6 +99,8 @@ apiGunicornExtraArgs: "--workers=4 --max-requests=200"
 # in a cluster where RBAC is active, for example K3s + KubernetesLocalDriver + group namespaces.
 workerServiceAccountClusterAdmin: False
 
+# Optional instance name prefix
+#instanceNamePrefix: pb-
 
 # Cluster config is provided in local values
 clusterConfig: |
