@@ -12,6 +12,14 @@ build-deployer-image:
     - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:latest $CI_DOCKER_REPOSITORY_PUBLIC/pebbles-deployer:latest
     - docker push $CI_DOCKER_REPOSITORY_PUBLIC/pebbles-deployer:latest
 
+    # if we are on master branch, create latest tags and push to PUBLISH repo
+    - |
+      if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer as latest"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:latest $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest
+      fi
+
 build-logstash-image:
   stage: build
   script:
@@ -20,6 +28,14 @@ build-logstash-image:
     - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:latest $CI_DOCKER_REPOSITORY_PUBLIC/logstash:latest
     - docker push $CI_DOCKER_REPOSITORY_PUBLIC/logstash:latest
 
+    # if we are on master branch, create latest tags and push to PUBLISH repo
+    - |
+      if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/logstash as latest"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:latest $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest
+      fi
+
 build-filebeat-image:
   stage: build
   script:
@@ -27,3 +43,11 @@ build-filebeat-image:
     - docker push $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:latest
     - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:latest $CI_DOCKER_REPOSITORY_PUBLIC/filebeat:latest
     - docker push $CI_DOCKER_REPOSITORY_PUBLIC/filebeat:latest
+
+    # if we are on master branch, create latest tags and push to PUBLISH repo
+    - |
+      if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/filebeat as latest"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:latest $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
+      fi
