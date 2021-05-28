@@ -1,0 +1,202 @@
+# This playbook obtains Let's Encrypt certificate for the K3s cluster and places it in inventory.
+#
+# The process
+#   - create a security group
+#     - open 80 to the world
+#     - open 22 to cidrs that are allowed to access jump host
+#   - create a VM
+#   - assign master's floating IP to the VM
+#   - obtain a certificate using certbot
+#   - copy the certificate data to inventory
+#   - reassign the floating IP to master
+#   - remove the temporary VM and security group rule
+#
+# Required parameter: cert_email
+#
+# Example - use Let's Encrypt test server to avoid hitting rate limits during testing:
+#
+# $ ansible-playbook playbooks/get_k3s_cert.yml -e cert_email=EMAIL_HERE -e certbot_extra_options='--test-cert'
+---
+
+- name: Check arguments
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: check required arguments
+      fail:
+        msg: "cert_email needs to be defined, see the playbook file for instructions"
+      when: cert_email is not defined
+
+- name: Provision temporary VM
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: create security group
+      os_security_group:
+        name: temporary_cert_vm
+
+    - name: create security group rule (allow traffic from jump)
+      os_security_group_rule:
+        security_group: temporary_cert_vm
+        remote_group: "{{ cluster_name }}-bastion"
+
+    - name: create security group rules (ssh matching jump host access)
+      os_security_group_rule:
+        security_group: temporary_cert_vm
+        protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+        remote_ip_prefix: "{{ item }}"
+      with_items:
+        - "{{ jump_host_allow_cidrs }}"
+
+    - name: create security group rule (http from anywhere)
+      os_security_group_rule:
+        security_group: temporary_cert_vm
+        protocol: tcp
+        port_range_min: 80
+        port_range_max: 80
+        remote_ip_prefix: 0.0.0.0/0
+
+    - name: provision VM
+      os_server:
+        state: present
+        name: temporary_cert_vm
+        image: "{{ jump_host_vm_image }}"
+        key_name: "{{ cluster_name }}"
+        timeout: 200
+        #flavor: "{{ jump_host_vm_flavor }}"
+        flavor: io.70GB
+        nics:
+          - net-name: "{{ cluster_name }}-network"
+        security_groups:
+          - temporary_cert_vm
+        auto_ip: false
+        wait: yes
+
+    - name: add temporary_cert_vm to inventory
+      add_host:
+        name: temporary_cert_vm
+        ansible_ssh_host: "{{ master_public_ip }}"
+
+    - name: borrow floating ip from the master
+      os_floating_ip:
+        server: temporary_cert_vm
+        floating_ip_address: "{{ master_public_ip }}"
+        state: present
+        wait: yes
+
+    - name: wait for SSH to work
+      shell: >
+        ssh {{ master_public_ip }}
+        'echo success'
+      register: result
+      until: result.stdout.find('success') != -1
+      retries: 30
+      delay: 5
+      changed_when: false
+
+- name: Obtain certificate
+  hosts: temporary_cert_vm
+  gather_facts: no
+  become: yes
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: install EPEL
+      dnf:
+        name: epel-release
+        state: present
+
+    - name: install certbot from EPEL
+      dnf:
+        name: certbot
+        state: present
+
+    - name: obtain a certificate with certbot
+      shell: >
+        certbot certonly -n --standalone --http-01-port 80 --agree-tos
+        --domains {{ domain_name }}
+        --email {{ cert_email }}
+        {{ certbot_extra_options | default('') }}
+      args:
+        creates: /etc/letsencrypt/live/{{ domain_name }}/privkey.pem
+
+    - name: get new certificate
+      slurp:
+        src: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem
+      register: new_cert_fullchain
+
+    - set_fact:
+        new_cert_fullchain: "{{ new_cert_fullchain['content'] }}"
+
+    - name: get new certificate key
+      slurp:
+        src: /etc/letsencrypt/live/{{ domain_name }}/privkey.pem
+      register: new_cert_privkey
+
+    - set_fact:
+        new_cert_privkey: "{{ new_cert_privkey['content'] }}"
+
+- name: Return floating IP to the master
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: return floating ip to the master
+      os_floating_ip:
+        server: "{{ cluster_name }}-master"
+        floating_ip_address: "{{ master_public_ip }}"
+        state: present
+        wait: yes
+
+- name: Write new certificate data to inventory
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: write new certificate
+      copy:
+        dest: /opt/deployment/pebbles-environments/group_vars/{{ cluster_name }}/cert.yml
+        content: |
+          # Ansible generated certificate file
+          ---
+          public_ssl_cert_chain: |
+            {{ hostvars['temporary_cert_vm']['new_cert_fullchain'] | b64decode | indent(width=2) }}
+
+    - name: write new certificate vault, first unencrypted
+      copy:
+        dest: /tmp/temp_vault_cert.yaml
+        content: |
+          # Ansible generated certificate file
+          ---
+          vaulted_private_ssl_key: |
+            {{ hostvars['temporary_cert_vm']['new_cert_privkey'] | b64decode | indent(width=2) }}
+
+    - name: encrypt the vault file
+      shell: >
+        ansible-vault encrypt /tmp/temp_vault_cert.yaml
+        --output /opt/deployment/pebbles-environments/group_vars/{{ cluster_name }}/vault_cert.yml
+
+    - name: delete the temporary vault file
+      file:
+        path: /tmp/temp_vault_cert.yaml
+        state: absent
+
+- name: Clean the temporary VM up
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: delete temporary VM
+      os_server:
+        name: temporary_cert_vm
+        state: absent
+
+    - name: delete temporary security group
+      os_security_group:
+        name: temporary_cert_vm
+        state: absent

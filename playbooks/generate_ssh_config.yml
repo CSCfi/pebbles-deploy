@@ -103,7 +103,7 @@
             mode: '0600'
             dest: "{{ ssh_config_file }}"
             block: |
-              Host {{ cluster_name }}-* {{  network_prefix }}.* {{ jump_host_public_ip }}
+              Host {{ cluster_name }}-* {{  network_prefix }}.* {{ jump_host_public_ip }} {{ master_public_ip }}
                 User cloud-user
                 ForwardAgent no
                 GSSAPIAuthentication no
