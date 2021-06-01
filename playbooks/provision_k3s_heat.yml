@@ -90,6 +90,12 @@
             state: present
             volume: "{{ cluster_name}}-nfs"
 
+        # lock servers to prevent accidental operations for production resources
+        - name: lock servers
+          shell: openstack server lock {{ item }}
+          with_items: "{{ groups['all'] }}"
+          when: lock_servers | d(false) | bool
+
       # endblock
 
 - include: generate_ssh_config.yml
