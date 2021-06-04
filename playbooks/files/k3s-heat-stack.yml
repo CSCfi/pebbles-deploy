@@ -17,17 +17,29 @@ parameters:
     type: json
   jump_host_allow_ports:
     description: >
-      Which ports to allow connections to on thejump_host host.
+      Which ports to allow connections to on the jump host (usually 22).
     type: comma_delimited_list
   jump_host_allow_cidrs:
     description: >
       The CIDRs of the networks where the bastion host should be accessible
       from.
     type: comma_delimited_list
-  secgroup_ext_access_rules:
+  ingress_allow_ports:
     description: >
-      Rules for the security group that governs external access to the system.
-    type: json
+      Which ports to allow connections to for ingress (usually 80,443).
+    type: comma_delimited_list
+  ingress_allow_cidrs:
+    description: >
+      The CIDRs of the networks where the ingress should be accessible from
+    type: comma_delimited_list
+  api_allow_ports:
+    description: >
+      Which ports to allow connections to for K8s API (usually 6443).
+    type: comma_delimited_list
+  api_allow_cidrs:
+    description: >
+      The CIDRs of the networks where the K8s API should be accessible from
+    type: comma_delimited_list
   network_cidr:
     description: >
       What CIDR to use for the dedicated cluster network. Must be unique within the tenant.
@@ -61,15 +73,6 @@ parameters:
     description: >
       Private IP for the jump host
     type: string
-  master_allow_cidrs:
-    description: >
-      The CIDRs of the networks where the master host should be accessible
-      from via HTTP(S).
-    type: comma_delimited_list
-  master_allow_ports:
-    description: >
-      Which ports to allow connections to on the master host.
-    type: comma_delimited_list
   master_vm_image:
     description: >
       What OpenStack image to use for master host.
@@ -157,6 +160,13 @@ resources:
           remote_group_id: { get_resource: secgroup_jump }
         - remote_mode: remote_group_id
           protocol: icmp
+
+  secgroup_node:
+    type: secgroup.yaml
+    properties:
+      env_name: { get_param: env_name }
+      name_suffix: "node"
+      rules:
         # https://rancher.com/docs/k3s/latest/en/installation/installation-requirements/#networking
         # K3s flannel
         - remote_mode: remote_group_id
@@ -165,20 +175,43 @@ resources:
           port_range_max: 8472
         # metrics
         - remote_mode: remote_group_id
+          remote_group_id: { get_resource: secgroup_infra }
           protocol: tcp
           port_range_min: 10250
           port_range_max: 10250
+        # prometheus node exporter accessible from infra VMs
+        - remote_mode: remote_group_id
+          remote_group_id: { get_resource: secgroup_infra }
+          protocol: tcp
+          port_range_min: 9100
+          port_range_max: 9100
 
-  secgroup_master:
+  secgroup_ingress:
     type: secgroup.yaml
     properties:
       env_name: { get_param: env_name }
-      name_suffix: master
+      name_suffix: "ingress"
       rules:
         repeat:
           for_each:
-            <%port%>: { get_param: master_allow_ports }
-            <%cidr%>: { get_param: master_allow_cidrs }
+            <%port%>: { get_param: ingress_allow_ports }
+            <%cidr%>: { get_param: ingress_allow_cidrs }
+          template:
+            protocol: tcp
+            port_range_min: <%port%>
+            port_range_max: <%port%>
+            remote_ip_prefix: <%cidr%>
+
+  secgroup_api:
+    type: secgroup.yaml
+    properties:
+      env_name: { get_param: env_name }
+      name_suffix: "api"
+      rules:
+        repeat:
+          for_each:
+            <%port%>: { get_param: api_allow_ports }
+            <%cidr%>: { get_param: api_allow_cidrs }
           template:
             protocol: tcp
             port_range_min: <%port%>
@@ -291,8 +324,10 @@ resources:
       key_name: { get_param: key_name }
       security_groups:
         - { get_resource: secgroup_common }
-        - { get_resource: secgroup_master }
         - { get_resource: secgroup_infra }
+        - { get_resource: secgroup_ingress }
+        - { get_resource: secgroup_api }
+        - { get_resource: secgroup_node }
       user_data_format: RAW
       user_data: { get_resource: cloud_config_resource }
 
@@ -349,6 +384,7 @@ resources:
           key_name: { get_param: key_name }
           security_groups:
             - { get_resource: secgroup_common }
+            - { get_resource: secgroup_node }
           server_group: { get_resource: compute_node_server_group }
           cloud_config: { get_param: cloud_config }
 outputs:

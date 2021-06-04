@@ -27,7 +27,6 @@
     - when:
         - stack_output.stderr.find('Stack not found') != -1 or force_heat_stack_update | d() | bool
       block:
-
         - name: build K3s Heat stack
           register: heat_stack
           os_stack:
@@ -40,10 +39,11 @@
               cloud_config: "{{ cloud_config|default({}) }}"
               jump_host_allow_ports: "{{ jump_host_allow_ports }}"
               jump_host_allow_cidrs: "{{ jump_host_allow_cidrs }}"
-              master_allow_cidrs: "{{ master_allow_cidrs }}"
-              master_allow_ports: "{{ master_allow_ports }}"
+              api_allow_cidrs: "{{ api_allow_cidrs }}"
+              api_allow_ports: "{{ api_allow_ports }}"
+              ingress_allow_cidrs: "{{ ingress_allow_cidrs }}"
+              ingress_allow_ports: "{{ ingress_allow_ports }}"
               network_dns_servers: "{{ network_dns_servers }}"
-              secgroup_ext_access_rules: "{{ secgroup_ext_access_rules }}"
               network_cidr: "{{ network_cidr }}"
               network_prefix: "{{ network_prefix }}"
               router: "{{ router }}"
