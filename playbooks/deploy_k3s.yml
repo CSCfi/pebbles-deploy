@@ -39,12 +39,19 @@
 
 - hosts: nfs
   become: yes
+  pre_tasks:
+    - name: check if /etc/exports already has exported entries
+      stat:
+        path: "/etc/exports"
+      register: stat_etc_exports
   roles:
     - name: pebbles_facts
     - name: volumes
       vars:
         vol_nfs_device: "{{ nfs_device|d() }}"
+    # Apply nfs role only if exports file is empty or does not exist. The role overrides it.
     - name: nfs
+      when: not stat_etc_exports.stat.exists or stat_etc_exports.stat.size==0
     - name: nfs_provisioner
   tasks:
     - name: start and enable nfs-server (nfs role won't do it if there are no exports)
