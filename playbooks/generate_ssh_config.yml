@@ -110,6 +110,7 @@
                 StrictHostKeyChecking no
                 UserKnownHostsFile /dev/null
                 IdentityFile /dev/shm/{{ cluster_name }}/id_rsa
+                ServerAliveInterval 120
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} common"
 
         - name: add ssh config entry for jump host
