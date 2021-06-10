@@ -102,6 +102,9 @@ workerServiceAccountClusterAdmin: False
 # Optional instance name prefix
 #instanceNamePrefix: pb-
 
+# Default cluster
+defaultCluster: "local_kubernetes"
+
 # Cluster config is provided in local values
 clusterConfig: |
   - name: example

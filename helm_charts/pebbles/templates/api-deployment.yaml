@@ -59,6 +59,8 @@ spec:
               value: '1'
             - name: PB_ENABLE_FILE_LOGGING
               value: '1'
+            - name: PB_DEFAULT_CLUSTER
+              value: {{ .Values.defaultCluster }}
             {{- if .Values.apiDevelopmentMode }}
             - name: GUNICORN_CMD_ARGS
               value: >-
