@@ -154,6 +154,8 @@ spec:
             - name: cluster-config
               mountPath: "/run/secrets/pebbles/cluster-config.yaml"
               subPath: cluster-config.yaml
+            - name: api-configmap
+              mountPath: /run/configmaps/pebbles/api-configmap/
             - mountPath: /opt/log
               name: log
           {{- if .Values.mountHostSrc }}
@@ -181,6 +183,9 @@ spec:
         - name: cluster-config
           secret:
             secretName: cluster-config
+        - name: api-configmap
+          configMap:
+            name: api-configmap
         - name: log
           emptyDir: {}
       {{- if .Values.mountHostSrc }}

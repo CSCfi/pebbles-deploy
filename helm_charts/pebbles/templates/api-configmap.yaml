@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-configmap
+data:
+  faq-content.yaml: |
+{{- if .Values.faq }}
+{{ .Values.faq | indent 4}}
+{{- end }}
