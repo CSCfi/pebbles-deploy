@@ -33,6 +33,34 @@ spec:
             - bash
             - -c
             - until pg_isready -h db; do echo "waiting for db to respond"; sleep 2; done
+
+      {{- if .Values.apiAutomigrateDb }}
+        - name: automigration
+          image: {{ .Values.imagePrefix }}{{ .Values.apiImage }}
+          imagePullPolicy: {{ .Values.apiImagePullPolicy }}
+          env:
+            - name: FLASK_APP
+              value: pebbles.server:app
+            - name: PB_SQLALCHEMY_DATABASE_URI
+              value: postgresql://pebbles:__PASSWORD__@db/pebbles
+            - name: PB_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pebbles
+                  key: database-password
+          command:
+            - bash
+            - -c
+            - |
+              echo "Migrating DB to the latest revision"
+              flask db upgrade
+              echo "Migration done"
+          {{- if .Values.mountHostSrc }}
+          volumeMounts:
+            - mountPath: /opt/app-root/src
+              name: src
+          {{- end }}
+      {{- end }}
       containers:
         - name: api
           env:
@@ -49,8 +77,6 @@ spec:
                 secretKeyRef:
                   name: pebbles
                   key: database-password
-            - name: PB_DB_AUTOMIGRATION
-              value: {{ .Values.dbAutomigration | default "1" | quote }}
             {{- if .Values.instanceNamePrefix }}
             - name: PB_INSTANCE_NAME_PREFIX
               value: {{ .Values.instanceNamePrefix }}

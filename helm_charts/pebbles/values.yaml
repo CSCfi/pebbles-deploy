@@ -82,13 +82,13 @@ ingressHost: localhost
 # Mount a ReadWriteMany volume as the source. Useful for remote development
 #useSourceVolume: true
 
-# Enable or disable running database automigration on API startup
-#dbAutomigration: true
-
 # Require a node label for deployments. Useful for running all the pods on a
 # system node like 'master' in a self-hosted cluster.
 # nodeSelector:
 #   node-role.kubernetes.io/master: "true"
+
+# Enable or disable running database automigration on API startup
+apiAutomigrateDb: false
 
 # gunicorn extra arguments for production mode
 apiGunicornExtraArgs: "--workers=4 --max-requests=200"
