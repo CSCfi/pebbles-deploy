@@ -6,7 +6,7 @@ build-image-logstash() {
     oc get imagestream logstash || oc create -f ~/pebbles-deploy/openshift/logstash-is.yaml
 
     # the buildconfig has contextDir set, so build from root dir
-    oc start-build logstash --from-dir ~/pebbles-deploy --follow
+    oc start-build logstash --from-dir ~/pebbles-deploy "$@"
 }
 
 # builds filebeat in the current OpenShift namespace
@@ -16,7 +16,7 @@ build-image-filebeat() {
     oc get imagestream filebeat || oc create -f ~/pebbles-deploy/openshift/filebeat-is.yaml
 
     # the buildconfig has contextDir set, so build from root dir
-    oc start-build filebeat --from-dir ~/pebbles-deploy --follow
+    oc start-build filebeat --from-dir ~/pebbles-deploy "$@"
 }
 
 # builds pebbles-deployer in the current OpenShift namespace
@@ -26,7 +26,7 @@ build-image-pebbles-deployer() {
     oc get imagestream pebbles-deployer || oc create -f ~/pebbles-deploy/openshift/pebbles-deployer-is.yaml
 
     # the buildconfig has contextDir set, so build from root dir
-    oc start-build pebbles-deployer --from-dir ~/pebbles-deploy --follow
+    oc start-build pebbles-deployer --from-dir ~/pebbles-deploy "$@"
 }
 
 # builds pebbles in the current OpenShift namespace
@@ -36,7 +36,7 @@ build-image-pebbles() {
     oc get imagestream pebbles || oc create -f ~/pebbles-deploy/openshift/pebbles-is.yaml
 
     # create an image for current source branch
-    oc start-build pebbles --from-dir ~/pebbles --follow
+    oc start-build pebbles --from-dir ~/pebbles "$@"
 }
 
 # builds pebbles-frontend in the current OpenShift namespace
@@ -49,16 +49,38 @@ build-image-pebbles-frontend() {
     # we don't want to upload the redundant node_modules/ (about 700MB) and dist/
     rsync -avi --exclude=node_modules --exclude=dist --delete ~/pebbles-frontend/* /tmp/pebbles-frontend
 
-    oc start-build pebbles-frontend --from-dir /tmp/pebbles-frontend --follow
+    oc start-build pebbles-frontend --from-dir /tmp/pebbles-frontend "$@"
 }
 
 # builds all images from local sources
 build-image-all() {
-    build-image-pebbles
+    build-image-pebbles --follow
+    build-image-pebbles-frontend --follow
+    build-image-logstash --follow
+    build-image-filebeat --follow
+    build-image-pebbles-deployer --follow
+}
+
+# builds all images from local sources in parallel
+build-image-all-parallel() {
+    # trigger builds, starting from the heaviest to lightest
     build-image-pebbles-frontend
+    build-image-pebbles
     build-image-logstash
     build-image-filebeat
     build-image-pebbles-deployer
+
+    # wait for at least one of the builds to be running
+    while ! oc get pods -l openshift.io/build.name | grep Running; do
+      echo "Waiting for builds to start"
+      sleep 2
+    done
+
+    # wait for all builds to have ended
+    while oc get pods -l openshift.io/build.name | grep Running; do
+      echo "Waiting for builds to end"
+      sleep 10
+    done
 }
 
 # blocks until API pod is ready
