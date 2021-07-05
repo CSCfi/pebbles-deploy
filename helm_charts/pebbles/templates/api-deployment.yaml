@@ -42,7 +42,7 @@ spec:
             - name: FLASK_APP
               value: pebbles.server:app
             - name: PB_SQLALCHEMY_DATABASE_URI
-              value: postgresql://pebbles:__PASSWORD__@db/pebbles
+              value: {{ .Values.databaseUri }}
             - name: PB_DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -71,7 +71,7 @@ spec:
             - name: FLASK_APP
               value: pebbles.server:app
             - name: PB_SQLALCHEMY_DATABASE_URI
-              value: postgresql://pebbles:__PASSWORD__@db/pebbles
+              value: {{ .Values.databaseUri }}
             - name: PB_DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:

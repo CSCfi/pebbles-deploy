@@ -42,6 +42,10 @@ frontendMemoryLimit: 200Mi
 frontendCpuRequest: 100m
 frontendCpuLimit: 1900m
 
+# Database connection URI.
+# __PASSWORD__ will be replaced with databasePassword by Pebbles api server during startup
+databaseUri: postgresql://pebbles:__PASSWORD__@db/pebbles
+
 # Database password. If not set, a random value is used.
 #databasePassword: pebbles
 
