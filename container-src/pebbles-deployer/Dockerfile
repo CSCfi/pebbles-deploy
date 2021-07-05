@@ -16,6 +16,7 @@ RUN dnf install -y \
         diffutils \
         epel-release \
         postgresql \
+        vim \
  && dnf clean all
 
 # Add s3cmd from EPEL for dealing with Allas object storage with S3 credentials
@@ -64,6 +65,7 @@ RUN chgrp -R root /opt/deployment \
 # set pebbles-deploy ansible_dc.cfg as the default
 # when all deployments use pebbles-deploy, this can be unified to ansible.cfg
 ENV ANSIBLE_CONFIG=/opt/deployment/pebbles-deploy/ansible_dc.cfg
+ENV EDITOR=vim
 
 USER 29295
 
