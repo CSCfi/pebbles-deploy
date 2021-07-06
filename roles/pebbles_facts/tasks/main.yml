@@ -41,3 +41,20 @@
     - name: Setting network_prefix for backwards compatibility for legacy deployments
       set_fact:
         network_prefix: "{{ pebbles_network_prefix }}"
+
+# get repository version data if we have not done that already
+- when:
+    - repo_version_data is not defined
+  block:
+    - name: get pebbles repository versions
+      become: no
+      delegate_to: localhost
+      shell: |
+        for repo in pebbles-deploy pebbles-environments; do
+          (echo $repo; cd /opt/deployment/$repo && git branch --show-current && git show | head -3; echo)
+        done
+      register: _repo_version_output
+
+    - set_fact:
+       repo_version_data: |
+         {{ _repo_version_output.stdout }}

@@ -183,3 +183,16 @@
       when:
         - item.spec is defined # checks if returned with only one item in a list
         - item['spec']['nodeName'] != cluster_name + '-master'
+
+- name: Set installation state
+  become: yes
+  hosts:
+    - masters
+    - nodes
+    - nfs
+  roles:
+    - pebbles_facts
+    - role: installation_status
+      vars:
+        operation: set
+        version_data: "{{ repo_version_data }}"

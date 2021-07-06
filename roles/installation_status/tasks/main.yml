@@ -1,0 +1,33 @@
+- when: operation == 'get'
+  block:
+    - name: check for installation flag file
+      stat:
+        path: "/var/lib/pb/INSTALLED"
+      register: check_pb_installed
+
+    - name: set pb_installed based on the flag file
+      set_fact:
+        pb_installed: "{{ check_pb_installed.stat.exists }}"
+  # endblock
+
+- when: operation == 'set'
+  block:
+    - name: make sure /var/lib/pb exists
+      file:
+        path: /var/lib/pb
+        state: directory
+        mode: 0755
+
+    - name: set installation flag
+      copy:
+        dest: "/var/lib/pb/INSTALLED"
+        content: |
+          Deployment done for this host at {{ ansible_date_time['iso8601'] }}
+
+          Repository versions:
+            {{ version_data | indent(2) }}
+
+    - name: set pb_installed to True
+      set_fact:
+        pb_installed: True
+  #endblock

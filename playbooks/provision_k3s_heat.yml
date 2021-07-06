@@ -132,11 +132,13 @@
         name: nmap-ncat
         state: present
 
-- name: Package updates
+- name: Package updates for new VMs
   hosts:
     - masters
     - nodes
     - nfs
+  roles:
+    - installation_status
   tasks:
     - name: disable auto-updates on Pouta
       file:
@@ -152,6 +154,7 @@
       become: true
       when:
         - server_update_and_reboot|default(false)|bool
+        - not pb_installed
 
     - when: _os_packages_updated.changed or server_update_force_reboot|default(false)|bool
       block:
