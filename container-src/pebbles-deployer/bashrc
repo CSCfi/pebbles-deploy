@@ -71,10 +71,10 @@ echo "Build, install and initialize Pebbles in an empty namespace with initial d
 echo
 echo "  install-pebbles"
 echo
-echo "Update an existing installation:"
+echo "Upgrade an existing installation:"
 echo
-echo "  cd pebbles-deploy"
-echo "  helm upgrade pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml"
+echo "  helm-upgrade-pebbles [-r] [options for Helm]"
+echo "    where -r will also update the values.yaml with 'refresh-ramdisk'"
 echo
 echo "Completely remove a development environment, including all data:"
 echo

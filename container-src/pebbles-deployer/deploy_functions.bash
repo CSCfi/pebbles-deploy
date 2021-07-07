@@ -124,7 +124,13 @@ initialize-pebbles-with-initial-data() {
 
 # installs system using Helm
 helm-install-pebbles() {
-   (cd ~/pebbles-deploy && helm install pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml --set overrideSecret=1)
+    (cd ~/pebbles-deploy && helm install pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml --set overrideSecret=1)
+}
+
+# upgrades deployment using Helm
+helm-upgrade-pebbles() {
+    if [[ "zzz$1" == 'zzz-r' ]]; then shift ; refresh-ramdisk; fi
+    (cd ~/pebbles-deploy && helm upgrade pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml "$@")
 }
 
 # Builds, installs and initializes system. Uses local source directories and initial data from inventory
@@ -138,7 +144,7 @@ install-pebbles() {
       return 1
     fi
 
-    build-image-all
+    build-image-all-parallel
 
     helm status pebbles 2>&1 > /dev/null || helm-install-pebbles
 
