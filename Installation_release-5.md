@@ -27,7 +27,7 @@ Here is how to deploy nginx ingress controller for docker for mac
 https://kubernetes.github.io/ingress-nginx/deploy/
 
 ```shell script
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-0.32.0/deploy/static/provider/cloud/deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.49.0/deploy/static/provider/cloud/deploy.yaml
 ```
 
 And here is how you enable it on minikube:
@@ -69,7 +69,7 @@ Linux:
 
 ```shell script
 curl -LO https://git.io/get_helm.sh
-bash ./get_helm.sh -v v3.0.3
+bash ./get_helm.sh -v v3.5.0
 ```
 
 Mac:
@@ -108,6 +108,8 @@ eval $(minikube docker-env)
 ```
 
 ## Building pebbles image
+
+Use _one_ of the options below.
 
 Build using pebbles dockerfile:
 
@@ -173,9 +175,6 @@ Note the image pull policies that make it possible to use locally build images a
 
 ```shell script
 cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy
-
-# create namespace if not present
-oc get namespace pebbles || oc create namespace pebbles
 
 # deploy with helm
 helm upgrade -i pebbles helm_charts/pebbles -f local_values/local_k8s.yaml --set overrideSecret=1
