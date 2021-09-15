@@ -37,3 +37,5 @@
   pip:
     requirements: "{{ application_path }}/requirements.txt"
     virtualenv: "{{ virtualenv_path }}"
+  environment:
+      LC_ALL: C.UTF-8
