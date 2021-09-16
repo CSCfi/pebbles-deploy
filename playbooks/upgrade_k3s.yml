@@ -1,0 +1,62 @@
+---
+# first run a play that populates nodes ansible group dynamically
+- hosts: localhost
+  roles:
+    - pebbles_facts
+
+# Upgrade masters and nodes on at a time, starting from master.
+- hosts: masters, nodes
+  serial: 1
+  gather_facts: yes
+  become: yes
+  vars:
+    master_ip: "{{ master_public_ip }}"
+    k3s_force_download: true
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: download given version of k3s
+      import_tasks: ~/galaxy-roles/k3s/tasks/download.yml
+
+    # for nodes, we explicitly stop and wait for the node to report NotReady
+    - name: stop k3s-agent service
+      systemd:
+        name: k3s-agent
+        state: stopped
+      when: ansible_hostname in groups.nodes
+
+    - name: wait for the node {{ ansible_hostname }} to be NotReady
+      delegate_to: localhost
+      become: no
+      shell: >
+        oc get node {{ ansible_hostname }}
+      register: result
+      until: result.stdout.find(' Ready ') == -1
+      retries: 30
+      delay: 5
+      changed_when: false
+      when: ansible_hostname in groups.nodes
+
+    # master is simply restarted (API is down when the service is down)
+    - name: restart k3s-master service
+      systemd:
+        name: k3s-master
+        state: restarted
+      when: ansible_hostname in groups.masters
+
+    - name: start k3s-agent service
+      systemd:
+        name: k3s-agent
+        state: started
+      when: ansible_hostname in groups.nodes
+
+    - name: wait for the node {{ ansible_hostname }} to report 'Ready' in API before continuing
+      delegate_to: localhost
+      become: no
+      shell: >
+        oc get node {{ ansible_hostname }}
+      register: result
+      until: result.stdout.find(' Ready ') != -1
+      retries: 30
+      delay: 5
+      changed_when: false
