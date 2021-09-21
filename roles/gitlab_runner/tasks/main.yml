@@ -13,11 +13,17 @@
     - lib_docker_device is defined
   become: True
   block:
+    - name: check if docker device file exists
+      stat:
+        path: "{{ lib_docker_device }}"
+      register: lib_docker_device_check
+
     - name: format docker storage device when using overlay2 storage driver
       filesystem:
         dev: "{{ lib_docker_device }}"
         fstype: xfs
         force: yes
+      when: not lib_docker_device_check.stat.exists
 
     - name: mount docker storage device when using overlay2 storage driver
       mount:
@@ -25,6 +31,29 @@
         src: "{{ lib_docker_device }}"
         state: mounted
         fstype: xfs
+
+- name: Create vaultpass directory
+  file:
+    path: /dev/shm/secret
+    state: directory
+    mode: '0700'
+    seuser: system_u
+    serole: object_r
+    setype: container_file_t
+
+# If you need to create extra config files to runner
+- when: vault_pass_files is defined
+  become: True
+  block:
+    - name: Copy vault pass files
+      copy:
+        dest: "{{ item.path }}"
+        content: "{{ item.content }}"
+        seuser: system_u
+        serole: object_r
+        setype: container_file_t
+
+      with_items: "{{ vault_pass_files }}"
 
 - name: install docker
   yum:

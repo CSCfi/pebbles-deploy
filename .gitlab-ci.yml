@@ -2,7 +2,14 @@
 image: docker:git
 
 stages:
+  - info
   - build
+  - ci-pipeline
+
+info:
+  stage: info
+  script:
+    - echo "On branch $CI_COMMIT_REF_NAME"
 
 build-deployer-image:
   stage: build
@@ -51,3 +58,20 @@ build-filebeat-image:
         docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:latest $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
       fi
+
+ci-pipeline:
+  stage: ci-pipeline
+  needs: ['build-deployer-image']
+  variables:
+    ENV_NAME: pebbles-ci-2
+    DEPROVISION_ENVIRONMENT: 1
+    PEBBLES_IMAGE_TAG: latest
+    PEBBLES_IMAGE_TAG: latest
+    PEBBLES_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
+    PEBBLES_ENVIRONMENTS_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
+    PEBBLES_DEPLOY_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
+    ENV_NAME_QA: "${CI_ENV_NAME_QA}"
+  trigger:
+    project: pebbles/cicd-pipeline
+    branch: master
+    strategy: depend
