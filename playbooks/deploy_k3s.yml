@@ -194,6 +194,31 @@
         job: "/usr/local/sbin/k3s_sqlite_vacuum.sh"
         cron_file: ansible_k3s_sqlite_vacuuming
 
+    - name: set up a script for sqlite backups
+      copy:
+        dest: /usr/local/sbin/k3s_sqlite_backup.sh
+        owner: root
+        group: root
+        mode: 0700
+        content: |
+          #!/usr/bin/env sh
+
+          bu_file=/var/lib/pb/backup/k3s_sqlite_$(date -Is).db
+          # run backup on k3s sqlite
+          sqlite3 /var/lib/rancher/k3s/server/db/state.db ".backup ${bu_file}"
+
+          # compress the backup
+          gzip ${bu_file}
+
+    - name: set up a cron job for sqlite backups
+      ansible.builtin.cron:
+        name: k3s sqlite backup
+        minute: "5"
+        hour: "3"
+        user: root
+        job: "/usr/local/sbin/k3s_sqlite_backup.sh"
+        cron_file: ansible_k3s_sqlite_backup
+
 - hosts: localhost
   tasks:
     - name: Cleanup traefik in compute nodes
