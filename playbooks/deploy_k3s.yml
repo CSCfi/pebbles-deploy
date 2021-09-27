@@ -170,6 +170,30 @@
       when: item | splitext | last in ('.yaml', '.yml')
       with_items: "{{ custom_manifests|d([ ]) }}"
 
+    - name: install sqlite3
+      dnf:
+        name: sqlite
+        state: present
+
+    - name: setup script for sqlite vacuuming
+      copy:
+        dest: /usr/local/sbin/k3s_sqlite_vacuum.sh
+        owner: root
+        group: root
+        mode: 0700
+        content: |
+          #!/usr/bin/env sh
+          echo "vacuum; pragma wal_checkpoint(truncate)" | sqlite3 /var/lib/rancher/k3s/server/db/state.db
+
+    - name: setup cron for sqlite vacuuming
+      ansible.builtin.cron:
+        name: k3s sqlite vacuuming
+        minute: "0"
+        hour: "3"
+        user: root
+        job: "/usr/local/sbin/k3s_sqlite_vacuum.sh"
+        cron_file: ansible_k3s_sqlite_vacuuming
+
 - hosts: localhost
   tasks:
     - name: Cleanup traefik in compute nodes
