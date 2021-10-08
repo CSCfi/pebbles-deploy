@@ -17,6 +17,7 @@ RUN dnf install -y \
         epel-release \
         postgresql \
         vim \
+        skopeo \
  && dnf clean all
 
 # Add s3cmd from EPEL for dealing with Allas object storage with S3 credentials

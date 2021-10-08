@@ -64,6 +64,7 @@
     content: |
       export DEPLOYMENT_TYPE="{{ deployment_type | d('helm') }}"
       export PUBLIC_DOMAIN_NAME="{{ domain_name | d('domain_name_not_set')}}"
+      export PUBLIC_IMAGE_REPO_URL="{{ public_image_repo_url | d('public_image_repo_url_not_set')}}"
 
 - name: Export initial data
   when: initial_data is defined

@@ -83,6 +83,17 @@ build-image-all-parallel() {
     done
 }
 
+list-image-tags() {
+    if [[ -z $1 ]]; then
+        echo 'list-image-tags needs image name (like "pebbles") as an argument' > /dev/stderr
+        return
+    fi
+    image_url="${PUBLIC_IMAGE_REPO_URL}/$1"
+    skopeo list-tags $image_url | jq -r '.Tags[]' \
+    | sort \
+    | xargs --replace echo "$image_url:{}"
+}
+
 # blocks until API pod is ready
 wait-for-api-readiness() {
     while echo 'wait for api readiness'; do
