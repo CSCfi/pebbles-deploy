@@ -7,3 +7,7 @@ data:
 {{- if .Values.faq }}
 {{ .Values.faq | indent 4}}
 {{- end }}
+  auth-config.yaml: |
+{{- if .Values.authConfig }}
+{{ .Values.authConfig | indent 4}}
+{{- end }}

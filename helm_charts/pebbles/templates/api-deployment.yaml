@@ -118,16 +118,6 @@ spec:
             - name: PB_OAUTH2_LOGIN_ENABLED
               value: '1'
             {{- end }}
-            {{- if .Values.oauth2AuthMethods }}
-            - name: PB_OAUTH2_AUTH_METHODS
-              value: {{- range .Values.oauth2AuthMethods }}
-                     {{ . }}
-                     {{- end }}
-            {{- end }}
-            {{- if .Values.oauth2OpenidConfigurationUrl }}
-            - name: PB_OAUTH2_OPENID_CONFIGURATION_URL
-              value: {{ .Values.oauth2OpenidConfigurationUrl }}
-            {{- end }}
             {{- if .Values.agreementTitle }}
             - name: PB_AGREEMENT_TITLE
               value: {{ .Values.agreementTitle }}
