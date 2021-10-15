@@ -1,55 +1,68 @@
 # Function for recreating files on ramdisk from ansible-inventory.
 # builds logstash in the current OpenShift namespace
-build-image-logstash() {
-    # create buildconfig and imagestream if missing
-    oc get buildconfig logstash || oc create -f ~/pebbles-deploy/openshift/logstash-bc.yaml
-    oc get imagestream logstash || oc create -f ~/pebbles-deploy/openshift/logstash-is.yaml
+build-image-from-container-src() {
+    if [[ -z $1 ]]; then
+        echo 'build-image-from-container-source() needs image name as an argument' > /dev/stderr
+        return
+    fi
+    # pop the first argument and pass the rest later to oc build
+    name=$1
+    shift
 
-    # the buildconfig has contextDir set, so build from root dir
-    oc start-build logstash --from-dir ~/pebbles-deploy "$@"
+    # create buildconfig and imagestream if missing
+    oc get buildconfig ${name} || oc create -f ~/pebbles-deploy/openshift/${name}-bc.yaml
+    oc get imagestream ${name} || oc create -f ~/pebbles-deploy/openshift/${name}-is.yaml
+
+    # The buildconfig has contextDir set, so build from root dir.
+    # Create an archive to exclude version control and ignored files from the build
+    tmpfile=$(mktemp -u /tmp/src-XXXXXX.tar.gz)
+    tar cfv $tmpfile --exclude-vcs-ignores --exclude-vcs -C ~/pebbles-deploy container-src
+    oc start-build ${name} --from-archive $tmpfile "$@"
+    rm -v $tmpfile
+}
+
+build-image-logstash() {
+    build-image-from-container-src logstash "$@"
 }
 
 # builds filebeat in the current OpenShift namespace
 build-image-filebeat() {
-    # create buildconfig and imagestream if missing
-    oc get buildconfig filebeat || oc create -f ~/pebbles-deploy/openshift/filebeat-bc.yaml
-    oc get imagestream filebeat || oc create -f ~/pebbles-deploy/openshift/filebeat-is.yaml
-
-    # the buildconfig has contextDir set, so build from root dir
-    oc start-build filebeat --from-dir ~/pebbles-deploy "$@"
+    build-image-from-container-src filebeat "$@"
 }
 
 # builds pebbles-deployer in the current OpenShift namespace
 build-image-pebbles-deployer() {
-    # create buildconfig and imagestream if missing
-    oc get buildconfig pebbles-deployer || oc create -f ~/pebbles-deploy/openshift/pebbles-deployer-bc.yaml
-    oc get imagestream pebbles-deployer || oc create -f ~/pebbles-deploy/openshift/pebbles-deployer-is.yaml
+    build-image-from-container-src pebbles-deployer "$@"
+}
 
-    # the buildconfig has contextDir set, so build from root dir
-    oc start-build pebbles-deployer --from-dir ~/pebbles-deploy "$@"
+build-image-from-project-src() {
+    if [[ -z $1 ]]; then
+        echo 'build-image-from-project-source() needs project name as an argument' > /dev/stderr
+        return
+    fi
+    # pop the first argument and pass the rest later to oc build
+    name=$1
+    shift
+
+    # create buildconfig and imagestream if missing
+    oc get buildconfig ${name} || oc create -f ~/pebbles-deploy/openshift/${name}-bc.yaml
+    oc get imagestream ${name} || oc create -f ~/pebbles-deploy/openshift/${name}-is.yaml
+
+    # create a build for current source branch, only taking files under version control
+    tmpfile=$(mktemp -u /tmp/src-${name}-XXXXXX.tar.gz)
+    tar cfv $tmpfile --exclude-vcs-ignores --exclude-vcs -C ~/${name} `git -C ~/${name} ls-files`
+    oc start-build ${name} --from-archive $tmpfile "$@"
+    rm -v $tmpfile
 }
 
 # builds pebbles in the current OpenShift namespace
 build-image-pebbles() {
-    # create buildconfig and imagestream if missing
-    oc get buildconfig pebbles || oc create -f ~/pebbles-deploy/openshift/pebbles-bc.yaml
-    oc get imagestream pebbles || oc create -f ~/pebbles-deploy/openshift/pebbles-is.yaml
-
-    # create an image for current source branch
-    oc start-build pebbles --from-dir ~/pebbles "$@"
+    build-image-from-project-src pebbles "$@"
 }
 
 # builds pebbles-frontend in the current OpenShift namespace
 build-image-pebbles-frontend() {
-    # create buildconfig and imagestream if missing
-    oc get buildconfig pebbles-frontend || oc create -f ~/pebbles-deploy/openshift/pebbles-frontend-bc.yaml
-    oc get imagestream pebbles-frontend || oc create -f ~/pebbles-deploy/openshift/pebbles-frontend-is.yaml
-
-    # create an image for current source branch, copying old AngularJS files in as well
-    # we don't want to upload the redundant node_modules/ (about 700MB) and dist/
-    rsync -avi --exclude=node_modules --exclude=dist --delete ~/pebbles-frontend/* /tmp/pebbles-frontend
-
-    oc start-build pebbles-frontend --from-dir /tmp/pebbles-frontend "$@"
+    build-image-from-project-src pebbles-frontend "$@"
 }
 
 # builds all images from local sources
@@ -161,3 +174,12 @@ install-pebbles() {
 
     initialize-pebbles-with-initial-data
 }
+
+pebbles-tail-logs() {
+  oc rsh deployment/logstash bash -c "tail -f data/opt/log/$1*"
+}
+
+pebbles-rsync-src-api() {
+  oc rsync ~/pebbles/pebbles $(oc get pods -l name=api | grep Running | cut -f 1 -d " " | head):.
+}
+

@@ -26,15 +26,17 @@ branch-info() {
 }
 
 restart-pebbles() {
+
     if [ -z "$1" ]; then
-      oc rollout restart deployment
-      oc rollout restart statefulset
+        # by default, restart workloads that run our source code (api, frontend, worker)
+        oc rollout restart deployment/{api,frontend}
+        oc rollout restart statefulset/worker
     else 
-      if [ "$1" = "worker" ]; then
-         oc rollout restart statefulset/worker
-      else
-         oc rollout restart deployment/$1
-      fi
+        if [ "$1" = "worker" ]; then
+           oc rollout restart statefulset/worker
+        else
+           oc rollout restart deployment/$1
+        fi
     fi
 }
 
