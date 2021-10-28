@@ -3,10 +3,66 @@ kind: ConfigMap
 metadata:
   name: api-configmap
 data:
+  pebbles.yaml: |
+    # Pebbles main configuration file created by Helm.
+    # All keys have direct counterparts in config.py
+    ENABLE_FILE_LOGGING: '1'
+    DEFAULT_CLUSTER: {{ .Values.defaultCluster }}
+    SESSION_NAME_PREFIX: {{ .Values.sessionNamePrefix }}
+
+    {{- if .Values.baseUrl }}
+    BASE_URL: {{ .Values.baseUrl }}
+    {{- end }}
+
+    {{- if .Values.installationName }}
+    INSTALLATION_NAME: {{ .Values.installationName }}
+    {{- end}}
+    {{- if .Values.shortDescription }}
+    SHORT_DESCRIPTION: {{ .Values.shortDescription }}
+    {{- end}}
+    {{- if .Values.installationDescription }}
+    INSTALLATION_DESCRIPTION: {{ .Values.installationDescription }}
+    {{- end}}
+    {{- if .Values.courseRequestFormUrl }}
+    COURSE_REQUEST_FORM_URL: {{ .Values.courseRequestFormUrl }}
+    {{- end}}
+    {{- if .Values.brandImageUrl }}
+    BRAND_IMAGE_URL: {{ .Values.brandImageUrl }}
+    {{- end}}
+    {{- if .Values.termsOfUseUrl }}
+    TERMS_OF_USE_URL: {{ .Values.termsOfUseUrl }}
+    {{- end}}
+    {{- if .Values.accessibilityStatementUrl }}
+    ACCESSIBILITY_STATEMENT_URL: {{ .Values.accessibilityStatementUrl }}
+    {{- end}}
+    {{- if .Values.contactEmail }}
+    CONTACT_EMAIL: {{ .Values.contactEmail }}
+    {{- end}}
+    {{- if .Values.serviceDocumentationUrl }}
+    SERVICE_DOCUMENTATION_URL: {{ .Values.serviceDocumentationUrl }}
+    {{- end}}
+
+    {{- if .Values.agreementTitle }}
+    AGREEMENT_TITLE: {{ .Values.agreementTitle }}
+    {{- end }}
+    {{- if .Values.agreementTermsPath }}
+    AGREEMENT_TERMS_PATH: {{ .Values.agreementTermsPath }}
+    {{- end }}
+    {{- if .Values.agreementCookiesPath }}
+    AGREEMENT_COOKIES_PATH: {{ .Values.agreementCookiesPath }}
+    {{- end }}
+    {{- if .Values.agreementPrivacyPath  }}
+    AGREEMENT_PRIVACY_PATH: {{ .Values.agreementPrivacyPath }}
+    {{- end }}
+    {{- if .Values.agreementLogoPath }}
+    AGREEMENT_LOGO_PATH: {{ .Values.agreementLogoPath }}
+    {{- end }}
+
   faq-content.yaml: |
 {{- if .Values.faq }}
 {{ .Values.faq | indent 4}}
 {{- end }}
+
   auth-config.yaml: |
 {{- if .Values.authConfig }}
 {{ .Values.authConfig | indent 4}}

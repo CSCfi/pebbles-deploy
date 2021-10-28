@@ -99,12 +99,12 @@ apiGunicornExtraArgs: "--workers=4 --max-requests=200"
 
 # The level of access for the worker service account. If the service account
 # needs to be able to create namespaces, cluster admin rights are needed.
-# This is the case when provisioning instances to local cluster to non-fixed namespaces,
+# This is the case when provisioning sessions to local cluster to non-fixed namespaces,
 # in a cluster where RBAC is active, for example K3s + KubernetesLocalDriver + group namespaces.
 workerServiceAccountClusterAdmin: False
 
-# Optional instance name prefix
-#instanceNamePrefix: pb-
+# Session name prefix
+sessionNamePrefix: pb-
 
 # Default cluster
 defaultCluster: "local_kubernetes"
@@ -166,14 +166,28 @@ oauth2ProxyRedirectUrl: http://localhost/oauth2/callback
 # a random value every time the deployment is upgraded.
 #oauth2ProxyCookieSecret: change_me
 
-# Set openid-config url
-#oauth2OpenidConfigurationUrl: https:////test-user-auth.csc.fi/.well-known/openid-configuration
+# Provide configuration for different oauth2 config options.
+# Probably only works with CSC's authentication proxy for now.
+#  authConfig: |
+#    oauth2:
+#      openidConfigurationUrl: https://user-auth.csc.fi/.well-known/openid-configuration
+#      authMethods:
+#        - acr: https://test-user-auth.csc.fi/LoginHaka
+#          prefix: haka
+#          idClaim: eppn
+#        - acr: ...
 
-# Provide array of methods to allow sso login
-#oauth2AuthMethods:
-#        - https://test-user-auth.csc.fi/LoginHakaTest
-#        - https://test-user-auth.csc.fi/LoginVirtuTest
-#        - https://test-user-auth.csc.fi/LoginCSC
+# Control how installation is presented to the user. These values are served by public variables and
+# picked up by the frontend. All of these have defaults in config.py.
+#installationName: ""
+#shortDescription: ""
+#installationDescription: ""
+#courseRequestFormUrl: ""
+#brandImageUrl: ""
+#termsOfUseUrl: ""
+#accessibilityStatementUrl: ""
+#contactEmail: ""
+#serviceDocumentationUrl: ""
 
 # Optionally set title, privacy policy link and image logo path for agreement acceptance dialog.
 #agreementTitle: Service_name

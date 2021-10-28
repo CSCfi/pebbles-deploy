@@ -77,16 +77,8 @@ spec:
                 secretKeyRef:
                   name: pebbles
                   key: database-password
-            {{- if .Values.instanceNamePrefix }}
-            - name: PB_INSTANCE_NAME_PREFIX
-              value: {{ .Values.instanceNamePrefix }}
-            {{- end }}
             - name: PB_DEBUG
               value: '1'
-            - name: PB_ENABLE_FILE_LOGGING
-              value: '1'
-            - name: PB_DEFAULT_CLUSTER
-              value: {{ .Values.defaultCluster }}
             {{- if .Values.apiDevelopmentMode }}
             - name: GUNICORN_CMD_ARGS
               value: >-
@@ -117,30 +109,6 @@ spec:
             {{- if .Values.oauth2LoginEnabled }}
             - name: PB_OAUTH2_LOGIN_ENABLED
               value: '1'
-            {{- end }}
-            {{- if .Values.agreementTitle }}
-            - name: PB_AGREEMENT_TITLE
-              value: {{ .Values.agreementTitle }}
-            {{- end }}
-            {{- if .Values.agreementTermsPath }}
-            - name: PB_AGREEMENT_TERMS_PATH
-              value: {{ .Values.agreementTermsPath }}
-            {{- end }}
-            {{- if .Values.agreementCookiesPath }}
-            - name: PB_AGREEMENT_COOKIES_PATH
-              value: {{ .Values.agreementCookiesPath }}
-            {{- end }}
-            {{- if .Values.agreementPrivacyPath  }}
-            - name: PB_AGREEMENT_PRIVACY_PATH
-              value: {{ .Values.agreementPrivacyPath }}
-            {{- end }}
-            {{- if .Values.agreementLogoPath }}
-            - name: PB_AGREEMENT_LOGO_PATH
-              value: {{ .Values.agreementLogoPath }}
-            {{- end }}
-            {{- if .Values.baseUrl }}
-            - name: PB_BASE_URL
-              value: {{ .Values.baseUrl }}
             {{- end }}
 
           image: {{ .Values.imagePrefix }}{{ .Values.apiImage }}
