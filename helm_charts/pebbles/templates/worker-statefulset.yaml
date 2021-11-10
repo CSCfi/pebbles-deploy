@@ -95,7 +95,7 @@ spec:
           {{- end }}
         {{- if .Values.deployCentralLogging }}
         - name: filebeat
-          image: {{ .Values.imagePrefix }}filebeat:latest
+          image: {{ .Values.imagePrefix }}{{ .Values.filebeatImage }}
           imagePullPolicy: {{ .Values.workerImagePullPolicy }}
           resources:
             requests:

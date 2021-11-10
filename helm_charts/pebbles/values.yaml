@@ -6,6 +6,8 @@ imagePrefix: ''
 apiImage: pebbles:latest
 workerImage: pebbles:latest
 frontendImage: pebbles-frontend:latest
+filebeatImage: filebeat:latest
+logstashImage: logstash:latest
 
 # To avoid remote pulling with local kubernetes, you can set these to 'IfNotPresent'
 dbImagePullPolicy: Always
@@ -135,6 +137,9 @@ logstashMemoryRequest: 1024Mi
 logstashMemoryLimit: 1024Mi
 logstashCpuRequest: 100m
 logstashCpuLimit: 1900m
+
+# Option to deploy private image registry
+private_registry_enabled: false
 
 # ----------------------------------------------------------------------------
 # Optional oauth2 settings
