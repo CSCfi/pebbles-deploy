@@ -81,21 +81,21 @@
         state: mounted
         fstype: xfs
 
-- when: vol_k3srun_device|d()
+- when: vol_k3slib_device|d()
   become: True
   block:
-    - name: format k3srun storage device
+    - name: format k3slib storage device
       filesystem:
-        dev: "{{ vol_k3srun_device }}"
+        dev: "{{ vol_k3slib_device }}"
         fstype: xfs
-        opts: "-L K3SRUN"
+        opts: "-L K3SLIB"
         force: yes
       failed_when: false
 
-    - name: mount k3srun storage
+    - name: mount k3slib storage
       mount:
-        name: "/run/k3s"
-        src: "LABEL=K3SRUN"
+        name: "/var/lib/rancher/k3s"
+        src: "LABEL=K3SLIB"
         state: mounted
         fstype: xfs
 

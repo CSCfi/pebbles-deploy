@@ -4,11 +4,19 @@
   roles:
     - pebbles_facts
 
+    # get installation status to figure out if we should skip volume setup
+    - role: installation_status
+      vars:
+        operation: get
+
+    # configure volumes, only for fresh hosts
     - name: volumes
       vars:
-        vol_k3srun_device: "{{ k3srun_device|d() }}"
+        vol_k3slib_device: "{{ k3slib_device|d() }}"
         vol_backup_device: "{{ backup_device|d() }}"
         vol_image_device: "{{ image_device|d() }}"
+      when:
+        - pb_installed | d(false) | bool == false
 
 - hosts: masters
   gather_facts: yes
@@ -46,9 +54,19 @@
       register: stat_etc_exports
   roles:
     - name: pebbles_facts
+
+    # get installation status to figure out if we should skip volume setup
+    - role: installation_status
+      vars:
+        operation: get
+
+    # configure volumes, only for fresh hosts
     - name: volumes
       vars:
         vol_nfs_device: "{{ nfs_device|d() }}"
+      when:
+        - pb_installed | d(false) | bool == false
+
     # Apply nfs role only if exports file is empty or does not exist. The role overrides it.
     - name: nfs
       when: not stat_etc_exports.stat.exists or stat_etc_exports.stat.size==0
@@ -65,9 +83,19 @@
   become: yes
   roles:
     - pebbles_facts
+
+    # get installation status to figure out if we should skip volume setup
+    - role: installation_status
+      vars:
+        operation: get
+
+    # configure volumes, only for fresh hosts
     - name: volumes
       vars:
-        vol_k3srun_device: "{{ k3srun_device|d() }}"
+        vol_k3slib_device: "{{ k3slib_device|d() }}"
+      when:
+        - pb_installed | d(false) | bool == false
+
     - k3s
 
 - hosts: masters, nodes
@@ -75,6 +103,11 @@
   become: yes
   roles:
     - pebbles_facts
+
+    # get installation status to figure out if we should skip volume setup
+    - role: installation_status
+      vars:
+        operation: get
   tasks:
     - name: create custom local storage directory
       file:
@@ -86,6 +119,7 @@
         selevel: s0
       when:
         - custom_local_storage_dir is defined
+        - pb_installed | d(false) | bool == false
 
 - hosts: localhost
   gather_facts: no
