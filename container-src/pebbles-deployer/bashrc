@@ -21,7 +21,12 @@ short_cwd() {
 branch-info() {
     for repo in pebbles pebbles-deploy pebbles-environments pebbles-frontend; do
         branch=$(cd /opt/deployment/$repo && parse_git_branch)
-        printf "%23s: %s\n" $repo $branch
+        num_modified=$(cd /opt/deployment/$repo && git status --porcelain | wc -l)
+        if [[ num_modified -eq 0 ]]; then
+            printf "%23s: %s\n" $repo $branch
+        else
+            printf "%23s: %s (modified: %d)\n" $repo $branch $num_modified
+        fi
     done
 }
 
