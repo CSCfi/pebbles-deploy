@@ -73,6 +73,9 @@
           - net-name: "{{ cluster_name }}-network"
         security_groups:
           - temporary_cert_vm
+        userdata: |
+          #cloud-config
+          {{ cloud_config|to_yaml }}
         auto_ip: false
         wait: yes
 
