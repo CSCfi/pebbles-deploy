@@ -58,10 +58,10 @@
               nfs_vm_flavor: "{{ nfs_vm_flavor }}"
               nfs_vm_ip: "{{ network_prefix }}.21"
               compute_node_name_suffix: "node"
-              compute_node_count: "{{ compute_node_count|default(2) }}"
+              compute_node_count: "{{ compute_node_count|default(0) }}"
               compute_node_image: "{{ compute_node_image }}"
               compute_node_flavor: "{{ compute_node_flavor }}"
-              compute_node_ids: "{{ compute_node_ids }}"
+              compute_node_ids: "{{ compute_node_ids|default([]) }}"
 
         - name: associate floating IP with master node
           os_floating_ip:
@@ -132,12 +132,38 @@
         name: nmap-ncat
         state: present
 
+- name: Lock packages
+  become: yes
+  gather_facts: no
+  hosts:
+    - masters
+    - nodes
+    - nfs
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: install dnf versionlock plugin
+      dnf:
+        name: dnf-command(versionlock)
+        state: present
+
+    - name: versionlock packages
+      blockinfile:
+        dest: /etc/dnf/plugins/versionlock.list
+        block: |
+          {% for package in versionlock_packages|d([]) %}
+          {{ package }}          
+          {% endfor %}
+        create: yes
+        mode: '0644'
+
 - name: Package updates for new VMs
   hosts:
     - masters
     - nodes
     - nfs
   roles:
+    - pebbles_facts
     - installation_status
   tasks:
     - name: disable auto-updates on Pouta

@@ -59,5 +59,5 @@ else
         echo "    using generic vaultpass"
     fi
     echo
-    ${script_dir}/run_deployment_container.bash $vaultpass_opt -e $env_name
+    ${script_dir}/run_deployment_container.bash $vaultpass_opt -e $env_name ${RDC_CLI_OPTIONS}
 fi

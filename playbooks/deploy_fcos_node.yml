@@ -1,0 +1,81 @@
+# In pebbles-environments
+# butane data/fcos/k3s-node.butane > data/fcos/k3s-node.ignition
+---
+- name: Provision VM
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - pebbles_facts
+  tasks:
+    - when: server_name is not defined
+      block:
+        - set_fact:
+            random_suffix: "{{ lookup('password', '/dev/null chars=ascii_lowercase,digits length=8') }}"
+        - set_fact:
+            server_name: "{{ cluster_name}}-{{ vm_name_prefix | default('node') }}-{{ random_suffix }}"
+
+    - name: fetch node join token from master
+      slurp:
+        src: /var/lib/rancher/k3s/server/node-token
+      register: _node_token
+      delegate_to: "{{ cluster_name }}-master"
+      become: yes
+
+    - name: set vm_role default if not set
+      set_fact:
+        vm_role: k3s-node
+      when: vm_role is not defined
+
+    - name: decode and trim node join token
+      set_fact:
+        k3s_node_token: "{{ _node_token.content | b64decode | trim }}"
+
+    - name: render butane template
+      set_fact:
+        butane_def: "{{ lookup('template', 'butane/' + vm_role + '.butane.j2') }}"
+
+    - name: create ignition from butane file
+      command: butane
+      args:
+        stdin: "{{ butane_def }}"
+      register: ignition_def
+
+    - name: create/query server group
+      os_server_group:
+        state: present
+        name: "{{ cluster_name }}-server_group_node"
+        policies:
+          - soft-anti-affinity
+      register: _os_server_group
+
+    - name: provision VM
+      os_server:
+        state: present
+        name: "{{ server_name }}"
+        image: "{{ fcos_image }}"
+        key_name: "{{ cluster_name }}"
+        timeout: 200
+        flavor: "{{ fcos_flavor }}"
+        auto_ip: false
+        nics:
+          - net-name: "{{ cluster_name }}-network"
+        security_groups:
+          - "{{ cluster_name }}-common"
+          - "{{ cluster_name }}-node"
+        wait: yes
+        scheduler_hints:
+          group: "{{ _os_server_group.id }}"
+        userdata: "{{ ignition_def.stdout | string }}"
+      register: _os_server
+
+    - name: add ssh-config entry
+      blockinfile:
+        create: yes
+        mode: '0600'
+        dest: "{{ ssh_config_file }}"
+        insertbefore: BOF
+        block: |
+          Host {{ server_name }} {{ _os_server.server.private_v4 }}
+              ProxyCommand ssh -q cloud-user@{{ jump_host_public_ip }} nc %h %p
+              HostName {{ _os_server.server.private_v4 }}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ server_name }}"

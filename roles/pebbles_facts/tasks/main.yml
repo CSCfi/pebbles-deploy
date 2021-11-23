@@ -14,11 +14,21 @@
 - when:
     - deployment_type in ('k3s',)
     - groups.nodes | length == 0
+    - compute_node_count > 0
   block:
+    - name:
+      set_fact:
+        compute_node_ids: "101"
+      when:
+        - compute_node_count == 1
+
     - name: populate K3s compute_node_ids for Heat to look up
       set_fact:
         compute_node_ids: "{{ compute_node_ids | d('101') + ',' + item }}"
-      with_sequence: start=2 end="{{ compute_node_count | d(2) }}" format="1%02x"
+      # sequence needs a bit of trickery because the expression is still evaluated even if 'when' condition is false
+      with_sequence: start=2 end="{{ [compute_node_count, 2] | max }}" format="1%02x"
+      when:
+        - compute_node_count > 1
 
     - name: add nodes to inventory
       add_host:
@@ -58,3 +68,10 @@
     - set_fact:
        repo_version_data: |
          {{ _repo_version_output.stdout }}
+
+# set facts for predefined addresses
+- set_fact:
+    jump_host_vm_ip: "{{ network_prefix }}.10"
+    master_vm_ip: "{{ network_prefix }}.11"
+    nfs_vm_ip: "{{ network_prefix }}.21"
+  when: deployment_type == 'k3s'

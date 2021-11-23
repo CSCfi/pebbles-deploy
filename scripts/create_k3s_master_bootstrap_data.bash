@@ -2,6 +2,8 @@
 
 # This script will create an Ansible vault file for master bootstrap data.
 # It should be run in the deployment container against an existing K3s deployment
+#
+# The reason for having bootstrap data is to preserve credentials between development system reinstallations.
 
 set -e
 

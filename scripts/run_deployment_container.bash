@@ -18,15 +18,17 @@ print_usage_and_exit() {
     echo "  -P vault_password_file   path to file containing vault password"
     echo "                           exposed as environment variable VAULT_PASS"
     echo "  -e environment_name      environment to deploy"
-    echo "  -c container_image       use custom container image (default cscfi/pebbles-deployer)"
+    echo "  -c container_image       use custom container image (default 'cscfi/pebbles-deployer')"
+    echo "  -t image_tag             use custom container image tag (default 'latest')"
     echo "  -s                       skip ssh config generation (useful when debugging broken installations)"
     exit 1
 }
 
 docker_opts='-it'
 container_image='cscfi/pebbles-deployer'
+image_tag='latest'
 
-while getopts "p:P:e:o:c:sh" opt; do
+while getopts "p:P:e:o:c:t:sh" opt; do
     case $opt in
         p)
             passfile=$OPTARG
@@ -51,6 +53,9 @@ while getopts "p:P:e:o:c:sh" opt; do
         c)  container_image=$OPTARG
             echo "  using custom image $container_image"
             ;;
+        t)  image_tag=$OPTARG
+            echo "  using custom image tag $image_tag"
+            ;;
         s)
             docker_opts="$docker_opts -e SKIP_SSH_CONFIG=1"
             ;;
@@ -68,4 +73,4 @@ docker run --rm \
     -v $SCRIPT_DIR/../../pebbles-frontend:/opt/deployment/pebbles-frontend:rw \
     --name ${env_name}-deployer \
     $docker_opts \
-    $container_image $*
+    $container_image:$image_tag $*

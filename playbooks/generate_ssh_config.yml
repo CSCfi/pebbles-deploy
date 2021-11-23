@@ -97,6 +97,17 @@
             dest: "{{lookup('env', 'HOME')}}/.ssh/"
             state: directory
 
+        - name: add catch-all config entry private network through jump host
+          blockinfile:
+            create: yes
+            mode: '0600'
+            dest: "{{ ssh_config_file }}"
+            insertafter: EOF
+            block: |
+              Host {{ network_prefix }}.* !{{ network_prefix }}.10
+                  ProxyCommand ssh -q cloud-user@{{ jump_host_public_ip }} nc %h %p
+            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: catch-all"
+
         - name: add cluster common ssh config
           blockinfile:
             create: yes
@@ -119,7 +130,7 @@
             mode: '0600'
             dest: "{{ ssh_config_file }}"
             block: |
-              Host {{ cluster_name }}-jump {{ jump_host_public_ip }} {{ hostvars[cluster_name + '-jump'].ansible_ssh_host }}
+              Host {{ cluster_name }}-jump {{ jump_host_public_ip }} {{ network_prefix }}.10
                   HostName {{ jump_host_public_ip }}
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: jump"
 
@@ -130,7 +141,6 @@
             dest: "{{ ssh_config_file }}"
             block: |
               Host {{ cluster_name }}-master {{ hostvars[cluster_name + '-master'].ansible_ssh_host }}
-                  ProxyCommand ssh -q cloud-user@{{ jump_host_public_ip }} nc %h %p
                   HostName {{ hostvars[cluster_name + '-master'].ansible_ssh_host }}
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: master"
 
@@ -141,7 +151,6 @@
             dest: "{{ ssh_config_file }}"
             block: |
               Host {{ cluster_name }}-nfs {{ hostvars[cluster_name + '-nfs'].ansible_ssh_host }}
-                  ProxyCommand ssh -q cloud-user@{{ jump_host_public_ip }} nc %h %p
                   HostName {{ hostvars[cluster_name + '-nfs'].ansible_ssh_host }}
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: nfs"
 
@@ -152,7 +161,6 @@
             dest: "{{ ssh_config_file }}"
             block: |
               Host {{ item }} {{ hostvars[item].ansible_ssh_host }}
-                  ProxyCommand ssh -q cloud-user@{{ jump_host_public_ip }} nc %h %p
                   HostName {{ hostvars[item].ansible_ssh_host }}
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: {{ item }}"
-          with_items: "{{ groups.nodes }}"
+          with_items: "{{ groups.nodes | d([]) }}"

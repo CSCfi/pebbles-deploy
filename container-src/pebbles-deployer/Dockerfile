@@ -1,23 +1,27 @@
-FROM centos:centos8.3.2011
+FROM quay.io/fedora/fedora:34
 
 LABEL maintainer="CSC Notebooks Team"
+RUN dnf makecache
 
 # Install base packages
 RUN dnf install -y \
-        openssh-clients \
-        python36-devel python3-pip \
-        gcc openssl-devel openssl \
-        jq \
-        tmux less git man bash-completion \
-        rsync \
-        glibc-langpack-en \
-        which \
-        bind-utils \
-        diffutils \
-        epel-release \
-        postgresql \
-        vim \
-        skopeo \
+    openssh-clients \
+    python-devel pip \
+    gcc openssl-devel openssl \
+    jq \
+    tmux less git man bash-completion \
+    rsync \
+    glibc-langpack-en \
+    which \
+    bind-utils \
+    diffutils \
+    findutils \
+    postgresql \
+    vim \
+    skopeo \
+    xz \
+    butane \
+    procps-ng \
  && dnf clean all
 
 # Add s3cmd from EPEL for dealing with Allas object storage with S3 credentials
@@ -25,14 +29,9 @@ RUN dnf install -y \
         s3cmd \
  && dnf clean all
 
-# Make python3 as the python for '#!/usr/bin/env python'
-RUN alternatives --set python /usr/bin/python3
-
 # Install python requirements
 COPY requirements.txt /root/requirements.txt
-RUN pip3 install --no-cache-dir -U pip
-RUN pip3 install --no-cache-dir -U setuptools
-RUN pip3 install --no-cache-dir -r /root/requirements.txt
+RUN pip install --no-cache-dir -r /root/requirements.txt
 
 # Install helm
 RUN cd /tmp/ \
@@ -66,8 +65,11 @@ RUN chgrp -R root /opt/deployment \
 # set pebbles-deploy ansible_dc.cfg as the default
 # when all deployments use pebbles-deploy, this can be unified to ansible.cfg
 ENV ANSIBLE_CONFIG=/opt/deployment/pebbles-deploy/ansible_dc.cfg
+
+# VIM is installed, so designate that as the default
 ENV EDITOR=vim
 
+# user content from this point on
 USER 29295
 
 WORKDIR /opt/deployment
