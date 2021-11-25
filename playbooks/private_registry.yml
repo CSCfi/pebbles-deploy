@@ -1,4 +1,4 @@
-- hosts: masters
+- hosts: masters, nodes
   gather_facts: yes
   become: yes
   tasks:
@@ -14,13 +14,31 @@
             dest: /etc/rancher/k3s/registries.yaml
             content: |
               mirrors:
-                "{{ ansible_ssh_host }}:5000":
+                "private-registry:5000":
                   endpoint:
-                    - "http://{{ ansible_ssh_host }}:5000"
+                    - "{{ hostvars[groups['masters'][0]].ansible_ssh_host }}:5000"
           register: k3s_file
 
-        - name: restart k3s service
-          systemd:
-            name: k3s-master
-            state: restarted
-          when: k3s_file.changed
+- hosts: masters
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: restart k3s service
+      systemd:
+        name: k3s-master
+        state: restarted
+      when:
+        - private_registry_enabled | default(false) | bool
+        - k3s_file.changed
+
+- hosts: nodes
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: restart k3s service
+      systemd:
+        name: k3s-agent
+        state: restarted
+      when:
+        - private_registry_enabled | default(false) | bool
+        - k3s_file.changed
