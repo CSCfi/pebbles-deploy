@@ -14,15 +14,18 @@ info:
 build-deployer-image:
   stage: build
   script:
-    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:latest container-src/pebbles-deployer/.
-    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:latest
-    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:latest $CI_DOCKER_REPOSITORY_PUBLIC/pebbles-deployer:latest
-    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/pebbles-deployer:latest
+    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:${CI_COMMIT_REF_NAME} container-src/pebbles-deployer/.
+    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:${CI_COMMIT_REF_NAME}
+    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:${CI_COMMIT_REF_NAME} $CI_DOCKER_REPOSITORY_PUBLIC/pebbles-deployer:${CI_COMMIT_REF_NAME}
+    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/pebbles-deployer:${CI_COMMIT_REF_NAME}
 
-    # if we are on master branch, create latest tags and push to PUBLISH repo
+    # if we are on master branch, push to PUBLISH repo
     - |
       if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer as latest"
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:master"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:master
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:master
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest"
         docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:latest $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest
       fi
@@ -30,15 +33,18 @@ build-deployer-image:
 build-logstash-image:
   stage: build
   script:
-    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:latest container-src/logstash/.
-    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/logstash:latest
-    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:latest $CI_DOCKER_REPOSITORY_PUBLIC/logstash:latest
-    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/logstash:latest
+    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:${CI_COMMIT_REF_NAME} container-src/logstash/.
+    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/logstash:${CI_COMMIT_REF_NAME}
+    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:${CI_COMMIT_REF_NAME} $CI_DOCKER_REPOSITORY_PUBLIC/logstash:${CI_COMMIT_REF_NAME}
+    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/logstash:${CI_COMMIT_REF_NAME}
 
-    # if we are on master branch, create latest tags and push to PUBLISH repo
+    # if we are on master branch push to PUBLISH repo
     - |
       if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/logstash as latest"
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/logstash:master"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:master $CI_DOCKER_REPOSITORY_PUBLISH/logstash:master
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/logstash:master
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest"
         docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:latest $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest
       fi
@@ -46,27 +52,31 @@ build-logstash-image:
 build-filebeat-image:
   stage: build
   script:
-    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:latest container-src/filebeat/.
-    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:latest
-    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:latest $CI_DOCKER_REPOSITORY_PUBLIC/filebeat:latest
-    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/filebeat:latest
+    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:${CI_COMMIT_REF_NAME} container-src/filebeat/.
+    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:${CI_COMMIT_REF_NAME}
+    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:${CI_COMMIT_REF_NAME} $CI_DOCKER_REPOSITORY_PUBLIC/filebeat:${CI_COMMIT_REF_NAME}
+    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/filebeat:${CI_COMMIT_REF_NAME}
 
-    # if we are on master branch, create latest tags and push to PUBLISH repo
+    # if we are on master branch push to PUBLISH repo
     - |
       if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/filebeat as latest"
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:master"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:master $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:master
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:master
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest"
         docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:latest $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
       fi
 
+# TODO: we could support testing matching images for pebbles and pebbles-frontend instead of always using master
 ci-pipeline:
   stage: ci-pipeline
-  needs: ['build-deployer-image']
+  needs: [ 'build-deployer-image' ]
   variables:
-    ENV_NAME: pebbles-ci-2
+    ENV_NAME: "${CI_ENV_NAME}"
     DEPROVISION_ENVIRONMENT: 1
-    PEBBLES_IMAGE_TAG: latest
-    PEBBLES_IMAGE_TAG: latest
+    PEBBLES_IMAGE_TAG: master
+    PEBBLES_FRONTEND_IMAGE_TAG: master
     PEBBLES_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
     PEBBLES_ENVIRONMENTS_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
     PEBBLES_DEPLOY_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
