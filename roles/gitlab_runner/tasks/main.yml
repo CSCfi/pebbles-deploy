@@ -32,11 +32,12 @@
         state: mounted
         fstype: xfs
 
-- name: Create vaultpass directory
+- name: Create vaultpass directory and make it readable by deployment container process that runs with gid 29295
   file:
     path: /dev/shm/secret
     state: directory
-    mode: '0700'
+    mode: '0770'
+    group: 29295
     seuser: system_u
     serole: object_r
     setype: container_file_t
