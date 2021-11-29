@@ -13,17 +13,17 @@
     - lib_docker_device is defined
   become: True
   block:
-    - name: check if docker device file exists
-      stat:
-        path: "{{ lib_docker_device }}"
-      register: lib_docker_device_check
+
+    # check if /var/lib/docker has been mounted already
+    - set_fact:
+        var_lib_docker_mounted: "{{ '/var/lib/docker' in ansible_mounts | map(attribute='mount') | list }}"
 
     - name: format docker storage device when using overlay2 storage driver
       filesystem:
         dev: "{{ lib_docker_device }}"
         fstype: xfs
         force: yes
-      when: not lib_docker_device_check.stat.exists
+      when: not var_lib_docker_mounted
 
     - name: mount docker storage device when using overlay2 storage driver
       mount:
