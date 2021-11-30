@@ -16,7 +16,7 @@
               mirrors:
                 "private-registry:5000":
                   endpoint:
-                    - "{{ hostvars[groups['masters'][0]].ansible_ssh_host }}:5000"
+                    - "http://{{ hostvars[groups['masters'][0]].ansible_ssh_host }}:5000"
           register: k3s_file
 
 - hosts: masters
