@@ -1,4 +1,4 @@
-- src: https://a3s.fi/notebooks-devel-public/ansible-role-k3s-38aeebe.tar.gz
+- src: https://a3s.fi/notebooks-devel-public/ansible-role-k3s-f0d5728956.tar.gz
   name: k3s
 
 - src: https://github.com/geerlingguy/ansible-role-nfs.git

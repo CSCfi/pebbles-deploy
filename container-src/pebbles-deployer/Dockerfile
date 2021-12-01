@@ -79,7 +79,7 @@ COPY deploy_functions.bash deploy_functions.bash
 
 # bake roles in the image to reduce dependencies
 RUN mkdir -p /opt/deployment/galaxy-roles/{k3s,nfs} \
- && curl https://a3s.fi/notebooks-devel-public/ansible-role-k3s-38aeebe.tar.gz \
+ && curl https://a3s.fi/notebooks-devel-public/ansible-role-k3s-f0d5728956.tar.gz \
   | tar xz -C /opt/deployment/galaxy-roles/k3s \
  && curl -L https://github.com/geerlingguy/ansible-role-nfs/archive/11e9802153ffe19709e1fd3d1e49beb0d641d760.tar.gz \
   | tar xz --strip-components=1 -C /opt/deployment/galaxy-roles/nfs
