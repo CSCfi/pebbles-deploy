@@ -39,6 +39,7 @@ dbCpuRequest: 100m
 dbCpuLimit: 1900m
 
 # Resources for frontend
+frontendReplicas: 1
 frontendMemoryRequest: 200Mi
 frontendMemoryLimit: 200Mi
 frontendCpuRequest: 100m
