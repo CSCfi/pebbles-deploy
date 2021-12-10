@@ -33,6 +33,9 @@ spec:
                   start_ts=$(date +%s)
                   echo "$(date -Is) backup starting"
 
+                  echo "$(date -Is) first check that db is responding"
+                  if pg_isready; then true; else echo "$(date -Is) cannot connect to db"; exit 1; fi
+
                   # construct backup file name
                   BACKUP_DIR=/backup/{{ .Values.backup.name }}
                   BACKUP_FILE_BASE="db-backup"

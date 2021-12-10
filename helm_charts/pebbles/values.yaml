@@ -124,6 +124,20 @@ clusterKubeconfig: |
   placeholder: "replace me with real kubeconfig"
 
 # ----------------------------------------------------------------------------
+# Optional database backups. Fill in the values, see backup-db-cronjob.yaml for details
+backupEnabled: false
+backup:
+  name: ''
+  jobImage: pebbles-deployer:latest
+  jobImagePullPolicy: Always
+  volumeSize: 10Gi
+  dbBackupSchedule: '*/15 * * * *'
+  keepDays: 1
+  s3BucketName: ''
+  s3cfg: ''
+  encryptPublicKey: ''
+
+# ----------------------------------------------------------------------------
 # Optional central logging
 
 # deploy logstash and filebeat sidecar containers
