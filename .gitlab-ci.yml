@@ -26,7 +26,7 @@ build-deployer-image:
         docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:master
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:master
         echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:latest $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest
       fi
 
@@ -45,7 +45,7 @@ build-logstash-image:
         docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:master $CI_DOCKER_REPOSITORY_PUBLISH/logstash:master
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/logstash:master
         echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:latest $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:master $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest
       fi
 
@@ -64,7 +64,7 @@ build-filebeat-image:
         docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:master $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:master
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:master
         echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:latest $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:master $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
       fi
 
