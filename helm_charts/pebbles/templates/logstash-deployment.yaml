@@ -26,7 +26,7 @@ spec:
       containers:
         - name: logstash
           image: {{ .Values.imagePrefix }}{{ .Values.logstashImage }}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.logstashImagePullPolicy }}
           resources:
             requests:
               cpu: {{ .Values.logstashCpuRequest }}

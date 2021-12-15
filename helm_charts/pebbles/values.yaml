@@ -14,6 +14,7 @@ dbImagePullPolicy: Always
 apiImagePullPolicy: Always
 workerImagePullPolicy: Always
 frontendImagePullPolicy: Always
+logstashImagePullPolicy: Always
 
 # Database volume size (undefined or empty means no persistent storage)
 #databaseVolumeSize: 1Gi
