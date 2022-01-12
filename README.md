@@ -1,6 +1,6 @@
-# Pebbles deployment playbook with HEAT
+# Pebbles deployment with Ansible, Heat and Helm
 
-This repository contains Ansible playbooks to deploy [Pebbles](https://github.com/CSCfi/pebbles)
+This repository contains Ansible playbooks and Helm charts to deploy [Pebbles](https://github.com/CSCfi/pebbles)
 on CSC's computing platforms. It could serve as an example for other deployments.
 
 ## Prerequisites for using these playbooks
@@ -15,8 +15,11 @@ All that is needed is
 
 For Pebbles release-4 version, see [Installation_release-4.md](Installation_release-4.md)
 
-For Pebbles release-5 version, see [Installation_release-5.md](Installation_release-5.md)
-(only instructions for local deployment now, remote OpenShift/K8s TODO)
+For setting up a local development environment, see 
+[Installation_for_local_development.md](Installation_for_local_development.md)
+
+For setting up a development environment on OpenShift for release-5, see 
+[Installation_on_openshift.md](Installation_on_openshift.md)
 
 For deploying a GitLab runner, see [Installation_gitlab_runner.md](Installation_gitlab_runner.md). 
 

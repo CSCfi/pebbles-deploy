@@ -141,7 +141,7 @@ initialize-pebbles-with-initial-data() {
     # create database structure
     oc rsh deployment/api python manage.py create_database
     # load initial data
-    oc rsh deployment/api python manage.py load_test_data /dev/stdin < /dev/shm/$ENV_NAME/initial_data.yaml
+    oc rsh deployment/api python manage.py load_data /dev/stdin < /dev/shm/$ENV_NAME/initial_data.yaml
     # reset worker password to default secret
     oc rsh deployment/api python manage.py reset_worker_password
 }
