@@ -33,14 +33,18 @@ branch-info() {
 restart-pebbles() {
 
     if [ -z "$1" ]; then
-        # by default, restart workloads that run our source code (api, frontend, worker)
-        oc rollout restart deployment/{api,frontend}
-        oc rollout restart statefulset/worker
-    else 
+        # by default, restart workloads that run our source code (api, frontend, worker) and wait for completion
+        for workload in statefulset/worker deployment/frontend deployment/api; do
+            oc rollout restart $workload
+            oc rollout status --timeout=300s $workload
+        done
+    else
         if [ "$1" = "worker" ]; then
-           oc rollout restart statefulset/worker
+            oc rollout restart statefulset/worker
+            oc rollout status --timeout=300s statefulset/worker
         else
-           oc rollout restart deployment/$1
+            oc rollout restart deployment/$1
+            oc rollout status --timeout=300s deployment/$1
         fi
     fi
 }
