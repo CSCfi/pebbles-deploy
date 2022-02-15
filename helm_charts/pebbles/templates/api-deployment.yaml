@@ -32,7 +32,16 @@ spec:
           command:
             - bash
             - -c
-            - until pg_isready -h db; do echo "waiting for db to respond"; sleep 2; done
+            - |
+              until pg_isready; do
+                echo "waiting for database $PGHOST:$PGPORT to respond"
+                sleep 2
+              done
+          env:
+            - name: PGHOST
+              value: "{{ .Values.databaseHost }}"
+            - name: PGPORT
+              value: "{{ .Values.databasePort }}"
 
       {{- if .Values.apiAutomigrateDb }}
         - name: automigration
