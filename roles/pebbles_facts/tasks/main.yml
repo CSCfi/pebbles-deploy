@@ -2,10 +2,16 @@
   set_fact:
     os_env_path: "{{ os_env_path|default('/opt/deployment/pebbles-environments') }}"
 
+- name: check if group vars for this environment exist in global group vars directory
+  stat:
+    path: "{{ os_env_path }}/group_vars/{{ cluster_name }}"
+  register: _stat_res
+
 - name: get context for current environment
   include_vars:
     dir: "{{ os_env_path }}/group_vars/{{ cluster_name }}"
   no_log: "{{ show_hidden_logs|d(False) == False }}"
+  when: _stat_res.stat.exists
 
 - name: figure out ssh_config_file location
   set_fact:

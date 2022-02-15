@@ -1,0 +1,17 @@
+---
+- name: Prepare
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Add public key to OpenStack for {{ cluster_name }}
+      os_keypair:
+        state: present
+        name: "{{ cluster_name }}"
+        public_key_file: "/dev/shm/{{ cluster_name }}/id_rsa.pub"
+
+- name: Provision VMs
+  hosts: dbservers
+  gather_facts: no
+  roles:
+    - db_vm
+

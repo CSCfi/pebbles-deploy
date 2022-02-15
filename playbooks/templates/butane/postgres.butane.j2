@@ -1,0 +1,72 @@
+# Butane file for creating ignition definition for postgresql on podman
+---
+variant: fcos
+version: 1.4.0
+systemd:
+  units:
+{% for db in databases %}
+    - name: postgres-{{ db.name }}.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run PostgreSQL in podman for {{ db.name }} on port {{ db.port }}
+        Wants=network-online.target
+
+        [Service]
+        ExecStart=/bin/podman run --name=postgres-{{ db.name }} \
+                                  --pull=always  \
+                                  --read-only \
+                                  --rm \
+                                  -e POSTGRES_USER=pebbles \
+                                  -e POSTGRES_DB=pebbles \
+                                  -e POSTGRES_PASSWORD="{{ db.password }}" \
+                                  -v /var/srv/postgres/{{ db.name }}:/var/lib/postgresql/data:z \
+                                  -p {{ db.port }}:5432 \
+                                  {{ db.image }} \
+                                    -c ssl=on \
+                                    -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem \
+                                    -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+        ExecStop=/bin/podman rm -f postgres-{{ db.name }}
+        [Install]
+        WantedBy=multi-user.target
+{% endfor %}
+
+    # disable zincati
+    - name: zincati.service
+      mask: true
+
+storage:
+  disks:
+  - device: /dev/vdb
+    partitions:
+    - number: 1
+      label: varsrv
+      size_mib: 0
+      resize: true
+  filesystems:
+    - path: /var/srv
+      device: /dev/disk/by-partlabel/varsrv
+      format: xfs
+      with_mount_unit: true
+
+  directories:
+    - path: /var/srv
+      mode: 0700
+      user:
+        name: root
+      group:
+        name: root
+{% for db in databases %}
+    - path: /var/srv/postgres/{{ db.name }}
+{% endfor %}
+  files:
+    # only do manual updates
+    - path: /etc/zincati/config.d/90-disable-auto-updates.toml
+      mode: 0644
+      contents:
+        inline: |
+          [updates]
+          enabled = false
+
+
+

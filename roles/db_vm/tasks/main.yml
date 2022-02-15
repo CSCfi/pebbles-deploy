@@ -1,0 +1,90 @@
+---
+
+- set_fact:
+    server_name: "{{ cluster_name }}-{{ inventory_hostname }}"
+
+# -----------------------------------------------------------------------------
+# create resources
+
+- name: security group
+  delegate_to: localhost
+  os_security_group:
+    state: present
+    name: "{{ server_name }}"
+    description: security group for database server {{ server_name }}
+
+- name: security group rules for ssh
+  with_items: "{{ allow_ssh_from }}"
+  delegate_to: localhost
+  os_security_group_rule:
+    security_group: "{{ server_name }}"
+    protocol: tcp
+    port_range_min: 22
+    port_range_max: 22
+    remote_ip_prefix: "{{ item }}"
+    state: present
+
+- name: security group rules for databases
+  delegate_to: localhost
+  os_security_group_rule:
+    security_group: "{{ server_name }}"
+    protocol: tcp
+    port_range_min: "{{ item.0.port }}"
+    port_range_max: "{{ item.0.port }}"
+    remote_ip_prefix: "{{ item.1 }}"
+    state: present
+  loop: "{{ databases|subelements('allow_access_from') }}"
+
+- name: os_volume
+  delegate_to: localhost
+  os_volume:
+    state: present
+    size: "{{ volume_size_gb }}"
+    display_name: "{{ server_name }}-data"
+    wait: yes
+
+# -----------------------------------------------------------------------------
+# create VM
+
+- name: render butane template
+  set_fact:
+    _butane_def: "{{ lookup('template', 'butane/postgres.butane.j2') }}"
+  no_log: true
+
+- name: create ignition from butane file
+  delegate_to: localhost
+  command: butane
+  args:
+    stdin: "{{ _butane_def }}"
+  register: _ignition_def
+  no_log: true
+
+- name: provision VM
+  delegate_to: localhost
+  os_server:
+    state: present
+    name: "{{ server_name }}"
+    image: "{{ image }}"
+    key_name: "{{ cluster_name }}"
+    timeout: 200
+    flavor: "{{ flavor }}"
+    auto_ip: false
+    network: "{{ network }}"
+    security_groups:
+      -  "{{ server_name }}"
+    wait: yes
+    userdata: "{{ _ignition_def.stdout | string }}"
+    volumes:
+      - "{{ server_name }}-data"
+  register: _os_server
+
+- name: attach floating ip to VM
+  delegate_to: localhost
+  os_floating_ip:
+    server: "{{ server_name }}"
+    floating_ip_address: "{{ public_ip }}"
+
+- name: lock server
+  delegate_to: localhost
+  shell: openstack server lock {{ server_name }}
+  when: lock_server | d(false) | bool

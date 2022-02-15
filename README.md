@@ -24,3 +24,5 @@ For setting up a development environment on OpenShift for release-5, see
 For deploying a GitLab runner, see [Installation_gitlab_runner.md](Installation_gitlab_runner.md). 
 
 For deploying K3s for deploying user workloads and/or Pebbles, see [Installation_k3s.md](Installation_k3s.md).
+
+For deploying a bunch of Postgresql databases, see [Installation_db_farm.md](Installation_db_farm.md). 
