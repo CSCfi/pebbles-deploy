@@ -49,8 +49,38 @@ restart-pebbles() {
     fi
 }
 
+# extract keys from Helm values on ramdisk
+extract-from-helm-values() {
+  cat /dev/shm/pebbles-devel-2/values.yaml \
+  | python -c 'import json, sys, yaml ; y=yaml.safe_load(sys.stdin.read()) ; json.dump(y, sys.stdout)' \
+  | jq -r ".$1"
+}
+
+# open psql in database pod
 db-shell() {
-   oc rsh $(oc get pod -o name -l name=db) bash -c 'psql -d pebbles'
+   oc rsh deployment/db bash -c 'psql -d pebbles'
+}
+
+# open psql in external database
+db-shell-external() {
+    # extract database host and port from Helm values
+    export PGHOST=$(extract-from-helm-values databaseHost)
+    export PGPORT=$(extract-from-helm-values databasePort)
+
+    # extract db password from pebbles secret
+    db_password=$(oc get secret pebbles -o json | jq -r '.data["database-password"]' | base64 -d)
+
+    # create a password file
+    export PGPASSFILE=/dev/shm/$ENV_NAME/.pgpass
+    touch $PGPASSFILE && chmod 600 $PGPASSFILE
+    # hostname:port:database:username:password
+    echo "$PGHOST:$PGPORT:pebbles:pebbles:$db_password" > $PGPASSFILE
+    unset db_password
+
+    # finally open the shell
+    psql -U pebbles
+
+    rm $PGPASSFILE
 }
 
 # Useful when developing Helm charts when generated values.yaml needs to be updated after inventory changes.
