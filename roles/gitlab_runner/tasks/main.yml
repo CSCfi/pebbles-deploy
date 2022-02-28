@@ -69,17 +69,25 @@
     state: started
     enabled: yes
 
-- name: add docker config directory
+- name: add docker config directories from root_docker_configs dict
   file:
-    dest: /root/.docker
+    dest: "/root/.docker/{{ item.key }}"
     state: directory
     mode: "0600"
+  loop: "{{ root_docker_configs | dict2items }}"
 
-- name: add docker config
+- name: add docker config files from root_docker_configs dict
   copy:
-    dest: /root/.docker/config.json
-    content: "{{ root_docker_config | to_json }}"
+    dest: "/root/.docker/{{ item.key }}/config.json"
+    content: "{{ item.value | to_json }}"
     mode: "0600"
+  loop: "{{ root_docker_configs | dict2items }}"
+
+- name: symlink default docker config
+  file:
+    src: /root/.docker/default/config.json
+    dest: /root/.docker/config.json
+    state: link
 
 - name: setup repo for gitlab runner
   template:
