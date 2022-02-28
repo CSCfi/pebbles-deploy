@@ -130,6 +130,7 @@
     {% endfor %}
     --docker-privileged="true"
     --docker-image="alpine:latest"
+    --docker-pull-policy="if-not-present"
     --description="docker-runner"
     --tag-list="docker"
     --run-untagged="true"
