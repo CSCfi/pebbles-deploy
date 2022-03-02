@@ -6,7 +6,7 @@ RUN dnf makecache
 # Install base packages
 RUN dnf install -y \
     openssh-clients \
-    python-devel pip \
+    python python-devel pip \
     gcc openssl-devel openssl \
     jq \
     tmux less git man bash-completion \
