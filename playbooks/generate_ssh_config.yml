@@ -187,7 +187,7 @@
             mode: '0600'
             dest: "{{ ssh_config_file|default('/opt/deployment/.ssh/config') }}"
             block: |
-              Host {{ cluster_name }}{{ item }}
+              Host {{ cluster_name }}-{{ item }}
                   User core
                   HostName {{ hostvars[item].public_ip }}
                   ForwardAgent no
@@ -195,5 +195,5 @@
                   StrictHostKeyChecking no
                   UserKnownHostsFile /dev/null
                   IdentityFile /dev/shm/{{ cluster_name }}/id_rsa
-            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}{{ item }}"
+            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}-{{ item }}"
           with_items: "{{ groups.dbservers | d([]) }}"
