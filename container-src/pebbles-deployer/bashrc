@@ -51,7 +51,7 @@ restart-pebbles() {
 
 # extract keys from Helm values on ramdisk
 extract-from-helm-values() {
-  cat /dev/shm/pebbles-devel-2/values.yaml \
+  cat /dev/shm/$ENV_NAME/values.yaml \
   | python -c 'import json, sys, yaml ; y=yaml.safe_load(sys.stdin.read()) ; json.dump(y, sys.stdout)' \
   | jq -r ".$1"
 }
