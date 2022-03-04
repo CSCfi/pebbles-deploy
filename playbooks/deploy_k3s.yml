@@ -53,6 +53,10 @@
       stat:
         path: "/etc/exports"
       register: stat_etc_exports
+
+    - name: force ansible_os_family for nfs role
+      set_fact:
+        ansible_os_family: 'RedHat'
   roles:
     - name: pebbles_facts
 
