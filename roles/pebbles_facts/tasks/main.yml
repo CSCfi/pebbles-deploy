@@ -3,6 +3,8 @@
     os_env_path: "{{ os_env_path|default('/opt/deployment/pebbles-environments') }}"
 
 - name: check if group vars for this environment exist in global group vars directory
+  become: no
+  delegate_to: localhost
   stat:
     path: "{{ os_env_path }}/group_vars/{{ cluster_name }}"
   register: _stat_res
