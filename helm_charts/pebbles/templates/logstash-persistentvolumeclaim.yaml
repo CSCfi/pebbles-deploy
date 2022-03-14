@@ -7,7 +7,7 @@ metadata:
     helm.sh/resource-policy: keep
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   {{- if .Values.logstashStorageClass }}
   storageClassName: {{ .Values.logstashStorageClass }}
   {{- end }}
