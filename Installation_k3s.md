@@ -29,6 +29,9 @@ cd pebbles-deploy
 ansible-playbook -v playbooks/deploy_fcos_node.yml
 ```
 
+Optionally, you can add `-e fcos_upgrade_on_first_boot=1` to the playbook command to upgrade the OS to the latest
+during the first boot.
+
 ## Deprovisioning
 
 First remove the node VMs.

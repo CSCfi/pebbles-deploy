@@ -4,11 +4,39 @@ variant: fcos
 version: 1.4.0
 systemd:
   units:
+{% if fcos_upgrade_on_first_boot | d(false) | bool %}
+    - name: oneshot-system-upgrade.service
+      enabled: true
+      contents: |
+        [Unit]
+        After=network-online.target
+        Wants=network-online.target
+        Before=systemd-user-sessions.service
+        OnFailure=emergency.target
+        OnFailureJobMode=replace-irreversibly
+        ConditionPathExists=!/var/lib/system-upgraded
+
+        [Service]
+        RemainAfterExit=yes
+        Type=oneshot
+        ExecStart=/usr/bin/rpm-ostree upgrade
+        ExecStartPost=/usr/bin/touch /var/lib/system-upgraded
+        ExecStartPost=/usr/bin/systemctl --no-block reboot
+
+        [Install]
+        WantedBy=multi-user.target
+{% endif %}
+
 {% for db in databases %}
     - name: postgres-{{ db.name }}.service
       enabled: true
       contents: |
         [Unit]
+{% if fcos_upgrade_on_first_boot | d(false) | bool %}
+        After=oneshot-system-upgrade.service
+{% else %}
+        After=network-online.target
+{% endif %}
         Description=Run PostgreSQL in podman for {{ db.name }} on port {{ db.port }}
         Wants=network-online.target
 
@@ -23,9 +51,9 @@ systemd:
                                   -v /var/srv/postgres/{{ db.name }}:/var/lib/postgresql/data:z \
                                   -p {{ db.port }}:5432 \
                                   {{ db.image }} \
-                                    -c ssl=on \
-                                    -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem \
-                                    -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+                                  -c ssl=on \
+                                  -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem \
+                                  -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
         ExecStop=/bin/podman rm -f postgres-{{ db.name }}
         [Install]
         WantedBy=multi-user.target

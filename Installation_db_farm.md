@@ -60,6 +60,9 @@ cd pebbles-deploy
 ansible-playbook -v playbooks/site_db_farm.yml
 ```
 
+Optionally, you can add `-e fcos_upgrade_on_first_boot=1` to the playbook command to upgrade the OS to the latest
+during the first boot.
+
 ## Deprovisioning
 
 Simply remove the VMs, security groups and related volumes.

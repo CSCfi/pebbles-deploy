@@ -8,7 +8,7 @@ kernel_arguments:
     - systemd.unified_cgroup_hierarchy=0
 systemd:
   units:
-{% if server_upgrade_on_first_boot | d(false) | bool %}
+{% if fcos_upgrade_on_first_boot | d(false) | bool %}
     - name: oneshot-system-upgrade.service
       enabled: true
       contents: |
@@ -35,7 +35,7 @@ systemd:
       enabled: true
       contents: |
         [Unit]
-{% if server_upgrade_on_first_boot | d(false) | bool %}
+{% if fcos_upgrade_on_first_boot | d(false) | bool %}
         After=oneshot-system-upgrade.service
 {% else %}
         After=network-online.target
