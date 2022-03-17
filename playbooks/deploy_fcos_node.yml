@@ -68,14 +68,4 @@
         userdata: "{{ ignition_def.stdout | string }}"
       register: _os_server
 
-    - name: add ssh-config entry
-      blockinfile:
-        create: yes
-        mode: '0600'
-        dest: "{{ ssh_config_file }}"
-        insertbefore: BOF
-        block: |
-          Host {{ server_name }} {{ _os_server.server.private_v4 }}
-              ProxyCommand ssh -q cloud-user@{{ jump_host_public_ip }} nc %h %p
-              HostName {{ _os_server.server.private_v4 }}
-        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ server_name }}"
+- include: generate_ssh_config.yml

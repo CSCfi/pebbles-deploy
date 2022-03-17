@@ -122,13 +122,12 @@
             dest: "{{ ssh_config_file }}"
             block: |
               Host {{ cluster_name }}-* {{  network_prefix }}.* {{ jump_host_public_ip }} {{ master_public_ip }}
-                User cloud-user
-                ForwardAgent no
-                GSSAPIAuthentication no
-                StrictHostKeyChecking no
-                UserKnownHostsFile /dev/null
-                IdentityFile /dev/shm/{{ cluster_name }}/id_rsa
-                ServerAliveInterval 120
+                  ForwardAgent no
+                  GSSAPIAuthentication no
+                  StrictHostKeyChecking no
+                  UserKnownHostsFile /dev/null
+                  IdentityFile /dev/shm/{{ cluster_name }}/id_rsa
+                  ServerAliveInterval 120
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} common"
 
         - name: add ssh config entry for jump host
@@ -138,6 +137,7 @@
             dest: "{{ ssh_config_file }}"
             block: |
               Host {{ cluster_name }}-jump {{ jump_host_public_ip }} {{ network_prefix }}.10
+                  User cloud-user
                   HostName {{ jump_host_public_ip }}
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: jump"
 
@@ -148,6 +148,7 @@
             dest: "{{ ssh_config_file }}"
             block: |
               Host {{ cluster_name }}-master {{ hostvars[cluster_name + '-master'].ansible_ssh_host }}
+                  User cloud-user
                   HostName {{ hostvars[cluster_name + '-master'].ansible_ssh_host }}
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: master"
 
@@ -158,19 +159,39 @@
             dest: "{{ ssh_config_file }}"
             block: |
               Host {{ cluster_name }}-nfs {{ hostvars[cluster_name + '-nfs'].ansible_ssh_host }}
+                  User cloud-user
                   HostName {{ hostvars[cluster_name + '-nfs'].ansible_ssh_host }}
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: nfs"
 
-        - name: add ssh config entry for nodes
+        - name: add ssh config entry for nodes (static)
           blockinfile:
             create: yes
             mode: '0600'
             dest: "{{ ssh_config_file }}"
             block: |
               Host {{ item }} {{ hostvars[item].ansible_ssh_host }}
+                  User cloud-user
                   HostName {{ hostvars[item].ansible_ssh_host }}
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: {{ item }}"
           with_items: "{{ groups.nodes | d([]) }}"
+
+        - name: list node VMs
+          os_server_facts:
+            server: "{{ cluster_name }}-node-*"
+          register: _os_server_facts
+
+        - name: add ssh config entry for nodes (dynamic)
+          blockinfile:
+            create: yes
+            mode: '0600'
+            dest: "{{ ssh_config_file }}"
+            block: |
+              Host {{ item.name }} {{ item.private_v4 }}
+                  User core
+                  HostName {{ item.private_v4 }}
+            marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: {{ item.name }}"
+          with_items: "{{ _os_server_facts.ansible_facts.openstack_servers }}"
+          when: item.name not in groups.nodes
 
     # db-farm
     - when:
