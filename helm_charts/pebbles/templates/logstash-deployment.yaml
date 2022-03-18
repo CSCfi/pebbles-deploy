@@ -12,6 +12,7 @@ spec:
       name: logstash
   strategy:
     type: Recreate
+  revisionHistoryLimit: 1
   template:
     metadata:
       labels:

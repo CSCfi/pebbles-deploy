@@ -13,6 +13,7 @@ spec:
       name: db
   strategy:
     type: Recreate
+  revisionHistoryLimit: 1
   template:
     metadata:
       labels:

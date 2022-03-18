@@ -11,6 +11,7 @@ spec:
       name: api
   strategy:
     type: RollingUpdate
+  revisionHistoryLimit: 1
   template:
     metadata:
       labels:

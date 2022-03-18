@@ -13,6 +13,7 @@ spec:
       name: oauth2-proxy
   strategy:
     type: RollingUpdate
+  revisionHistoryLimit: 1
   template:
     metadata:
       labels:
