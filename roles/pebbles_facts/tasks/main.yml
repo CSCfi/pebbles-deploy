@@ -9,11 +9,15 @@
     path: "{{ os_env_path }}/group_vars/{{ cluster_name }}"
   register: _stat_res
 
+- name: set a fact to indicate an old inventory format
+  set_fact:
+    env_uses_shared_group_vars: "{{ _stat_res.stat.exists | bool }}"
+
 - name: get context for current environment
   include_vars:
     dir: "{{ os_env_path }}/group_vars/{{ cluster_name }}"
   no_log: "{{ show_hidden_logs|d(False) == False }}"
-  when: _stat_res.stat.exists
+  when: env_uses_shared_group_vars
 
 - name: figure out ssh_config_file location
   set_fact:
