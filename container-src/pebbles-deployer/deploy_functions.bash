@@ -109,20 +109,14 @@ list-image-tags() {
 
 # blocks until API pod is ready
 wait-for-api-readiness() {
-    while echo 'wait for api readiness'; do
-        # we grep for readiness for deployments with a single container or with a logging sidecar container
-        oc get pod -l name=api | egrep '1/1|2/2' | grep Running && break
-        sleep 5
-    done
+    echo 'waiting for api to be available'
+    oc wait --for=condition=Available --timeout=600s deployment/api
 }
 
 # blocks until worker-0 pod is ready
 wait-for-worker-readiness() {
-    while echo 'wait for worker-0 readiness'; do
-        # we grep for readiness for deployments with a single container or with a logging sidecar container
-        oc get pod worker-0 | egrep '1/1|2/2' | grep Running && break
-        sleep 5
-    done
+    echo 'waiting for worker pod readiness'
+    oc wait --for=condition=Ready --timeout=600s pod -l name=worker
 }
 
 # initializes system with given admin password
