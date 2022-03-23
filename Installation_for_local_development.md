@@ -27,7 +27,7 @@ Here is how to deploy nginx ingress controller for docker for mac
 https://kubernetes.github.io/ingress-nginx/deploy/
 
 ```shell script
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.49.0/deploy/static/provider/cloud/deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/1.22/deploy.yaml
 ```
 
 And here is how you enable it on minikube:
@@ -152,6 +152,7 @@ apiDisableCORS: true
 #remoteDebugServerWorker: host.docker.internal
 #remoteDebugServerApi: host.docker.internal
 ingressHost: localhost
+ingressClass: nginx
 databaseVolumeSize: 1Gi
 
 deployCentralLogging: false
@@ -167,6 +168,7 @@ clusterConfig: |
   clusters:
     - name: local_kubernetes
       driver: KubernetesLocalDriver
+      ingressClass: nginx
 ```
 
 Note the image pull policies that make it possible to use locally build images already present in Docker.

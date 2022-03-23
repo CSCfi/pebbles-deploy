@@ -8,6 +8,10 @@ metadata:
     app: frontend
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    {{- if .Values.ingressClass }}
+    kubernetes.io/ingress.class: "{{ .Values.ingressClass }}"
+    {{- end}}
+
 spec:
   rules:
     - host: {{ .Values.ingressHost }}

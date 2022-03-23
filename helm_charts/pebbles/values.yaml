@@ -73,6 +73,9 @@ ingressType: Ingress
 # Ingress host
 ingressHost: localhost
 
+# Optional ingress class, that gets set in kubernetes.io/ingress.class annotations
+#ingressClass: nginx
+
 # IP whitelist for limiting connectivity to given ranges
 #ipWhitelist: '192.168.1.0/24 10.0.0.1'
 
