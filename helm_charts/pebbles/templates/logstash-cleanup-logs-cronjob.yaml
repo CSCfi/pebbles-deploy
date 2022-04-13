@@ -35,33 +35,41 @@ spec:
 
                   if [[ $log_files ]]; then
                      start_ts=$(date -Is -d "$(date -Is) - 31 days")
+                     echo "cleaning up files older than $start_ts"
+
                      LOGSTASH_BACKUP_DIR=/opt/log/{{ .Values.backup.name }}
                      LOGSTASH_BACKUP_FILE="${LOGSTASH_BACKUP_DIR}/logs-backup-$start_ts"
                      # create backup directory
                      mkdir -p ${LOGSTASH_BACKUP_DIR}
-                     tar cvf ${LOGSTASH_BACKUP_FILE}.tar.gz $log_files
+                     tar cvfz ${LOGSTASH_BACKUP_FILE}.tar.gz $log_files
 
                      echo "import public key and set trust"
                      echo "$ENCRYPT_PUBLIC_KEY"  | gpg --batch --no-tty --import
                      echo -e 'trust\n5\ny\n'  | gpg --batch --no-tty --command-fd 0 --edit-key backup
-                     gpg --encrypt --batch --no-tty --recipient backup --compress-level 9 ${LOGSTASH_BACKUP_FILE}.tar.gz
 
-                     # remove the unencrypted files
-                     rm -rf ${LOGSTASH_BACKUP_FILE}.tar.gz
+                     echo "encrypt log tarball"
+                     gpg --encrypt --batch --no-tty --recipient backup ${LOGSTASH_BACKUP_FILE}.tar.gz
+                     # remove the unencrypted tarball
+                     rm -f ${LOGSTASH_BACKUP_FILE}.tar.gz
 
                      echo "synchronizing to object storage"
                      s3cmd -c /run/secret/s3cfg sync  \
                         ${LOGSTASH_BACKUP_DIR} s3://{{ .Values.backup.s3LogsBucketName }}
 
-                     # importing a private key and decryption to standard out would be
+                     echo "removing files older than $start_ts"
+                     rm -v $log_files
+
+                     # Oneliners for debug pod
+                     #
+                     # import a private key
                      # gpg --batch --no-tty --import
                      # (paste private key followed by ctrl-d)
+                     #
+                     # decrypt to standard out
                      # gpg --pinentry-mode=loopback --batch --passphrase=PASSPHRASE <  ${BACKUP_FILE}
-                     # To output decrypted contents in file
-                     # gpg --batch --passphrase=PASSPHRASE --output <filename> --decrypt **.tar.gz.gpg
-
-                     # clean up the files older than 31 days
-                     rm $log_files
+                     #
+                     # output decrypted contents from INFILE to OUTFILE
+                     # gpg --pinentry-mode=loopback --batch --passphrase=PASSPHRASE --output OUTFILE --decrypt INFILE
                   else
                     echo "nothing to do"
                   fi
