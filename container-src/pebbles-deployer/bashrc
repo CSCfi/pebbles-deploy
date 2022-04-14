@@ -88,6 +88,10 @@ refresh-ramdisk() {
   (cd /opt/deployment/pebbles-deploy && ansible-playbook playbooks/initialize_ramdisk.yml)
 }
 
+# Alias to convert yaml to json using python.
+# example: cat /dev/shm/$ENV_NAME/values.yaml | yaml2json | jq -r '.clusterKubeconfig' > ~/.kube/config-clusters
+alias yaml2json="python3 -c 'import sys, yaml, json; y=yaml.safe_load(sys.stdin.read()); print(json.dumps(y))'"
+
 # All non-printable output should be enclosed in '\[\]' to avoid bash evaluating the prompt length wrong,
 # which will in turn cause line wrapping issues
 # https://unix.stackexchange.com/questions/105958/terminal-prompt-not-wrapping-correctly
