@@ -89,6 +89,26 @@
     dest: /root/.docker/config.json
     state: link
 
+- name: create ssh directory for mirror keys
+  file:
+    path: /root/ssh/
+    state: directory
+    mode: '0600'
+
+- name: add ssh directories from root_ssh_keys dict
+  file:
+    dest: "/root/ssh/{{ item.key }}"
+    state: directory
+    mode: "0600"
+  loop: "{{ root_ssh_keys | dict2items }}"
+
+- name: add ssh key files from root_ssh_keys dict
+  copy:
+    dest: "/root/ssh/{{ item.key }}/id_rsa"
+    content: "{{ item.value }}"
+    mode: "0600"
+  loop: "{{ root_ssh_keys | dict2items }}"
+
 - name: setup repo for gitlab runner
   template:
     src: etc/yum.repos.d/runner_gitlab-runner.repo

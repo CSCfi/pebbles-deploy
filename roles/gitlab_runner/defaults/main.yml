@@ -5,4 +5,7 @@ gitlab_runner_concurrency: 1
 runner_volumes: []
 
 # /root/.docker/config.json content in yaml format, used for credentials
-root_docker_config: {}
+root_docker_configs: {}
+
+# ssh keys in yaml format, used for github mirroring
+root_ssh_keys: {}
