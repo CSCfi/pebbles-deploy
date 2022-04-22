@@ -1,0 +1,95 @@
+#
+# This playbook obtains ACME certificate with a predefined account and places it in inventory.
+#
+# Required inventory variables:
+#  - certbot_config.{email,eab_kid,eab_hmac_key,server}
+#  - domain_name
+#
+# You can specify additional configuration options to certbot with certbot_extra_options
+#
+# The certificates are left in the standard location under /etc/letsencrypt, so remove those
+# manually if necessary.
+#
+---
+
+- name: Obtain certificate
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: create certbot config
+      copy:
+        dest: /dev/shm/{{ cluster_name }}/certbot.conf
+        mode: '0600'
+        content: |
+          # Ansible generated certbot config
+
+          email = {{ certbot_config.email }}
+          eab-kid = {{ certbot_config.eab_kid }}
+          eab-hmac-key = {{ certbot_config.eab_hmac_key }}
+          server = {{ certbot_config.server }}
+
+          work-dir = /dev/shm/{{ cluster_name }}/certbot
+          logs-dir = /dev/shm/{{ cluster_name }}/certbot/logs
+
+          agree-tos = true
+          authenticator = standalone
+          no-eff-email = true
+
+    - name: obtain a certificate with certbot
+      shell: >
+        certbot certonly -n --standalone -c /dev/shm/{{ cluster_name }}/certbot.conf
+        --domain {{ domain_name }}
+        {{ certbot_extra_options | default('') }}
+      args:
+        creates: /etc/letsencrypt/live/{{ domain_name }}/privkey.pem
+
+    - name: get new certificate
+      slurp:
+        src: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem
+      register: new_cert_fullchain
+
+    - set_fact:
+        new_cert_fullchain: "{{ new_cert_fullchain['content'] }}"
+
+    - name: get new certificate key
+      slurp:
+        src: /etc/letsencrypt/live/{{ domain_name }}/privkey.pem
+      register: new_cert_privkey
+
+    - set_fact:
+        new_cert_privkey: "{{ new_cert_privkey['content'] }}"
+
+    - name: set target directory depending on inventory style
+      set_fact:
+        cert_target_dir: >-
+          {{ env_uses_shared_group_vars | ternary("group_vars/" + cluster_name, cluster_name + "/group_vars/all") }}
+
+    - name: write new certificate
+      copy:
+        dest: /opt/deployment/pebbles-environments/{{ cert_target_dir }}/cert.yml
+        content: |
+          # Ansible generated certificate file
+          ---
+          public_ssl_cert_chain: |
+            {{ new_cert_fullchain | b64decode | indent(width=2) }}
+
+    - name: write new certificate vault, first unencrypted
+      copy:
+        dest: /tmp/temp_vault_cert.yaml
+        content: |
+          # Ansible generated certificate file
+          ---
+          vaulted_private_ssl_key: |
+            {{ new_cert_privkey | b64decode | indent(width=2) }}
+
+    - name: encrypt the vault file
+      shell: >
+        ansible-vault encrypt /tmp/temp_vault_cert.yaml
+        --output /opt/deployment/pebbles-environments/{{ cert_target_dir }}/vault_cert.yml
+
+    - name: delete the temporary vault file
+      file:
+        path: /tmp/temp_vault_cert.yaml
+        state: absent

@@ -22,6 +22,7 @@ RUN dnf install -y \
     xz \
     butane \
     procps-ng \
+    certbot \
  && dnf clean all
 
 # Add s3cmd from EPEL for dealing with Allas object storage with S3 credentials
@@ -61,6 +62,9 @@ RUN useradd -u 29295 -g deployer -d /opt/deployment deployer
 RUN chgrp -R root /opt/deployment \
  && find /opt/deployment -type d -exec chmod g+rwx,o+rx {} \; \
  && find /opt/deployment -type f -exec chmod g+rw {} \;
+
+# make certbot directory writable
+RUN mkdir -p /etc/letsencrypt && chown -R 29295:0 /etc/letsencrypt
 
 # set pebbles-deploy ansible_dc.cfg as the default
 # when all deployments use pebbles-deploy, this can be unified to ansible.cfg
