@@ -51,14 +51,14 @@ restart-pebbles() {
 
 # extract keys from Helm values on ramdisk
 extract-from-helm-values() {
-  cat /dev/shm/$ENV_NAME/values.yaml \
-  | python -c 'import json, sys, yaml ; y=yaml.safe_load(sys.stdin.read()) ; json.dump(y, sys.stdout)' \
-  | jq -r ".$1"
+    cat /dev/shm/$ENV_NAME/values.yaml \
+    | python -c 'import json, sys, yaml ; y=yaml.safe_load(sys.stdin.read()) ; json.dump(y, sys.stdout)' \
+    | jq -r ".$1"
 }
 
 # open psql in database pod
 db-shell() {
-   oc rsh deployment/db bash -c 'psql -d pebbles'
+    oc rsh deployment/db bash -c 'psql -d pebbles'
 }
 
 # open psql in external database
@@ -85,12 +85,17 @@ db-shell-external() {
 
 # Useful when developing Helm charts when generated values.yaml needs to be updated after inventory changes.
 refresh-ramdisk() {
-  (cd /opt/deployment/pebbles-deploy && ansible-playbook playbooks/initialize_ramdisk.yml)
+    (cd /opt/deployment/pebbles-deploy && ansible-playbook playbooks/initialize_ramdisk.yml)
 }
 
 # Alias to convert yaml to json using python.
 # example: cat /dev/shm/$ENV_NAME/values.yaml | yaml2json | jq -r '.clusterKubeconfig' > ~/.kube/config-clusters
 alias yaml2json="python3 -c 'import sys, yaml, json; y=yaml.safe_load(sys.stdin.read()); print(json.dumps(y))'"
+
+# Alias to list application images using manage.py. Turn off debug to get clean output
+list-application-images() {
+    oc rsh -c api deployment/api bash -c 'PB_DEBUG=0 ./manage.py list_application_images'
+}
 
 # All non-printable output should be enclosed in '\[\]' to avoid bash evaluating the prompt length wrong,
 # which will in turn cause line wrapping issues
