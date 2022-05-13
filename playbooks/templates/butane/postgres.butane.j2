@@ -41,6 +41,8 @@ systemd:
         Wants=network-online.target
 
         [Service]
+        # make sure a container does not exist after an unclean shutdown (leading dash to ignore errors)
+        ExecStartPre=-/bin/podman rm -f postgres-{{ db.name }}
         ExecStart=/bin/podman run --name=postgres-{{ db.name }} \
                                   --pull=always  \
                                   --read-only \
