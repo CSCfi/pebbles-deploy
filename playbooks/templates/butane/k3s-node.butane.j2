@@ -113,7 +113,7 @@ storage:
           mirrors:
             "private-registry:5000":
               endpoint:
-                - "http://{{ hostvars[groups['masters'][0]].ansible_ssh_host }}:5000"
+                - "http://{{ master_vm_ip }}:5000"
 
     # only do manual updates
     - path: /etc/zincati/config.d/90-disable-auto-updates.toml
