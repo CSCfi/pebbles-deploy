@@ -173,13 +173,20 @@ oauth2LoginEnabled: false
 
 # oauth2-proxy basic deployment config
 oauth2ProxyReplicas: 1
-oauth2ProxyImage: quay.io/oauth2-proxy/oauth2-proxy:v7.1.3
+oauth2ProxyImage: quay.io/oauth2-proxy/oauth2-proxy:v7.3.0
+
+# oauth2-proxy redis backend, sclorg image
+oauth2ProxyRedisImage: quay.io/centos7/redis-5-centos7:20220610
+oauth2ProxyRedisArgs: ['run-redis', '--bind', '127.0.0.1', '--logfile', '/opt/log/oauth2-proxy-redis.log']
+# alternative way: use official Redis image
+#oauth2ProxyRedisImage: redis:7.0.1
+#oauth2ProxyRedisArgs: ['--bind', '127.0.0.1', '--logfile', '/opt/log/oauth2-proxy-redis.log']
 
 # Resources for oauth2-proxy
 oauth2MemoryRequest: 512Mi
 oauth2MemoryLimit: 512Mi
 oauth2CpuRequest: 100m
-oauth2CpuLimit: 1900m
+oauth2CpuLimit: 1800m
 
 # Callback URL for the proxy. The default is for local K8s deployment
 oauth2ProxyRedirectUrl: http://localhost/oauth2/callback

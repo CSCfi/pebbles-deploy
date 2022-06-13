@@ -32,6 +32,8 @@ spec:
             - --logging-filename=/opt/log/oauth2-proxy.log
             - --silence-ping-logging
             - --skip-provider-button
+            - --session-store-type=redis
+            - --redis-connection-url=redis://localhost:6379
           env:
             {{- if .Values.oauth2ProxyProvider }}
             - name: OAUTH2_PROXY_PROVIDER
@@ -100,6 +102,22 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 1
+          volumeMounts:
+            - mountPath: /opt/log
+              name: log
+        - name: redis
+          image: {{ .Values.oauth2ProxyRedisImage }}
+          imagePullPolicy: IfNotPresent
+          {{- if .Values.oauth2ProxyRedisArgs }}
+          args: {{ .Values.oauth2ProxyRedisArgs | toJson }}
+          {{- end }}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
           volumeMounts:
             - mountPath: /opt/log
               name: log
