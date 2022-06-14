@@ -4,7 +4,10 @@ requests-oauthlib==1.2.0
 openshift==0.11.0
 
 python-heatclient==1.18.0
+python-novaclient==17.7.0
 python-openstackclient==4.0.0
+python-swiftclient==3.13.1
+openstacksdk==0.61.0
 
 # Fix Jinja2 for ansible
 Jinja2<3.1
