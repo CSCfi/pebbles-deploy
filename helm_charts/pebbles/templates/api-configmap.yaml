@@ -58,6 +58,9 @@ data:
     AGREEMENT_LOGO_PATH: {{ .Values.agreementLogoPath }}
     {{- end }}
 
+    {{- if .Values.serviceAnnouncement }}
+    SERVICE_ANNOUNCEMENT: {{ .Values.serviceAnnouncement }}
+    {{- end }}
   faq-content.yaml: |
 {{- if .Values.faq }}
 {{ .Values.faq | indent 4}}
