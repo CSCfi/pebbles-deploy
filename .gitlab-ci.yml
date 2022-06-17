@@ -69,6 +69,25 @@ build-filebeat-image:
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
       fi
 
+build-k3s-autoscaler-image:
+  stage: build
+  script:
+    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:${CI_COMMIT_REF_NAME} container-src/k3s-autoscaler/.
+    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:${CI_COMMIT_REF_NAME}
+    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:${CI_COMMIT_REF_NAME} $CI_DOCKER_REPOSITORY_PUBLIC/k3s-autoscaler:${CI_COMMIT_REF_NAME}
+    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/k3s-autoscaler:${CI_COMMIT_REF_NAME}
+
+    # if we are on master branch push to PUBLISH repo
+    - |
+      if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:master"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:master $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:master
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:master
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:latest"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:master $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:latest
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:latest
+      fi
+
 # TODO: we could support testing matching images for pebbles and pebbles-frontend instead of always using master
 ci-pipeline:
   stage: ci-pipeline

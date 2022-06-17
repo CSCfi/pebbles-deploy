@@ -1,0 +1,129 @@
+---
+- name: Install k3s-autoscaler
+  hosts: jump_host
+  gather_facts: no
+  become: yes
+  roles:
+    - pebbles_facts
+  tasks:
+    - when: autoscaler_enabled | d(false) | bool
+      block:
+        - name: install podman
+          dnf:
+            name:
+              - podman
+            state: present
+
+        - name: fetch node join token from master
+          slurp:
+            src: /var/lib/rancher/k3s/server/node-token
+          register: _node_token
+          delegate_to: "{{ cluster_name }}-master"
+          become: yes
+
+        - name: create config/secrets directory
+          file:
+            dest: /run/pebbles/k3s-autoscaler
+            state: directory
+            mode: '0700'
+
+        - name: create autoscaler configuration
+          copy:
+            dest: /run/pebbles/k3s-autoscaler/autoscaler-config.yaml
+            content: |
+              clusterName: {{ cluster_name }}
+              flavor: {{ fcos_flavor }}
+              image: {{ fcos_image }}
+              
+              freeMemoryTarget: {{ free_memory_target }}
+              maximumNumberOfNodes: {{ maximum_number_of_nodes }}
+              oldNodeAgeLimitHours: {{ old_node_age_limit_hours }}
+              
+              butaneBinary: /usr/bin/butane
+              butaneConfigTemplate: /run/pebbles/k3s-autoscaler/k3s-node.butane.j2
+              butaneConfigData:
+                master_vm_ip: {{ master_vm_ip }}
+                k3s_version: {{ k3s_version }}
+                k3s_node_token: {{ _node_token.content | b64decode | trim }}
+            mode: "0600"
+          no_log: true
+
+        - name: create openstack configuration
+          copy:
+            dest: /run/pebbles/k3s-autoscaler/openstack_credentials.yaml
+            content: |
+              OS_AUTH_URL: {{ openstack_auth_url }}
+              OS_IDENTITY_API_VERSION: 3
+              OS_USERNAME: {{ openstack_username }}
+              OS_PASSWORD: {{ openstack_password }}
+              OS_USER_DOMAIN_NAME: {{ openstack_domain_name }}
+              OS_TENANT_ID: {{ openstack_tenant_id }}
+              OS_TENANT_NAME: {{ openstack_tenant_name }}
+              OS_REGION: {{ openstack_region }}
+            mode: "0600"
+          no_log: true
+
+        - name: slurp kubeconfig from master
+          slurp:
+            src: /etc/rancher/k3s/k3s.yaml
+          register: _admin_kube_config
+          delegate_to: "{{ cluster_name }}-master"
+          no_log: true
+
+        - name: upload kubeconfig to jump
+          copy:
+            content: >
+              {{
+                _admin_kube_config.content
+                | b64decode
+                | replace('https://127.0.0.1', 'https://' + master_vm_ip)
+              }}
+            dest: /run/pebbles/k3s-autoscaler/kubeconfig
+            mode: "0600"
+          no_log: true
+
+        - name: copy butane template
+          copy:
+            src: templates/butane/k3s-node.butane.j2
+            dest: /run/pebbles/k3s-autoscaler/k3s-node.butane.j2
+
+        - name: install k3s-autoscaler systemd service
+          register: _autoscaler_service
+          copy:
+            dest: /etc/systemd/system/k3s-autoscaler.service
+            mode: '0644'
+            content: |
+              [Unit]
+              After=network-online.target
+              Description=Run k3s-autoscaler in podman
+              Wants=network-online.target
+      
+              [Service]
+              # make sure a container does not exist after an unclean shutdown (leading dash to ignore errors)
+              ExecStartPre=-/bin/podman rm -f k3s-autoscaler
+              ExecStart=/bin/podman run \
+                --name=k3s-autoscaler \
+                --pull=always  \
+                --read-only \
+                --rm \
+                -e AUTOSCALER_CONFIG_FILE=/run/pebbles/k3s-autoscaler/autoscaler-config.yaml \
+                -e KUBECONFIG_FILE=/run/pebbles/k3s-autoscaler/kubeconfig \
+                -e OPENSTACK_CREDENTIALS_FILE=/run/pebbles/k3s-autoscaler/openstack_credentials.yaml \
+                -v /run/pebbles/k3s-autoscaler:/run/pebbles/k3s-autoscaler:z \
+                {{ autoscaler_image }}
+              ExecStop=/bin/podman rm -f k3s-autoscaler
+              [Install]
+              WantedBy=multi-user.target
+
+        - name: reread systemd unit files
+          systemd:
+            daemon_reload: yes
+          when:
+            - _autoscaler_service.changed
+
+        - name: enable and start k3s-autoscaler
+          systemd:
+            name: k3s-autoscaler
+            enabled: true
+            state: started
+    # endblock
