@@ -158,9 +158,9 @@ deployCentralLogging: true
 #logstashStorageClass: standard-rwo
 #logstashVolumeSize: 1Gi
 
-# Resources for logstash
-logstashMemoryRequest: 1024Mi
-logstashMemoryLimit: 1024Mi
+# Resources for logstash - logstash image 7.x is hard coded for 1GiB JVM memory, include some extra
+logstashMemoryRequest: 1200Mi
+logstashMemoryLimit: 1200Mi
 logstashCpuRequest: 100m
 logstashCpuLimit: 1900m
 
