@@ -29,6 +29,11 @@ build-deployer-image:
         echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest"
         docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest
+        
+        export IMAGE_TAG="${CI_COMMIT_REF_NAME}-$(date +%Y-%m-%d_%H%M)"
+        echo "Tagging and publishing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:${IMAGE_TAG}"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:${IMAGE_TAG}
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:${IMAGE_TAG}
       fi
 
 build-logstash-image:
@@ -48,6 +53,11 @@ build-logstash-image:
         echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest"
         docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:master $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest
+
+        export IMAGE_TAG="${CI_COMMIT_REF_NAME}-$(date +%Y-%m-%d_%H%M)"
+        echo "Tagging and publishing $CI_DOCKER_REPOSITORY_PUBLISH/logstash:${IMAGE_TAG}"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:master $CI_DOCKER_REPOSITORY_PUBLISH/logstash:${IMAGE_TAG}
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/logstash:${IMAGE_TAG}
       fi
 
 build-filebeat-image:
@@ -67,6 +77,11 @@ build-filebeat-image:
         echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest"
         docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:master $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
+
+        export IMAGE_TAG="${CI_COMMIT_REF_NAME}-$(date +%Y-%m-%d_%H%M)"
+        echo "Tagging and publishing $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:${IMAGE_TAG}"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:master $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:${IMAGE_TAG}
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:${IMAGE_TAG}
       fi
 
 build-k3s-autoscaler-image:
@@ -86,6 +101,11 @@ build-k3s-autoscaler-image:
         echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:latest"
         docker tag $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:master $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:latest
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:latest
+
+        export IMAGE_TAG="${CI_COMMIT_REF_NAME}-$(date +%Y-%m-%d_%H%M)"
+        echo "Tagging and publishing $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:${IMAGE_TAG}"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:master $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:${IMAGE_TAG}
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:${IMAGE_TAG}
       fi
 
 # TODO: we could support testing matching images for pebbles and pebbles-frontend instead of always using master
