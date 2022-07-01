@@ -89,6 +89,10 @@ spec:
               subPath: cluster-kubeconfig
             - name: log
               mountPath: /opt/log
+          {{- if .Values.backupEnabled }}
+            - name: backup-secret
+              mountPath: "/run/secrets/pebbles/backup-secret"
+          {{- end }}
           {{- if or .Values.mountHostSrc .Values.useSourceVolume }}
             - name: src
               mountPath: /opt/app-root/src
@@ -122,6 +126,11 @@ spec:
             secretName: cluster-kubeconfig
         - name: log
           emptyDir: {}
+      {{- if .Values.backupEnabled }}
+        - name: backup-secret
+          secret:
+            secretName: backup-secret
+      {{- end }}
       {{- if .Values.mountHostSrc }}
         - name: src
           hostPath:
