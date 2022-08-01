@@ -223,6 +223,8 @@ oauth2ProxyRedirectUrl: http://localhost/oauth2/callback
 #courseRequestFormUrl: ""
 #brandImageUrl: ""
 #termsOfUseUrl: ""
+#cookiesPolicyUrl: ""
+#privacyPolicyUrl: ""
 #accessibilityStatementUrl: ""
 #contactEmail: ""
 #serviceDocumentationUrl: ""

@@ -32,6 +32,12 @@ data:
     {{- if .Values.termsOfUseUrl }}
     TERMS_OF_USE_URL: {{ .Values.termsOfUseUrl }}
     {{- end}}
+    {{- if .Values.cookiesPolicyUrl }}
+    COOKIES_POLICY_URL: {{ .Values.cookiesPolicyUrl }}
+    {{- end}}
+    {{- if .Values.privacyPolicyUrl }}
+    PRIVACY_POLICY_URL: {{ .Values.privacyPolicyUrl }}
+    {{- end}}
     {{- if .Values.accessibilityStatementUrl }}
     ACCESSIBILITY_STATEMENT_URL: {{ .Values.accessibilityStatementUrl }}
     {{- end}}
