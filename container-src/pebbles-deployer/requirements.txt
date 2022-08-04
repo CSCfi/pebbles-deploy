@@ -1,6 +1,7 @@
 ansible==2.8.5
 requests==2.22.0
 requests-oauthlib==1.2.0
+oslo.utils==4.13.0
 openshift==0.11.0
 
 python-heatclient==1.18.0
