@@ -1,0 +1,6 @@
+# Mark source directories safe to avoid warnings about file ownership
+[safe]
+	directory = /opt/deployment/pebbles
+	directory = /opt/deployment/pebbles-frontend
+	directory = /opt/deployment/pebbles-deploy
+	directory = /opt/deployment/pebbles-environments

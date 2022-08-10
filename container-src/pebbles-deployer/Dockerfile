@@ -82,6 +82,7 @@ ENV HOME=/opt/deployment
 COPY init_env.bash init_env.bash
 COPY bashrc .bashrc
 COPY deploy_functions.bash deploy_functions.bash
+COPY gitconfig .gitconfig
 
 # bake roles in the image to reduce dependencies
 RUN mkdir -p /opt/deployment/galaxy-roles/{k3s,nfs} \
