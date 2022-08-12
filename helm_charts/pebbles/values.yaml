@@ -21,8 +21,8 @@ logstashImagePullPolicy: Always
 
 # Resources for api
 apiReplicas: 1
-apiMemoryRequest: 300Mi
-apiMemoryLimit: 300Mi
+apiMemoryRequest: 400Mi
+apiMemoryLimit: 400Mi
 apiCpuRequest: 100m
 apiCpuLimit: 1900m
 
