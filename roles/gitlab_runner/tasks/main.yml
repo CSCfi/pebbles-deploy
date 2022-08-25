@@ -56,11 +56,26 @@
 
       with_items: "{{ vault_pass_files }}"
 
-- name: install docker
-  yum:
+- name: install docker-ce repo
+  yum_repository:
+      name: docker-ce
+      description: Docker CE Stable - $basearch
+      baseurl: https://download.docker.com/linux/centos/$releasever/$basearch/stable
+      enabled: true
+      gpgcheck: true
+      gpgkey: https://download.docker.com/linux/centos/gpg
+
+- name: install docker-ce and pip
+  dnf:
     name:
-     - docker
-     - python-docker-py
+     - docker-ce
+     - docker-ce-cli
+     - pip
+    state: present
+
+- name: install docker python library
+  pip:
+    name: docker
     state: present
 
 - name: start and enable docker
@@ -115,7 +130,7 @@
     dest: /etc/yum.repos.d/runner_gitlab-runner.repo
 
 - name: install runner
-  yum:
+  dnf:
     name: gitlab-runner
     state: present
 

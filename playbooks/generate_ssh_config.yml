@@ -85,7 +85,7 @@
             block: |
               Host {{ cluster_name }} {{ public_ip }} {{ hostvars[groups['runner'][0]].ansible_ssh_host }}
                 HostName {{ public_ip }}
-                User cloud-user
+                User {{ ansible_user }}
                 ForwardAgent no
                 GSSAPIAuthentication no
                 StrictHostKeyChecking no
