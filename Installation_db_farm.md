@@ -6,7 +6,7 @@ contents are saved on separate volumes.
 
 ## Prerequisites
 
-See [Installation_release-4.md](Installation_release-4.md) for prerequisites, 
+See [Using_deployment_container.md](Using_deployment_container.md) for prerequisites, 
 checking out the repositories and launching a deployment container.
 
 ## Provisioning and configuring

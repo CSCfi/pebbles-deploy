@@ -1,1 +1,0 @@
-docker_cert_dir: /webapps/{{ application_name }}/docker_driver_certs

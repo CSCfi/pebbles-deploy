@@ -13,8 +13,6 @@ All that is needed is
 
 ## Installation instructions
 
-For Pebbles release-4 version, see [Installation_release-4.md](Installation_release-4.md)
-
 For setting up a local development environment, see 
 [Installation_for_local_development.md](Installation_for_local_development.md)
 

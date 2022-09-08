@@ -1,7 +1,0 @@
----
-- include: provision_heat_volume_stack.yml
-  #ToDo: only include for production environments
-- include: provision_heat.yml
-- include: set_up_secrets.yml
-- include: install.yml
-- include: clear_secrets.yml

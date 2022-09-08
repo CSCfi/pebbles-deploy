@@ -1,13 +1,13 @@
 # OpenShift installation instructions Pebbles release-5
 
-This document contains instructions for installing Pebbles in OpenShift.
+This document contains instructions for installing Pebbles on OpenShift.
 
 # Bootstrap
 
 ## Prerequisites
 
 The installation environment runs in purpose-built Docker container called "deployment container".
-See [Installation_release-4.md](Installation_release-4.md) for prerequisites, 
+See [Using_deployment_container.md](Using_deployment_container.md) for prerequisites, 
 checking out the repositories and launching a deployment container.
 
 # Development installation 
@@ -91,41 +91,12 @@ upgrade Helm deployment by:
 helm-upgrade-pebbles -r
 ```
 
-# Production installation
-
-TBD
-
-# Production updates
-
-TBD
-
 # Notes
 
 ## Aliases in deployment container
 
 All aliases in deployment container are defined in `container-src/pebbles-deployer/deploy_functions.bash`. Take a look
 at the definitions to see what they are actually doing and copy and customize to need.
-
-## dcterm - Deployment Container TERMinal 
-
-`scripts/dcterm.bash` is a handy script that either starts a deployment container or executes a new shell in an 
-existing one if it already exists. You could set up an alias in your local shell to invoke it by adding a definition
-in your profile. This assumes bash:
-
-```shell script
-$ grep dcterm $HOME/.bash_profile
-alias dcterm='$HOME/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/scripts/dcterm.bash'
-```
-
-After setting up the alias, you can use it with
-
-```
-# starts a new deployment container, asks for vault key for the environment
-$ dcterm pebbles-devel-3
-...
-# in another terminal, this will launch a shell in the already running container 
-$ dcterm pebbles-devel-3
-```
 
 ## Login timeouts
 

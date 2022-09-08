@@ -1,8 +1,0 @@
----
-# a bit rough, but we will eventually get rid of containers as vms
-- name: restart all supervisord processes when git repository was updated
-  supervisorctl:
-    state: restarted
-    name: "{{ item }}"
-  with_items: "{{ programs }}"
-  when: (git_status|changed or force_restart) and deploy_mode == "docker"

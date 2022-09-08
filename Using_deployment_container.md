@@ -1,15 +1,14 @@
-# Installation for release-4
-
-Here we have instructions to deploy a VM based pebbles release-4 with Heat.
+# Using deployment container
 
 ## Prerequisites
 
-Clone pebbles, pebbles-deploy and pebbles-environments.
+Clone pebbles, pebbles-frontend, pebbles-deploy and pebbles-environments
 
 ```bash
 mkdir -p ~/src/gitlab.ci.csc.fi/pebbles
 cd ~/src/gitlab.ci.csc.fi/pebbles/
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles
+git clone https://gitlab.ci.csc.fi/pebbles/pebbles-frontend
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-deploy
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-environments
 ```
@@ -36,11 +35,11 @@ chcon -Rt svirt_sandbox_file_t pebbles*
 
 Deployments are done in a dedicated Docker container. Different environments will have dedicated instances.
 
-Here we launch a container for development environment called 'notebooks-dev'.
+Here we launch a container for development environment called 'pebbles-devel-1'.
 
 ```bash
 cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/
-./scripts/run_deployment_container.bash -e notebooks-dev 
+./scripts/run_deployment_container.bash -e pebbles-devel-1 
 
 ```
 The container will ask for Ansible vault password for that environment at startup. Then it will set up
@@ -53,31 +52,34 @@ initialization playbook does not have to ask it interactively. There is a
 script called `read_vault_pass_from_clipboard.bash` under the scripts directory
 for doing this.
 
+## Using dcterm - Deployment Container TERMinal 
+
+`scripts/dcterm.bash` is a handy script that either starts a deployment container or executes a new shell in an 
+existing one if it already exists. You could set up an alias in your local shell to invoke it by adding a definition
+in your profile. This assumes bash:
+
+```shell script
+$ grep dcterm $HOME/.bash_profile
+alias dcterm='$HOME/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/scripts/dcterm.bash'
+```
+
+After setting up the alias, you can use it with
+
+```
+# starts a new deployment container, asks for vault key for the environment
+$ dcterm pebbles-devel-3
+...
+# in another terminal, this will launch a shell in the already running container 
+$ dcterm pebbles-devel-3
+```
+
 ## Provisioning and configuring
 
-In the deployment container, first check that you are on the branches that you wish to use. The branches will mounted
+In the deployment container, first check that you are on the branches that you wish to use. The branches are mounted
 from your laptop's directory. Check out the branches on your laptop and double check with branch-info 
 
 ```bash
 branch-info
 ```
 
-Then simply change to pebbles-deploy directory and run site. 
-
-```bash
-cd pebbles-deploy
-ansible-playbook -v playbooks/site.yml
-```
-
-## Deprovisioning
-
-```bash
-cd pebbles-deploy
-ansible-playbook -v playbooks/deprovision_heat.yml
-```
-
-Note that if you have provisioned a stack for hard drives it will *not* be
-destroyed by deprovision_heat.yml at the moment. You have to manually remove
-that stack from OpenStack UI or command line in the deployment container. This is so that
-we can shut down QA environments and re-provision and reinstall from scratch without losing 
-state like database or docker images on the main server host.
+Then proceed with environment type specific instructions to use ansible-playbook or helm.
