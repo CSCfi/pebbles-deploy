@@ -8,12 +8,15 @@
     - name: set the name of the volume stack
       set_fact:
         stack_name: "{{ cluster_name }}-volumes"
+
     - name: check if stack has been provisioned already
       shell: openstack stack show {{ stack_name }}
       register: stack_output
       failed_when: false
       changed_when: false
-    - block:
+
+    - when: stack_output.stderr.find('Stack not found') != -1
+      block:
       - name: Build the stack of drives
         register: heat_volumes
         os_stack:
@@ -23,9 +26,7 @@
           wait: yes
           parameters:
             env_name: "{{ cluster_name }}"
-            docker_vol_size: "{{ docker_vol_size|default(100) }}"
-            backup_vol_size: "{{ backup_vol_size|default(20) }}"
-            images_vol_size: "{{ images_vol_size|default(200) }}"
+            docker_vol_size: "{{ docker_vol_size|default(50) }}"
+            backup_vol_size: "{{ backup_vol_size|default(50) }}"
+            images_vol_size: "{{ images_vol_size|default(20) }}"
             nfs_vol_size: "{{ nfs_vol_size|default(10) }}"
-      when:
-        - stack_output.stderr.find('Stack not found') != -1
