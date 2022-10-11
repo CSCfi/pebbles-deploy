@@ -88,7 +88,16 @@ spec:
                   subPath: s3cfg
                 - name: tarball-data
                   mountPath: /opt/log
-
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                    - key: name
+                      operator: In
+                      values:
+                      - logstash
+                  topologyKey: "kubernetes.io/hostname"
           volumes:
             - name: data
               persistentVolumeClaim:
