@@ -28,10 +28,12 @@ Here is how to deploy nginx ingress controller for docker for mac
 https://kubernetes.github.io/ingress-nginx/deploy/
 
 ```shell script
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/1.23/deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.4.0/deploy/static/provider/cloud/deploy.yaml
 ```
 
-And here is how you enable it on minikube:
+If you encounter problems with accessing pebbles on localhost, restarting docker/laptop after installation may help.  
+
+Here is how you enable it on minikube:
 
 ```shell script
 minikube addons enable ingress

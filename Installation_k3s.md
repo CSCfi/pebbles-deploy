@@ -44,7 +44,7 @@ openstack server delete fcos_node_from_above
 Remove the Heat stacks for the environment in question.
 
 ```bash
-openstack stack delete --wait dev-cluster-X-k3s 
+openstack stack delete --wait dev-cluster-X 
 openstack stack delete --wait dev-cluster-X-volumes
 ```
 
