@@ -14,7 +14,7 @@ def create_kube_client():
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
     logging.info('Starting autoscaler')
 
     dc = DynamicClient(create_kube_client())

@@ -9,6 +9,7 @@ from time import sleep
 import dateutil.parser
 
 import utils
+from image_puller import ImagePuller
 from openstack_driver import OpenStackDriver
 
 
@@ -107,6 +108,9 @@ class Scaler:
             self._scale_down(expired_nodes[0].metadata.name)
             return
 
+        # nothing else to do, run image puller to populate warm image caches on nodes
+        self._run_image_puller()
+
     def _refresh_resource_data(self):
         api_node = self.dc.resources.get(api_version='v1', kind='Node')
         self.nodes = [n for n in api_node.get().items]
@@ -125,15 +129,19 @@ class Scaler:
         # projected memory
         self.total_projected_user_node_memory = self.total_user_node_memory - total_old_node_memory
 
-        active_user_node_names = [n.metadata.name for n in self._get_active_user_nodes()]
-        pods_on_user_nodes = [
-            p for p in self.pods
-            if not p.spec.nodeName or p.spec.nodeName in active_user_node_names
-        ]
+        pods_on_active_user_nodes = self._get_pods_on_nodes(self._get_active_user_nodes())
 
-        self.total_reserved_memory = sum([extract_pod_reserved_memory(p) for p in pods_on_user_nodes])
+        self.total_reserved_memory = sum([extract_pod_reserved_memory(p) for p in pods_on_active_user_nodes])
         self.free_memory = self.total_user_node_memory - self.total_reserved_memory
         self.total_projected_free_memory = self.total_projected_user_node_memory - self.total_reserved_memory
+
+    def _get_pods_on_nodes(self, nodes):
+        node_names = [n.metadata.name for n in nodes]
+        pods_on_nodes = [
+            p for p in self.pods
+            if not p.spec.nodeName or p.spec.nodeName in node_names
+        ]
+        return pods_on_nodes
 
     def _scale_up(self):
         logging.info('Scaling up')
@@ -202,6 +210,10 @@ class Scaler:
         osd.connect()
         osd.delete_vm(node_name)
         logging.info('Deleted node and VM %s', node_name)
+
+    def _run_image_puller(self):
+        puller = ImagePuller(self.dc, self.config)
+        puller.update(self._get_active_user_nodes(), self._get_pods_on_nodes(self._get_user_nodes()))
 
     def _get_expired_nodes(self):
         # find out nodes that can be taken out of the cluster

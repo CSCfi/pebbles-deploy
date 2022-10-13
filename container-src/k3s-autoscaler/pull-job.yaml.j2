@@ -1,0 +1,32 @@
+# A job template for pulling an image on a designated node
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pull-job
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 120
+  ttlSecondsAfterFinished: 10
+  template:
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - {{ node }}
+      tolerations:
+        - key: "role"
+          value: "user"
+          effect: "NoSchedule"
+      restartPolicy: Never
+      containers:
+        - name: puller
+          image: {{ image }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/true
