@@ -96,3 +96,4 @@ popd > /dev/null
 set +e
 
 print_header "Initialization done"
+touch /dev/shm/initialization_done
