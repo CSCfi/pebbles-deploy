@@ -28,7 +28,7 @@ if [[ ! -e /dev/shm/secret/vaultpass ]]; then
        echo $VAULT_PASS > /dev/shm/secret/vaultpass
        echo "Wrote vault password to /dev/shm/secret/vaultpass"
        unset VAULT_PASS
-    fi 
+    fi
 
 fi
 
@@ -65,8 +65,8 @@ fi
 pushd /opt/deployment/pebbles-deploy/playbooks > /dev/null
 
 if [[ ! -e /dev/shm/${env_name}/deployment_data.sh ]]; then
-  print_header "Initializing ramdisk contents"
-  SKIP_DYNAMIC_INVENTORY=1 ansible-playbook initialize_ramdisk.yml
+    print_header "Initializing ramdisk contents"
+    SKIP_DYNAMIC_INVENTORY=1 ansible-playbook initialize_ramdisk.yml
 fi
 
 print_header "Sourcing deployment data"
@@ -90,6 +90,20 @@ if [[ "$DEPLOYMENT_TYPE" == 'k3s' && ! -e ~/.kube/config ]]; then
     print_header "Fetching K3s credentials from master"
     ansible-playbook fetch_k3s_kubeconfig.yml
 fi
+
+# Set up custom prompt. Make production deployments stand out.
+# More info on format: https://unix.stackexchange.com/questions/105958/terminal-prompt-not-wrapping-correctly
+case $DEPLOYMENT_ROLE in
+production)
+    export PS1='\[${YELLOW}\]\[${RED_BG}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\] > '
+    ;;
+qa)
+    export PS1='\[${YELLOW}\]\[${BLUE_BG}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\] > '
+    ;;
+*)
+    export PS1='\[${YELLOW}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\] > '
+    ;;
+esac
 
 popd > /dev/null
 
