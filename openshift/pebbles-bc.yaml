@@ -1,0 +1,18 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  labels:
+    build: pebbles
+  name: pebbles
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: pebbles:latest
+  source:
+    git:
+      uri: https://github.com/CSCfi/pebbles/
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: deployment/pebbles-s2i.Dockerfile

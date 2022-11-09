@@ -1,0 +1,17 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  labels:
+    build: logstash
+  name: logstash
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: logstash:latest
+  source:
+    git:
+      uri: https://github.com/CSCfi/pebbles-deploy/
+    contextDir: container-src/logstash
+  strategy:
+    type: Docker

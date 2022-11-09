@@ -1,0 +1,17 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  labels:
+    build: filebeat
+  name: filebeat
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: filebeat:latest
+  source:
+    git:
+      uri: https://github.com/CSCfi/pebbles-deploy/
+    contextDir: container-src/filebeat
+  strategy:
+    type: Docker
