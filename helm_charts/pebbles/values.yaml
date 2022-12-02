@@ -173,7 +173,7 @@ oauth2LoginEnabled: false
 
 # oauth2-proxy basic deployment config
 oauth2ProxyReplicas: 1
-oauth2ProxyImage: quay.io/oauth2-proxy/oauth2-proxy:v7.3.0
+oauth2ProxyImage: quay.io/oauth2-proxy/oauth2-proxy:v7.4.0
 
 # oauth2-proxy redis backend, sclorg image
 oauth2ProxyRedisImage: quay.io/centos7/redis-5-centos7:20220610
