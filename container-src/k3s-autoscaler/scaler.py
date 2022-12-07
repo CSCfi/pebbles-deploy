@@ -231,7 +231,7 @@ class Scaler:
             n for n in self.nodes
             if n.metadata.get('labels', {}).get('role') == 'user'
                and not n.spec.get('unschedulable')
-               and len(n.spec.taints) <= 1
+               and len(n.spec.get('taints', [])) <= 1
         ]
 
     def _get_user_nodes(self):
@@ -249,5 +249,5 @@ class Scaler:
     def _get_cordoned_nodes(self):
         return [
             n for n in self._get_user_nodes()
-            if len([x for x in n.spec.taints if x.key == 'node.kubernetes.io/unschedulable']) == 1
+            if len([x for x in n.spec.get('taints', []) if x.key == 'node.kubernetes.io/unschedulable']) == 1
         ]
