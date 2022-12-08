@@ -87,9 +87,9 @@ spec:
                 secretKeyRef:
                   name: pebbles
                   key: database-password
+            {{- if .Values.apiDevelopmentMode }}
             - name: PB_DEBUG
               value: '1'
-            {{- if .Values.apiDevelopmentMode }}
             - name: GUNICORN_CMD_ARGS
               value: >-
                 --access-logfile=/opt/log/access.log
@@ -97,6 +97,8 @@ spec:
                 --workers=1
                 --reload
             {{- else }}
+            - name: PB_DEBUG
+              value: '0'
             - name: GUNICORN_CMD_ARGS
               value: >-
                 --access-logfile=/opt/log/access.log
