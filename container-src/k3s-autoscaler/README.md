@@ -4,11 +4,35 @@ This is a simple autoscaler for K3s on OpenStack. It watches the workloads on a 
 and down by provisioning and deleting node VMs in OpenStack. Nodes are supposed to be configured with Ignition/Butane -
 in practice Fedora CoreOS fits the bill.
 
-# Configuration
+## Overview
 
-Paths to following files are supposed to be set as environment variables. 
+Autoscaler will run in a loop, sleep for a while and then check if any actions need to be taken. Before each update
+cycle the current state of pods and nodes in K3s cluster is queried. Autoscaler will not store state anywhere, it will
+rely purely on the current K3s state.
 
-## AUTOSCALER_CONFIG_FILE
+### Actions, in order of priority:
+
+1) Scale up
+   If free memory is less than configured target, spawn a new node VM. Node is initially tainted so no workloads can
+   start before autoscaler removes that taint. This is to avoid a racecondition when autoscaler gives up waiting for the
+   node and deletes it while the node just becomes ready and starts accepting workloads
+
+2) Mark old node as unschedulable to start draining it
+   If there is enough capacity, start draining a node that is older than oldNodeAgeLimitHours 
+
+3) Remove empty unschedulable node
+   Remove drained node from k3s and delete the VM
+
+4) Warm up image caches on nodes
+   
+Only one action is taken during a single update cycle, e.g. warming image caches only takes place if there is nothing
+else to do.
+
+## Configuration
+
+Paths to following files are supposed to be set as environment variables.
+
+### AUTOSCALER_CONFIG_FILE
 
 Path to main config file. Example:
 
@@ -29,7 +53,7 @@ butaneConfigData:
   k3s_node_token: Kxxxxx::server:1234567890
 ```
 
-## OPENSTACK_CREDENTIALS_FILE
+### OPENSTACK_CREDENTIALS_FILE
 
 Path to YAML file with OpenStack credentials. Example:
 
@@ -44,7 +68,7 @@ OS_TENANT_NAME: "12345"
 OS_REGION: "nova"
 ```
 
-## KUBECONFIG_FILE
+### KUBECONFIG_FILE
 
 Path to standard kubeconfig file that has admin access to the target cluster.
 

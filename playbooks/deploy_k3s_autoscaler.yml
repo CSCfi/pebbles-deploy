@@ -123,6 +123,9 @@
                 -v /run/pebbles/k3s-autoscaler:/run/pebbles/k3s-autoscaler:z \
                 {{ autoscaler_image }}
               ExecStop=/bin/podman rm -f k3s-autoscaler
+              Restart=on-failure
+              RestartSec=5
+
               [Install]
               WantedBy=multi-user.target
 

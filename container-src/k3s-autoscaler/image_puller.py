@@ -56,7 +56,6 @@ class ImagePuller:
                     missing_pairs.append((node, image))
         return missing_pairs
 
-
     @staticmethod
     def _select_node_and_image(missing_pairs):
         """Selects one pair to pull"""

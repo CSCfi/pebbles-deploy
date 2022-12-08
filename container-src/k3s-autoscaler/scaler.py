@@ -72,7 +72,7 @@ class Scaler:
 
         logging.info(
             'mem GiB: %.1f total %.1f proj %.1f alloc %.1f free %.1f proj_free %.1f tgt | '
-            'nodes: %d active %d old %d cordoned %d max',
+            'nodes: %d active %d old %d unschedulable %d max',
             self.total_user_node_memory / utils.UNIT_FACTORS.get('Gi'),
             self.total_projected_user_node_memory / utils.UNIT_FACTORS.get('Gi'),
             self.total_reserved_memory / utils.UNIT_FACTORS.get('Gi'),
@@ -81,7 +81,7 @@ class Scaler:
             self.free_memory_target / utils.UNIT_FACTORS.get('Gi'),
             len(self._get_active_user_nodes()),
             len(self._get_old_nodes()),
-            len(self._get_cordoned_nodes()),
+            len(self._get_unschedulable_nodes()),
             self.maximum_number_of_nodes,
         )
 
@@ -103,12 +103,14 @@ class Scaler:
                 return
 
         # remove empty unschedulable nodes
-        expired_nodes = self._get_expired_nodes()
-        if len(expired_nodes) > 0:
-            self._scale_down(expired_nodes[0].metadata.name)
+        retired_nodes = self._get_retired_nodes()
+        if len(retired_nodes) > 0:
+            node_name = retired_nodes[0].metadata.name
+            logging.info('Scaling down by removing empty unschedulable node %s', node_name)
+            self._scale_down(node_name)
             return
 
-        # nothing else to do, run image puller to populate warm image caches on nodes
+        # nothing else to do, run image puller to warm image caches on nodes
         self._run_image_puller()
 
     def _refresh_resource_data(self):
@@ -152,7 +154,10 @@ class Scaler:
 
         butane_config = utils.parse_jinja2(
             self.config.get('butaneConfigTemplate'),
-            dict(server_name=node_name, **self.config.get('butaneConfigData'))
+            dict(
+                server_name=node_name,
+                extra_k3s_args='--node-taint autoscaler-initially-tainted=true:NoSchedule',
+                **self.config.get('butaneConfigData'))
         )
         ignition_data = subprocess.run(
             self.config.get('butaneBinary'),
@@ -181,15 +186,31 @@ class Scaler:
             logging.info('...waiting for the node %s to join', node_name)
             self._refresh_resource_data()
 
-            if node_name in (n.metadata.name for n in self._get_active_user_nodes()):
-                logging.info('node %s is now ready', node_name)
+            if node_name in (n.metadata.name for n in self._get_initially_tainted_ready_nodes()):
+                self._initialize_fresh_node(node_name)
+                logging.info('initial taint has been removed and node %s is now ready', node_name)
                 break
 
-            if time.time() - start_ts > 15 * 60:
-                logging.error('node %s failed to become ready', node_name)
-                raise RuntimeError('node %s failed to become ready' % node_name)
+            if time.time() - start_ts > 10 * 60:
+                logging.error('node %s failed to become ready, deleting VM', node_name)
+                self._delete_openstack_vm(node_name)
+                break
 
             sleep(30)
+
+    def _initialize_fresh_node(self, node_name):
+        node = [n for n in self._get_initially_tainted_ready_nodes() if n.metadata.name == node_name][0]
+
+        new_taints = [dict(key=x.key, value=x.value, effect=x.effect) for x in node.spec.taints if
+                      x.key != 'autoscaler-initially-tainted']
+        api_node = self.dc.resources.get(api_version='v1', kind='Node')
+        body = dict(
+            kind='Node',
+            apiVersion='v1',
+            metadata=dict(name=node_name),
+            spec=dict(taints=new_taints),
+        )
+        api_node.patch(body=body)
 
     def _cordon_node(self, node_name):
         logging.info('Cordoning node %s', node_name)
@@ -203,22 +224,30 @@ class Scaler:
         api_node.patch(body=body)
 
     def _scale_down(self, node_name):
-        logging.info('Scaling down by removing node %s', node_name)
+        # We opt to first delete the node entry that stores the state. This will guarantee that the process is not
+        # looping if openstack vm deletion fails and autoscaler is restarted. However, we may leave orphaned VMs behind
+        # in some corner cases.
+        self._delete_k8s_node(node_name)
+        self._delete_openstack_vm(node_name)
+        logging.info('Deleted node and VM %s', node_name)
+
+    def _delete_k8s_node(self, node_name):
         api_node = self.dc.resources.get(api_version='v1', kind='Node')
         api_node.delete(name=node_name)
+
+    def _delete_openstack_vm(self, node_name):
         osd = OpenStackDriver(dict(OPENSTACK_CREDENTIALS_FILE=os.environ.get('OPENSTACK_CREDENTIALS_FILE')))
         osd.connect()
         osd.delete_vm(node_name)
-        logging.info('Deleted node and VM %s', node_name)
 
     def _run_image_puller(self):
         puller = ImagePuller(self.dc, self.config)
         puller.update(self._get_active_user_nodes(), self._get_pods_on_nodes(self._get_user_nodes()))
 
-    def _get_expired_nodes(self):
+    def _get_retired_nodes(self):
         # find out nodes that can be taken out of the cluster
         res = []
-        for n in self._get_cordoned_nodes():
+        for n in self._get_unschedulable_nodes():
             # no actual workloads running?
             if len([p for p in self.pods if p.spec.nodeName == n.metadata.name and not is_pod_safe_to_evict(p)]) > 0:
                 continue
@@ -228,10 +257,16 @@ class Scaler:
 
     def _get_active_user_nodes(self):
         return [
-            n for n in self.nodes
-            if n.metadata.get('labels', {}).get('role') == 'user'
-               and not n.spec.get('unschedulable')
-               and len(n.spec.get('taints', [])) <= 1
+            n for n in self.nodes if
+            n.metadata.get('labels', {}).get('role') == 'user'
+            and not n.spec.get('unschedulable')
+            and len(n.spec.get('taints', [])) <= 1
+        ]
+
+    def _get_initially_tainted_ready_nodes(self):
+        expected_taints = {'role', 'autoscaler-initially-tainted'}
+        return [
+            n for n in self._get_user_nodes() if not set([x.key for x in n.spec.get('taints', [])]) - expected_taints
         ]
 
     def _get_user_nodes(self):
@@ -246,8 +281,9 @@ class Scaler:
             if is_old_node(n, self.old_node_age_limit_sec)
         ]
 
-    def _get_cordoned_nodes(self):
+    def _get_unschedulable_nodes(self):
+        unschedulable_taints = {'node.kubernetes.io/unschedulable', 'autoscaler-initially-tainted'}
         return [
             n for n in self._get_user_nodes()
-            if len([x for x in n.spec.get('taints', []) if x.key == 'node.kubernetes.io/unschedulable']) == 1
+            if {x.key for x in n.spec.get('taints', [])}.intersection(unschedulable_taints)
         ]
