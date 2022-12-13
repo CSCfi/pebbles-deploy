@@ -75,6 +75,6 @@ simplejson==3.10.0
 six==1.10.0
 stevedore==1.24.0
 unicodecsv==0.14.1
-urllib3==1.21.1
+urllib3==1.26.5
 warlock==1.2.0
 wrapt==1.10.8
