@@ -1,0 +1,51 @@
+{{- if .Values.adminFrontendEnabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-frontend
+spec:
+  replicas: {{ .Values.frontendReplicas }}
+  selector:
+    matchLabels:
+      name: admin-frontend
+  strategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 1
+  template:
+    metadata:
+      labels:
+        name: admin-frontend
+    spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- range $key, $value := .Values.nodeSelector }}
+        {{ $key }}: "{{ $value}}"
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: frontend
+          image: {{ .Values.imagePrefix }}{{ .Values.adminFrontendImage }}
+          imagePullPolicy: {{ .Values.adminFrontendImagePullPolicy }}
+          ports:
+          - containerPort: 8080
+          resources:
+            requests:
+              cpu: {{ .Values.adminFrontendCpuRequest }}
+              memory: {{ .Values.adminFrontendMemoryRequest }}
+            limits:
+              cpu: {{ .Values.adminFrontendCpuLimit }}
+              memory: {{ .Values.adminFrontendMemoryLimit }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            timeoutSeconds: 3
+{{- end }}

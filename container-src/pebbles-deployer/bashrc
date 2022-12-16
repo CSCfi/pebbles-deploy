@@ -23,7 +23,7 @@ short_cwd() {
 }
 
 branch-info() {
-    for repo in pebbles pebbles-deploy pebbles-environments pebbles-frontend; do
+    for repo in pebbles pebbles-deploy pebbles-environments pebbles-frontend pebbles-admin-frontend; do
         branch=$(cd /opt/deployment/$repo && parse_git_branch)
         num_modified=$(cd /opt/deployment/$repo && git status --porcelain | wc -l)
         if [[ num_modified -eq 0 ]]; then
@@ -37,8 +37,8 @@ branch-info() {
 restart-pebbles() {
 
     if [ -z "$1" ]; then
-        # by default, restart workloads that run our source code (api, frontend, worker) and wait for completion
-        for workload in statefulset/worker deployment/frontend deployment/api; do
+        # by default, restart workloads that run our source code (api, frontends, worker) and wait for completion
+        for workload in statefulset/worker deployment/{frontend,admin-frontend,api}; do
             oc rollout restart $workload
             oc rollout status --timeout=300s $workload
         done
@@ -130,7 +130,7 @@ echo
 echo "  helm delete pebbles; oc delete all --all; oc delete pvc --all; oc delete secret pebbles"
 echo
 echo "To restart pods"
-echo "OPTION can be api/db/worker/frontend/logstash/oauth2-proxy. If empty restarts all."
+echo "OPTION can be api/db/worker/frontend/admin-frontend/logstash/oauth2-proxy. If empty restarts all."
 echo
 echo "  restart-pebbles [OPTION]"
 echo

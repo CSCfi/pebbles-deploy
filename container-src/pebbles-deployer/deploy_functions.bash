@@ -65,10 +65,16 @@ build-image-pebbles-frontend() {
     build-image-from-project-src pebbles-frontend "$@"
 }
 
+# builds pebbles-admin-frontend in the current OpenShift namespace
+build-image-pebbles-admin-frontend() {
+    build-image-from-project-src pebbles-admin-frontend "$@"
+}
+
 # builds all images from local sources
 build-image-all() {
     build-image-pebbles --follow
     build-image-pebbles-frontend --follow
+    build-image-pebbles-admin-frontend --follow
     build-image-logstash --follow
     build-image-filebeat --follow
     build-image-pebbles-deployer --follow
@@ -78,6 +84,7 @@ build-image-all() {
 build-image-all-parallel() {
     # trigger builds, starting from the heaviest to lightest
     build-image-pebbles-frontend
+    build-image-pebbles-admin-frontend
     build-image-pebbles
     build-image-logstash
     build-image-filebeat

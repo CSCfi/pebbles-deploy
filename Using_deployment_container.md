@@ -2,13 +2,14 @@
 
 ## Prerequisites
 
-Clone pebbles, pebbles-frontend, pebbles-deploy and pebbles-environments
+Clone pebbles, pebbles-frontend, pebbes-admin-frontend, pebbles-deploy and pebbles-environments
 
 ```bash
 mkdir -p ~/src/gitlab.ci.csc.fi/pebbles
 cd ~/src/gitlab.ci.csc.fi/pebbles/
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-frontend
+git clone https://gitlab.ci.csc.fi/pebbles/pebbles-admin-frontend
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-deploy
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-environments
 ```

@@ -60,6 +60,7 @@ mkdir -p ~/src/gitlab.ci.csc.fi/pebbles/
 cd  ~/src/gitlab.ci.csc.fi/pebbles/
 git clone ssh://git@gitlab.ci.csc.fi:10022/pebbles/pebbles.git
 git clone ssh://git@gitlab.ci.csc.fi:10022/pebbles/pebbles-frontend.git
+git clone ssh://git@gitlab.ci.csc.fi:10022/pebbles/pebbles-admin-frontend.git
 git clone ssh://git@gitlab.ci.csc.fi:10022/pebbles/pebbles-deploy.git
 git clone ssh://git@gitlab.ci.csc.fi:10022/pebbles/pebbles-environments.git
 ```
@@ -135,6 +136,14 @@ This is taken from pebbles-frontend/deployment/building.md "Multi-stage build":
 pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-frontend/ && docker build . -t pebbles-frontend:latest -f deployment/Dockerfile.multi-stage ; popd
 ```
 
+## Building pebbles-admin-frontend image
+
+This is taken from pebbles-admin-frontend/deployment/building.md:
+
+```shell script
+pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-admin-frontend/ && docker build . -t pebbles-admin-frontend:latest -f deployment/Dockerfile.multi-stage ; popd
+```
+
 # Deploying with Helm
 
 ## Configuration for minimal local deployment
@@ -146,6 +155,7 @@ Create local_values/local_k8s.yaml file with the following contents:
 workerImagePullPolicy: IfNotPresent
 apiImagePullPolicy: IfNotPresent
 frontendImagePullPolicy: IfNotPresent
+adminFrontendImagePullPolicy: IfNotPresent
 #mountHostSrc: /CHANGE_ME/src/gitlab.ci.csc.fi/pebbles/pebbles
 #useSourceVolume: true
 apiDevelopmentMode: true

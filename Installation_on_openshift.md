@@ -36,9 +36,10 @@ There are several build commands for building all images or a single image. You 
 
 ```
 pebbles-devel-3 ~ () > build-image-[TAB]
-build-image-all                 build-image-all-parallel        build-image-filebeat            
-build-image-from-container-src  build-image-from-project-src    build-image-logstash            
-build-image-pebbles             build-image-pebbles-deployer    build-image-pebbles-frontend
+build-image-all                     build-image-from-project-src        build-image-pebbles-deployer
+build-image-all-parallel            build-image-logstash                build-image-pebbles-frontend
+build-image-filebeat                build-image-pebbles
+build-image-from-container-src      build-image-pebbles-admin-frontend
 ```
 
 Usually `build-image-all-parallel` is the best choice for the first build. After the builds have finished, you can 

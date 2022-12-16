@@ -6,6 +6,7 @@ imagePrefix: ''
 apiImage: pebbles:latest
 workerImage: pebbles:latest
 frontendImage: pebbles-frontend:latest
+adminFrontendImage: pebbles-admin-frontend:latest
 filebeatImage: filebeat:latest
 logstashImage: logstash:latest
 
@@ -14,6 +15,7 @@ dbImagePullPolicy: Always
 apiImagePullPolicy: Always
 workerImagePullPolicy: Always
 frontendImagePullPolicy: Always
+adminFrontendImagePullPolicy: Always
 logstashImagePullPolicy: Always
 
 # Database volume size (undefined or empty means no persistent storage)
@@ -45,6 +47,16 @@ frontendMemoryRequest: 200Mi
 frontendMemoryLimit: 200Mi
 frontendCpuRequest: 100m
 frontendCpuLimit: 1900m
+
+# By default, admin frontend is not enabled
+adminFrontendEnabled: false
+
+# Resources for admin frontend
+adminFrontendReplicas: 1
+adminFrontendMemoryRequest: 200Mi
+adminFrontendMemoryLimit: 200Mi
+adminFrontendCpuRequest: 100m
+adminFrontendCpuLimit: 1900m
 
 # Whether to deploy database in the same namespace. Disable if you use an external database.
 dbDeploymentEnabled: true

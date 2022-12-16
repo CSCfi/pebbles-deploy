@@ -2,5 +2,6 @@
 [safe]
 	directory = /opt/deployment/pebbles
 	directory = /opt/deployment/pebbles-frontend
+	directory = /opt/deployment/pebbles-admin-frontend
 	directory = /opt/deployment/pebbles-deploy
 	directory = /opt/deployment/pebbles-environments
