@@ -4,9 +4,9 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: admin-frontend
-  {{- if .Values.ipWhitelist }}
+  {{- if .Values.ipWhitelistAdmin }}
   annotations:
-    haproxy.router.openshift.io/ip_whitelist: {{ .Values.ipWhitelist }}
+    haproxy.router.openshift.io/ip_whitelist: {{ .Values.ipWhitelistAdmin }}
   {{- end }}
 spec:
   {{- if .Values.ingressHost }}
@@ -24,4 +24,4 @@ spec:
     termination: edge
 status:
   ingress: []
-{{- end}}
+{{- end }}
