@@ -1,0 +1,20 @@
+{{- if .Values.bouncerEnabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    service-label-key: bouncer
+  name: bouncer
+spec:
+  ports:
+    - name: web 
+      port: 8080
+      targetPort: 8080
+    - name: web-secure
+      port: 8443
+      targetPort: 8443
+  selector:
+    name: bouncer
+
+{{- end }}

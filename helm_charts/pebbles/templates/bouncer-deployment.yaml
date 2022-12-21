@@ -1,0 +1,71 @@
+{{- if .Values.bouncerEnabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bouncer
+spec:
+  replicas: {{ .Values.bouncerReplicas }}
+  selector:
+    matchLabels:
+      name: bouncer
+  strategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 1
+  template:
+    metadata:
+      labels:
+        name: bouncer
+    spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- range $key, $value := .Values.nodeSelector }}
+        {{ $key }}: "{{ $value}}"
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: bouncer
+          image: {{ .Values.bouncerImage }}
+          imagePullPolicy: {{ .Values.bouncerImagePullPolicy }}
+          ports:
+          - containerPort: 8443
+          resources:
+            requests:
+              cpu: {{ .Values.bouncerCpuRequest }}
+              memory: {{ .Values.bouncerMemoryRequest }}
+            limits:
+              cpu: {{ .Values.bouncerCpuLimit }}
+              memory: {{ .Values.bouncerMemoryLimit }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: config
+              mountPath: /opt/bitnami/nginx/html/index.html
+              subPath: index.html
+            - name: config
+              mountPath: /opt/bitnami/nginx/conf/server_blocks/bouncer_server_block.conf
+              subPath: bouncer_server_block.conf
+            - name: config
+              mountPath: /opt/bitnami/nginx/conf/redirect_to_index.conf
+              subPath: redirect_to_index.conf
+            - name: tls-secret
+              mountPath: /opt/bitnami/nginx/certs
+      volumes:
+        - name: config
+          configMap:
+            name: bouncer-configmap
+        - name: tls-secret
+          secret:
+            secretName: bouncer-tls-secret
+
+{{- end }}

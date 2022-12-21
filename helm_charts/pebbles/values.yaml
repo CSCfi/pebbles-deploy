@@ -250,3 +250,17 @@ oauth2ProxyRedirectUrl: http://localhost/oauth2/callback
 
 # The url that is used in generated absolute hyperlinks
 #baseUrl: http://localhost
+
+# Optional bouncer to redirect service domain name to service implementation
+bouncerEnabled: false
+bouncerImage: docker.io/bitnami/nginx:1.23
+bouncerReplicas: 1
+bouncerImagePullPolicy: IfNotPresent
+bouncerMemoryRequest: 100Mi
+bouncerMemoryLimit: 100Mi
+bouncerCpuRequest: 100m
+bouncerCpuLimit: 1800m
+bouncerFromDomain: 'example.org'
+bouncerToDomain: 'service.example.com'
+bouncerTlsCert: ''
+bouncerTlsKey: ''
