@@ -42,6 +42,7 @@ flavor: io.70GB
 image: fedora-coreos-36.20220522.3.0-openstack.x86_64.qcow2
 
 freeMemoryTarget: 9 GiB
+minimumFreeNodeMemory: 4 GiB
 maximumNumberOfNodes: 1
 oldNodeAgeLimitHours: 72
 

@@ -41,59 +41,67 @@ class Scaler:
         self.config = config
 
         self.free_memory_target = 0
+        self.minimum_free_node_memory = 0
         self.old_node_age_limit_sec = 0
         self.maximum_number_of_nodes = 0
 
         self.nodes = []
         self.pods = []
 
+        self.node_memory_summary = {}
+
         self.total_user_node_memory = 0
         self.total_projected_user_node_memory = 0
         self.total_reserved_memory = 0
         self.total_projected_free_memory = 0
         self.free_memory = 0
+        self.largest_free_mem = 0
 
         self.set_config(config)
+
+        self._next_memory_summary_log_ts = 0
 
     def set_config(self, config):
 
         self.config = config
         self.free_memory_target = utils.parse_memspec_to_bytes(self.config.get('freeMemoryTarget'))
+        self.minimum_free_node_memory = utils.parse_memspec_to_bytes(self.config.get('minimumFreeNodeMemory', '0 GiB'))
         self.old_node_age_limit_sec = self.config.get('oldNodeAgeLimitHours', 7 * 24) * 60 * 60
         self.maximum_number_of_nodes = self.config.get('maximumNumberOfNodes')
 
-        logging.info('Setting config')
+        logging.info('Using config')
         for key in ('clusterName', 'flavor', 'image',
-                    'freeMemoryTarget', 'maximumNumberOfNodes', 'oldNodeAgeLimitHours'):
-            logging.info('  %s: %s', key, config.get(key))
+                    'freeMemoryTarget', 'minimumFreeNodeMemory', 'maximumNumberOfNodes', 'oldNodeAgeLimitHours'):
+            logging.info('  %s: %s', key, config.get(key, 'Not set, using default'))
 
     def update(self):
         self._refresh_resource_data()
 
-        logging.info(
-            'mem GiB: %.1f total %.1f proj %.1f alloc %.1f free %.1f proj_free %.1f tgt | '
-            'nodes: %d active %d old %d unschedulable %d max',
-            self.total_user_node_memory / utils.UNIT_FACTORS.get('Gi'),
-            self.total_projected_user_node_memory / utils.UNIT_FACTORS.get('Gi'),
-            self.total_reserved_memory / utils.UNIT_FACTORS.get('Gi'),
-            self.free_memory / utils.UNIT_FACTORS.get('Gi'),
-            self.total_projected_free_memory / utils.UNIT_FACTORS.get('Gi'),
-            self.free_memory_target / utils.UNIT_FACTORS.get('Gi'),
-            len(self._get_active_user_nodes()),
-            len(self._get_old_nodes()),
-            len(self._get_unschedulable_nodes()),
-            self.maximum_number_of_nodes,
-        )
+        self.write_status_log()
+        if self._next_memory_summary_log_ts < time.time():
+            self.write_memory_summary_log()
+            self._next_memory_summary_log_ts = time.time() + 30 * 60
 
         # perform one update action
 
         # scale up
+        scale_up_reason = None
         if self.total_projected_free_memory < self.free_memory_target:
+            scale_up_reason = 'total free memory %.1f < %.1f' % (
+                self.total_projected_free_memory / utils.UNIT_FACTORS.get('Gi'),
+                self.free_memory_target / utils.UNIT_FACTORS.get('Gi'))
+        elif self.largest_free_mem < self.minimum_free_node_memory:
+            scale_up_reason = 'largest free mem on node %.1f < %.1f' % (
+                self.largest_free_mem / utils.UNIT_FACTORS.get('Gi'),
+                self.minimum_free_node_memory / utils.UNIT_FACTORS.get('Gi'))
+        if scale_up_reason:
+            logging.info('Scale up triggered: %s', scale_up_reason)
             if len(self._get_user_nodes()) < self.maximum_number_of_nodes:
                 self._scale_up()
+                self._next_memory_summary_log_ts = 0
                 return
             else:
-                logging.info('maximum number of nodes reached: %d', self.maximum_number_of_nodes)
+                logging.info('Cannot scale up, maximum number of nodes reached: %d', self.maximum_number_of_nodes)
 
         # mark old nodes unschedulable, if there is room
         if self.total_projected_free_memory > self.free_memory_target:
@@ -108,6 +116,7 @@ class Scaler:
             node_name = retired_nodes[0].metadata.name
             logging.info('Scaling down by removing empty unschedulable node %s', node_name)
             self._scale_down(node_name)
+            self._next_memory_summary_log_ts = 0
             return
 
         # nothing else to do, run image puller to warm image caches on nodes
@@ -119,6 +128,15 @@ class Scaler:
 
         api_pod = self.dc.resources.get(api_version='v1', kind='Pod')
         self.pods = [p for p in api_pod.get().items]
+
+        # summary of memory per node
+        self.node_memory_summary = {
+            n.metadata.name: dict(
+                capacity=utils.parse_memspec_to_bytes(n.status.capacity.memory),
+                reserved=sum([extract_pod_reserved_memory(p) for p in self._get_pods_on_nodes([n, ])])
+            )
+            for n in self._get_user_nodes()
+        }
 
         # memory for all currently active user nodes
         self.total_user_node_memory = sum(
@@ -136,6 +154,15 @@ class Scaler:
         self.total_reserved_memory = sum([extract_pod_reserved_memory(p) for p in pods_on_active_user_nodes])
         self.free_memory = self.total_user_node_memory - self.total_reserved_memory
         self.total_projected_free_memory = self.total_projected_user_node_memory - self.total_reserved_memory
+
+        # largest free space on a single node e.g. largest session we can run
+        if len(self._get_active_user_nodes()):
+            self.largest_free_mem = max([
+                self.node_memory_summary[n]['capacity'] - self.node_memory_summary[n]['reserved']
+                for n in [x.metadata.name for x in self._get_active_user_nodes()]]
+            )
+        else:
+            self.largest_free_mem = 0
 
     def _get_pods_on_nodes(self, nodes):
         node_names = [n.metadata.name for n in nodes]
@@ -287,3 +314,37 @@ class Scaler:
             n for n in self._get_user_nodes()
             if {x.key for x in n.spec.get('taints', [])}.intersection(unschedulable_taints)
         ]
+
+    def write_status_log(self):
+        logging.info(
+            'mem GiB: %.1f total, %.1f alloc, %.1f free, %.1f largestFree'
+            ' | '
+            'nodes: %d active, %d old, %d unschedulable, %d max',
+            self.total_user_node_memory / utils.UNIT_FACTORS.get('Gi'),
+            self.total_reserved_memory / utils.UNIT_FACTORS.get('Gi'),
+            self.free_memory / utils.UNIT_FACTORS.get('Gi'),
+            self.largest_free_mem / utils.UNIT_FACTORS.get('Gi'),
+            len(self._get_active_user_nodes()),
+            len(self._get_old_nodes()),
+            len(self._get_unschedulable_nodes()),
+            self.maximum_number_of_nodes,
+        )
+
+    def write_memory_summary_log(self):
+        logging.info(
+            'free memory target: %.1f GiB, minimum free node memory: %.1f GiB, currently running pods: %d',
+            self.free_memory_target / utils.UNIT_FACTORS.get('Gi'),
+            self.minimum_free_node_memory / utils.UNIT_FACTORS.get('Gi'),
+            len(self._get_pods_on_nodes(self._get_user_nodes()))
+        )
+        logging.info('node memory summary:')
+
+        for node in self.node_memory_summary.keys():
+            nms = self.node_memory_summary.get(node)
+            logging.info(
+                '%32s : %.1f GiB reserved out of %.1f GiB %s',
+                node,
+                nms.get('reserved') / utils.UNIT_FACTORS.get('Gi'),
+                nms.get('capacity') / utils.UNIT_FACTORS.get('Gi'),
+                '(unschedulable)' if node in [n.metadata.name for n in self._get_unschedulable_nodes()] else ''
+            )
