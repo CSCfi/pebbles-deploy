@@ -342,7 +342,7 @@ class Scaler:
         for node in self.node_memory_summary.keys():
             nms = self.node_memory_summary.get(node)
             logging.info(
-                '%32s : %.1f GiB reserved out of %.1f GiB %s',
+                '    %s : %.1f GiB reserved out of %.1f GiB %s',
                 node,
                 nms.get('reserved') / utils.UNIT_FACTORS.get('Gi'),
                 nms.get('capacity') / utils.UNIT_FACTORS.get('Gi'),
