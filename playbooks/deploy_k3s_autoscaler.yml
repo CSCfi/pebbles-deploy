@@ -47,6 +47,7 @@
               image: {{ fcos_image }}
               
               freeMemoryTarget: {{ free_memory_target }}
+              minimumFreeNodeMemory: {{ minimum_free_node_memory | d('0') }}
               maximumNumberOfNodes: {{ maximum_number_of_nodes }}
               oldNodeAgeLimitHours: {{ old_node_age_limit_hours }}
               
