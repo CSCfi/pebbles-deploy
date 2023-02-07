@@ -43,14 +43,17 @@ RUN cd /tmp/ \
 RUN /usr/local/bin/helm completion bash > /etc/bash_completion.d/helm
 
 # Install oc and kubectl
-# Temporarily use oc binary uploaded to Allas and extracted with:
-# oc adm release extract --command=oc --command-os=linux registry.svc.ci.openshift.org/origin/release:4.4.0-0.okd-2020-03-24-091256
-# Once OKD 4 client binary releases are out, we can switch to those
-RUN cd /tmp/ \
- && curl -LOs https://a3s.fi/notebooks-devel-public/oc-4.4.0-0.okd-2020-03-24-091256 \
- && install oc-4.4.0-0.okd-2020-03-24-091256 /usr/local/bin/oc \
- && install oc-4.4.0-0.okd-2020-03-24-091256 /usr/local/bin/kubectl \
- && rm /tmp/oc-4.4.0-0.okd-2020-03-24-091256
+# Check the architecture, and download correct oc client from official mirror.
+RUN \
+    cd /tmp/ \
+    && ARCH='-' \
+    && if [[ $(uname -m) == 'aarch64' ]]; then ARCH='-arm64-'; fi \
+    && TARBALL=openshift-client-linux${ARCH}4.9.54.tar.gz \
+    && curl -LOs https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.9/${TARBALL} \
+    && tar xvfz ${TARBALL} \
+    && install oc /usr/local/bin/oc \
+    && install kubectl /usr/local/bin/kubectl \
+    && rm ${TARBALL} oc kubectl
 RUN /usr/local/bin/oc completion bash > /etc/bash_completion.d/oc
 
 # Choose an arbitrary GID so that vault password can be made group readable when mounted as a volume
