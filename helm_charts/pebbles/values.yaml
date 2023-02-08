@@ -152,7 +152,7 @@ clusterKubeconfig: |
 backupEnabled: false
 backup:
   name: ''
-  jobImage: pebbles-deployer:latest
+  jobImage: pebbles-backup:latest
   jobImagePullPolicy: Always
   volumeSize: 10Gi
   dbBackupSchedule: '*/15 * * * *'

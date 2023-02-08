@@ -35,6 +35,11 @@ build-image-pebbles-deployer() {
     build-image-from-container-src pebbles-deployer "$@"
 }
 
+# builds pebbles-deployer in the current OpenShift namespace
+build-image-pebbles-backup() {
+    build-image-from-container-src pebbles-backup "$@"
+}
+
 build-image-from-project-src() {
     if [[ -z $1 ]]; then
         echo 'build-image-from-project-source() needs project name as an argument' > /dev/stderr
@@ -77,7 +82,7 @@ build-image-all() {
     build-image-pebbles-admin-frontend --follow
     build-image-logstash --follow
     build-image-filebeat --follow
-    build-image-pebbles-deployer --follow
+    build-image-pebbles-backup --follow
 }
 
 # builds all images from local sources in parallel
@@ -88,7 +93,7 @@ build-image-all-parallel() {
     build-image-pebbles
     build-image-logstash
     build-image-filebeat
-    build-image-pebbles-deployer
+    build-image-pebbles-backup
 
     # wait for at least one of the builds to be running
     while ! oc get pods -l openshift.io/build.name | grep Running; do

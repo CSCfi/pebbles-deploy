@@ -1,4 +1,4 @@
-FROM quay.io/fedora/fedora:34
+FROM quay.io/fedora/fedora:37
 
 LABEL maintainer="CSC Notebooks Team"
 RUN dnf makecache
@@ -23,11 +23,7 @@ RUN dnf install -y \
     butane \
     procps-ng \
     certbot \
- && dnf clean all
-
-# Add s3cmd from EPEL for dealing with Allas object storage with S3 credentials
-RUN dnf install -y \
-        s3cmd \
+    s3cmd \
  && dnf clean all
 
 # Install python requirements
@@ -44,16 +40,17 @@ RUN /usr/local/bin/helm completion bash > /etc/bash_completion.d/helm
 
 # Install oc and kubectl
 # Check the architecture, and download correct oc client from official mirror.
-RUN \
-    cd /tmp/ \
-    && ARCH='-' \
-    && if [[ $(uname -m) == 'aarch64' ]]; then ARCH='-arm64-'; fi \
-    && TARBALL=openshift-client-linux${ARCH}4.9.54.tar.gz \
-    && curl -LOs https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.9/${TARBALL} \
-    && tar xvfz ${TARBALL} \
-    && install oc /usr/local/bin/oc \
-    && install kubectl /usr/local/bin/kubectl \
-    && rm ${TARBALL} oc kubectl
+RUN cd /tmp/ \
+ && ARCH='-' \
+ && if [[ $(uname -m) == 'aarch64' ]]; then ARCH='-arm64-'; fi \
+ && TARBALL=openshift-client-linux${ARCH}4.9.54.tar.gz \
+ && curl -LOs https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.9/${TARBALL} \
+ && tar xvfz ${TARBALL} \
+ && install oc /usr/local/bin/oc \
+ && install kubectl /usr/local/bin/kubectl \
+ && rm ${TARBALL} oc kubectl
+
+# Create completion for oc
 RUN /usr/local/bin/oc completion bash > /etc/bash_completion.d/oc
 
 # Choose an arbitrary GID so that vault password can be made group readable when mounted as a volume

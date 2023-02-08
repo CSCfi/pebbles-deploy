@@ -36,6 +36,30 @@ build-deployer-image:
         docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:${IMAGE_TAG}
       fi
 
+build-backup-image:
+  stage: build
+  script:
+    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-backup:${CI_COMMIT_REF_NAME} container-src/pebbles-backup/.
+    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-backup:${CI_COMMIT_REF_NAME}
+    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-backup:${CI_COMMIT_REF_NAME} $CI_DOCKER_REPOSITORY_PUBLIC/pebbles-backup:${CI_COMMIT_REF_NAME}
+    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/pebbles-backup:${CI_COMMIT_REF_NAME}
+
+    # if we are on master branch, push to PUBLISH repo
+    - |
+      if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:master"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-backup:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:master
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:master
+        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:latest"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-backup:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:latest
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:latest
+        
+        export IMAGE_TAG="${CI_COMMIT_REF_NAME}-$(date +%Y-%m-%d_%H%M)"
+        echo "Tagging and publishing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:${IMAGE_TAG}"
+        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-backup:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:${IMAGE_TAG}
+        docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:${IMAGE_TAG}
+      fi
+
 build-logstash-image:
   stage: build
   script:

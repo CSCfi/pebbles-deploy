@@ -1,0 +1,17 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  labels:
+    build: pebbles-backup
+  name: pebbles-backup
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: pebbles-backup:latest
+  source:
+    git:
+      uri: https://github.com/CSCfi/pebbles-deploy/
+    contextDir: container-src/pebbles-backup
+  strategy:
+    type: Docker
