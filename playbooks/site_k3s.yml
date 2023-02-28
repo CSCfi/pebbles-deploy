@@ -3,3 +3,4 @@
 - include: provision_k3s_heat.yml
 - include: deploy_k3s.yml
 - include: private_registry.yml
+- include: deploy_k3s_autoscaler.yml
