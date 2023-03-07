@@ -63,3 +63,19 @@
           when: helm_cluster_kubeconfig is defined
 
     # end block
+
+    - when: vaulted_s3cfg_access_key is defined
+      name: Create s3cfg for object storage access
+      copy:
+        dest: "/dev/shm/{{ cluster_name }}/s3cfg"
+        content: |
+          [default]
+          access_key = {{ vaulted_s3cfg_access_key }}
+          secret_key = {{ vaulted_s3cfg_secret_key }}
+          host_base = "a3s.fi"
+          host_bucket = "%(bucket)s.a3s.fi"
+          multipart_chunk_size_mb = 5000
+          signurl_use_https = True
+          public_url_use_https = True
+        mode: 0600
+
