@@ -41,9 +41,9 @@ RUN /usr/local/bin/helm completion bash > /etc/bash_completion.d/helm
 # Install oc and kubectl
 # Check the architecture, and download correct oc client from official mirror.
 RUN cd /tmp/ \
- && ARCH='-' \
- && if [[ $(uname -m) == 'aarch64' ]]; then ARCH='-arm64-'; fi \
- && TARBALL=openshift-client-linux${ARCH}4.9.54.tar.gz \
+ && ARCH='' \
+ && if [[ $(uname -m) == 'aarch64' ]]; then ARCH='-arm64'; fi \
+ && TARBALL=openshift-client-linux${ARCH}.tar.gz \
  && curl -LOs https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.9/${TARBALL} \
  && tar xvfz ${TARBALL} \
  && install oc /usr/local/bin/oc \
