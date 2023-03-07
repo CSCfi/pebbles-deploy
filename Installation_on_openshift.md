@@ -30,7 +30,11 @@ watch oc get pods
 
 For a more fine-grained process or updating an existing installation, read on.
 
-## Building images from local sources
+## Step-by-step installation
+
+Here is a fine-grained version of installation.
+
+### Building images from local sources
 
 There are several build commands for building all images or a single image. You can list them with tab-completion:
 
@@ -49,7 +53,7 @@ list the images (`imagestreams` in OpenShift talk) with:
 oc get imagestream
 ```
 
-## Helm install
+### Helm install
 
 Once the images have been built, install Pebbles with 
 
