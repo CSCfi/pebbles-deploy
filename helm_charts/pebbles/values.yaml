@@ -160,6 +160,7 @@ backup:
   s3BucketName: ''
   s3cfg: ''
   encryptPublicKey: ''
+  workspaceBackupBucketName: 'workspace-backup'
 
 # ----------------------------------------------------------------------------
 # Optional central logging
