@@ -2,10 +2,12 @@
 ---
 variant: fcos
 version: 1.4.0
+{% if fcos_cgroups_v1 | d(true) | bool %}
 kernel_arguments:
   should_exist:
     # Rocker/RStudio does not like cgroups v2 yet
     - systemd.unified_cgroup_hierarchy=0
+{% endif %}
 systemd:
   units:
 {% if fcos_upgrade_on_first_boot | d(false) | bool %}

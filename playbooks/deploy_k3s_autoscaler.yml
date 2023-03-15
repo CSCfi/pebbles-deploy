@@ -57,6 +57,7 @@
                 master_vm_ip: {{ master_vm_ip }}
                 k3s_version: {{ k3s_version }}
                 k3s_node_token: {{ _node_token.content | b64decode | trim }}
+                fcos_cgroups_v1: {{ fcos_cgroups_v1 | d(true) | bool }}
             mode: "0600"
           no_log: true
 
