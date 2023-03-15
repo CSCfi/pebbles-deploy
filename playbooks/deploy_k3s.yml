@@ -7,10 +7,12 @@
   roles:
     - pebbles_facts
   tasks:
-    - name: install sysstat
+    - name: install common packages
       dnf:
-        name: sysstat
         state: present
+        name:
+          - sysstat
+          - python3
 
     - name: Start and enable sysstat
       systemd:
