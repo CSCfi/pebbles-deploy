@@ -1,3 +1,5 @@
 ---
 kube_config_file: "/usr/local/etc/nfs-provisioner.kube_config"
 provisioner_name: "notebooks.csc.fi/nfs-1"
+provisioner_binary_version: 9cb4fa916f5b037fa6b99fcb72668ac0fe0efa2b
+provisioner_binary_url: https://a3s.fi/notebooks-devel-public/nfs-provisioner-{{ provisioner_binary_version }}

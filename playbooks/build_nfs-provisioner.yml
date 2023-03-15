@@ -1,0 +1,78 @@
+#
+# Playbook to build nfs-provisioner binary on jump host and download the resulting binary to deployment container /tmp/.
+#
+# Only run this in a development environment: if jump host is very small and memory gets exhausted, other processes like
+# k3s-autoscaler might be affected.
+#
+# To build anything else than the latest commit with docker.io/library/golang:1.16, please improve, update
+# or hack temporarily.
+#
+---
+- name: Build nfs-provisioner on jump host
+  hosts: jump_host
+  tasks:
+    - name: install podman
+      become: yes
+      dnf:
+        name:
+          - podman
+        state: present
+
+    - set_fact:
+        _build_dir: /run/build-nfs-provisioner
+
+    - name: create directory for files
+      become: yes
+      file:
+        dest: "{{ _build_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        seuser: system_u
+        serole: object_r
+        setype: container_file_t
+
+    - name: create build script
+      copy:
+        dest: "{{ _build_dir }}/build.bash"
+        mode: 0755
+        seuser: system_u
+        serole: object_r
+        setype: container_file_t
+        content: |
+          #!/bin/bash
+
+          git clone https://github.com/kubernetes-sigs/nfs-ganesha-server-and-external-provisioner.git --depth=1
+          cd nfs-ganesha-server-and-external-provisioner/
+          COMMIT_ID=$(git rev-parse HEAD)
+          TARGET_BINARY=nfs-provisioner-${COMMIT_ID}
+          if [ -e /build/$TARGET_BINARY ]; then
+              echo "${TARGET_BINARY} already exists. To rebuild, remove it first."
+              exit 0
+          fi
+            
+          make build
+
+          cp bin/nfs-provisioner /build/${TARGET_BINARY}
+          echo ${COMMIT_ID} > /build/nfs-provisioner.commit_id
+
+    - name: run build in podman container
+      shell: |
+        podman run --rm -v {{ _build_dir }}:/build:z --name build-provisioner \
+        docker.io/library/golang:1.16 /build/build.bash
+
+    - name: get build commit id
+      slurp:
+        src: "{{ _build_dir }}/nfs-provisioner.commit_id"
+      register: _build_commit_id_b64
+
+    - set_fact:
+        _build_commit_id:  "{{ _build_commit_id_b64.content | b64decode | trim }}"
+
+    - set_fact:
+        _binary_name: "nfs-provisioner-{{ _build_commit_id }}"
+
+    - name: get provisioner binary from build dir
+      fetch:
+        src: "{{ _build_dir }}/{{ _binary_name }}"
+        dest: "/tmp/{{ _binary_name }}"
+        flat: yes
