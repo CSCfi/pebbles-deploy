@@ -255,6 +255,28 @@
         job: "/usr/local/sbin/k3s_sqlite_backup.sh"
         cron_file: ansible_k3s_sqlite_backup
 
+    - name: set up a script for K3s object dump
+      copy:
+        dest: /usr/local/sbin/k3s_object_dump.sh
+        owner: root
+        group: root
+        mode: 0700
+        content: |
+          #!/usr/bin/env sh
+
+          bu_file=/var/lib/pb/backup/k3s_objects_$(date -Is).yaml.gz
+          # dump objects from K3s
+          /usr/local/bin/kubectl get --all-namespaces -o yaml all,pv,pvc | gzip > ${bu_file}
+
+    - name: set up a cron job for K3s object dumps
+      ansible.builtin.cron:
+        name: k3s object dump
+        minute: "45"
+        hour: "3"
+        user: root
+        job: "/usr/local/sbin/k3s_object_dump.sh"
+        cron_file: ansible_k3s_object_dump
+
 - hosts: localhost
   tasks:
     - name: Cleanup traefik in compute nodes
