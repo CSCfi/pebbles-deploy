@@ -13,6 +13,7 @@
         name:
           - sysstat
           - python3
+          - dstat
 
     - name: Start and enable sysstat
       systemd:
