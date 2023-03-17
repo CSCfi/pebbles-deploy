@@ -4,13 +4,13 @@ Here we have instructions to deploy a VM based GitLab runner.
 
 ## Prerequisites
 
-See [Using_deployment_container.md](Using_deployment_container.md) for prerequisites, 
+See [Using_deployment_container.md](Using_deployment_container.md) for prerequisites,
 checking out the repositories and launching a deployment container.
 
 ## Provisioning and configuring
 
 Open a deployment container for the gitlab runner environment (called 'gitlab-runner' or similar).
-Change to pebbles-deploy directory and run site_gitlab_runner.yml 
+Change to pebbles-deploy directory and run site_gitlab_runner.yml
 
 ```bash
 cd pebbles-deploy
@@ -22,5 +22,5 @@ ansible-playbook -v playbooks/site_gitlab_runner.yml
 Simply remove the Heat stack for the environment in question.
 
 ```bash
-openstack stack remove STACK_NAME
+openstack stack delete STACK_NAME --wait
 ```

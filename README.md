@@ -13,13 +13,13 @@ All that is needed is
 
 ## Installation instructions
 
-For setting up a local development environment, see 
+For setting up a local development environment, see
 [Installation_for_local_development.md](Installation_for_local_development.md)
 
-For setting up a development environment on OpenShift for release-5, see 
+For setting up a development environment on OpenShift for release-5, see
 [Installation_on_openshift.md](Installation_on_openshift.md)
 
-For deploying a GitLab runner, see [Installation_gitlab_runner.md](Installation_gitlab_runner.md). 
+For deploying a GitLab runner, see [Installation_gitlab_runner.md](Installation_gitlab_runner.md).
 
 For deploying K3s for deploying user workloads and/or Pebbles, see [Installation_k3s.md](Installation_k3s.md).
 

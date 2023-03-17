@@ -1,12 +1,12 @@
 # Installing Postgresql database VMs
 
-Here we have instructions to deploy Postgresql databases in one or more FCOS VMs. The databases run in podman 
+Here we have instructions to deploy Postgresql databases in one or more FCOS VMs. The databases run in podman
 containers, and there can be multiple DBs per host. All configuration is done up-front via butane/ignition. Database
 contents are saved on separate volumes.
 
 ## Prerequisites
 
-See [Using_deployment_container.md](Using_deployment_container.md) for prerequisites, 
+See [Using_deployment_container.md](Using_deployment_container.md) for prerequisites,
 checking out the repositories and launching a deployment container.
 
 ## Provisioning and configuring
@@ -26,7 +26,7 @@ all:
         db-1:
           public_ip: ""
           allow_ssh_from:
-            - "" 
+            - ""
           flavor: standard.small
           image: fedora-coreos-35.20220116.3.0-openstack.x86_64.qcow2
           volume_size_gb: 10
@@ -53,7 +53,7 @@ all:
 ```
 
 To deploy, open a deployment container for the db-farm environment (called 'dev-db-farm' or similar).
-Change to pebbles-deploy directory and run site_db_farm.yml 
+Change to pebbles-deploy directory and run site_db_farm.yml
 
 ```bash
 cd pebbles-deploy

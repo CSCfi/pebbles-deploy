@@ -31,7 +31,7 @@ https://kubernetes.github.io/ingress-nginx/deploy/
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.4.0/deploy/static/provider/cloud/deploy.yaml
 ```
 
-If you encounter problems with accessing pebbles on localhost, restarting docker/laptop after installation may help.  
+If you encounter problems with accessing pebbles on localhost, restarting docker/laptop after installation may help.
 
 Here is how you enable it on minikube:
 

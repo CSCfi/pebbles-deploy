@@ -7,15 +7,15 @@ This document contains instructions for installing Pebbles on OpenShift.
 ## Prerequisites
 
 The installation environment runs in purpose-built Docker container called "deployment container".
-See [Using_deployment_container.md](Using_deployment_container.md) for prerequisites, 
+See [Using_deployment_container.md](Using_deployment_container.md) for prerequisites,
 checking out the repositories and launching a deployment container.
 
-# Development installation 
+# Development installation
 
 ## One shot installation
 
 Once you are running the deployment container for your environment (say, pebbles-devel-3 in this case) you can do the
-initial installation by simply running `install-pebbles` 
+initial installation by simply running `install-pebbles`
 
 ```shell script
 install-pebbles
@@ -46,7 +46,7 @@ build-image-filebeat                build-image-pebbles
 build-image-from-container-src      build-image-pebbles-admin-frontend
 ```
 
-Usually `build-image-all-parallel` is the best choice for the first build. After the builds have finished, you can 
+Usually `build-image-all-parallel` is the best choice for the first build. After the builds have finished, you can
 list the images (`imagestreams` in OpenShift talk) with:
 
 ```shell script
@@ -55,13 +55,13 @@ oc get imagestream
 
 ### Helm install
 
-Once the images have been built, install Pebbles with 
+Once the images have been built, install Pebbles with
 
 ```shell script
 helm-install-pebbles
 ```
 
-At this point the database is empty, so the installation does not actually work. To initialize database content and 
+At this point the database is empty, so the installation does not actually work. To initialize database content and
 set worker password, run:
 
 ```shell script
@@ -70,17 +70,17 @@ initialize-pebbles-with-initial-data
 
 After this point, the system should be up and running happily.
 
-# Development upgrades 
+# Development upgrades
 
 ## Upgrade images
 
-To test new code in existing deployment, you can 
- 
+To test new code in existing deployment, you can
+
 * check out the desired combination of branches in pebbles, pebbles-frontend, pebbles-deploy and pebbles-environments
 * build the image(s) using instructions above
 * restart the relevant services
 
-For example, here we build a new frontend image, wait for the build to finish with `--follow` and restart the frontend 
+For example, here we build a new frontend image, wait for the build to finish with `--follow` and restart the frontend
 pods.
 
 ```shell script
