@@ -7,7 +7,7 @@ metadata:
 spec:
   schedule: "{{ .Values.backup.dbBackupSchedule }}"
   successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 5
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 600
   jobTemplate:
