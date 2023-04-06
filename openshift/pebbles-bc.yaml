@@ -15,4 +15,4 @@ spec:
   strategy:
     type: Docker
     dockerStrategy:
-      dockerfilePath: deployment/pebbles-s2i.Dockerfile
+      dockerfilePath: deployment/pebbles.Dockerfile

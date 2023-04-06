@@ -28,7 +28,7 @@ Here is how to deploy nginx ingress controller for docker for mac
 https://kubernetes.github.io/ingress-nginx/deploy/
 
 ```shell script
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.4.0/deploy/static/provider/cloud/deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.7.0/deploy/static/provider/cloud/deploy.yaml
 ```
 
 If you encounter problems with accessing pebbles on localhost, restarting docker/laptop after installation may help.
@@ -82,24 +82,6 @@ Mac:
 brew install helm
 ```
 
-### s2i (optional)
-
-On Linux, to install s2i
-
-```shell script
-cd /tmp
-wget https://github.com/openshift/source-to-image/releases/download/v1.1.14/source-to-image-v1.1.14-874754de-linux-amd64.tar.gz
-tar xvf source-to-image-v1.1.14-874754de-linux-amd64.tar.gz
-sudo install s2i /usr/local/bin/
-cd
-```
-
-On a Mac, you can use
-
-```shell script
-brew install source-to-image
-```
-
 # Building
 
 The idea here is to build images locally so that they are available to the local Kubernetes without
@@ -119,13 +101,7 @@ Use _one_ of the options below.
 Build using pebbles dockerfile:
 
 ```shell script
-pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && docker build --tag pebbles:latest . --file=deployment/pebbles-s2i.Dockerfile ; popd
-```
-
-Alternative: You can also use `s2i` to build the image
-
-```shell script
-pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && s2i build . --copy -e UPGRADE_PIP_TO_LATEST=1 centos/python-38-centos7 pebbles ; popd
+pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && docker build --tag pebbles:latest . --file=deployment/pebbles.Dockerfile ; popd
 ```
 
 ## Building pebbles-frontend image
@@ -186,22 +162,32 @@ Note the image pull policies that make it possible to use locally build images a
 
 ## Deploy Pebbles
 
+Deploy with Helm
+
 ```shell script
 cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy
 
-# deploy with helm
+echo "deploy with helm"
 helm upgrade -i pebbles helm_charts/pebbles -f local_values/local_k8s.yaml --set overrideSecret=1
 
-# wait until api pod is running
+echo "wait until api pod is running"
 while ! oc get pod -l name=api | egrep '1/1|2/2' | grep 'Running'; do echo 'Waiting for api pod'; sleep 5; done
+```
 
-# initialize system with either 
-# a) development data that sets up a basic set of users and environments
+Initialize system with either
+
+a) development data that sets up a basic set of users and environments
+
+```shell script
 oc rsh deployment/api bash -c 'python manage.py create_database' && \
 oc rsh deployment/api bash -c 'python manage.py load_data /dev/stdin' < ../pebbles/devel_dataset.yaml && \
 oc rsh deployment/api bash -c 'python manage.py reset_worker_password'
 
-# b) just bare minimum
+```
+
+b) just bare minimum
+
+```shell script
 oc rsh $(oc get pod -o name -l name=api) python manage.py initialize_system -e admin@example.org -p admin
 ```
 
