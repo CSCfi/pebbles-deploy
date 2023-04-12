@@ -16,3 +16,6 @@ spec:
     type: Docker
     dockerStrategy:
       dockerfilePath: deployment/pebbles.Dockerfile
+      buildArgs:
+      - name: APP_VERSION
+        value: "unknown"

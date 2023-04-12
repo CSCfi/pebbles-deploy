@@ -53,8 +53,17 @@ build-image-from-project-src() {
     oc get buildconfig ${name} || oc create -f ~/pebbles-deploy/openshift/${name}-bc.yaml
     oc get imagestream ${name} || oc create -f ~/pebbles-deploy/openshift/${name}-is.yaml
 
+    # patch buildconfig to include application version (timestamp for a devel build)
+    oc patch buildconfig ${name} --patch-file /dev/stdin <<EOF
+spec:
+  strategy:
+    dockerStrategy:
+      buildArgs:
+        - name: APP_VERSION
+          value: "$(date -Is)"
+EOF
     # create a build for current source branch, only taking files under version control
-    tmpfile=$(mktemp -u /tmp/src-${name}-XXXXXX.tar.gz)
+    tmpfile=$(mktemp -u /tmp/src-${name}-XXXXXX.tar)
     tar cfv $tmpfile --exclude-vcs-ignores --exclude-vcs -C ~/${name} `git -C ~/${name} ls-files`
     oc start-build ${name} --from-archive $tmpfile "$@"
     rm -v $tmpfile
