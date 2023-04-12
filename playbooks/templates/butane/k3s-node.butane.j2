@@ -93,6 +93,7 @@ storage:
             export K3S_URL="https://{{ master_vm_ip }}:6443"
             export K3S_TOKEN="{{ k3s_node_token }}"
             export K3S_KUBECONFIG_MODE="644"
+            export INSTALL_K3S_CHANNEL="{{ k3s_channel|d('stable') }}"
             export INSTALL_K3S_EXEC="--node-label role=user --node-taint role=user:NoSchedule {{ extra_k3s_args|d('') }}"
             curl -sfL https://get.k3s.io | sh -
             return 0
