@@ -125,3 +125,10 @@ storage:
         inline: |
           [updates]
           enabled = false
+
+    # disable user namespaces by default to mitigate related vulnerabilities
+    - path: /etc/sysctl.d/99-disable-user-namespaces.conf
+      mode: 0644
+      contents:
+        inline: |
+          user.max_user_namespaces = {{ max_user_namespaces|d('0') }}
