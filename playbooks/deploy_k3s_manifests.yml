@@ -1,0 +1,24 @@
+- hosts: masters
+  become: yes
+  roles:
+    - pebbles_facts
+  tasks:
+    - name: custom manifest templates
+      template:
+        src: "/opt/deployment/pebbles-environments/data/k3s-manifests/{{ item }}"
+        dest: "/var/lib/rancher/k3s/server/manifests/{{ item | splitext | first }}"
+        owner: root
+        group: root
+        mode: 0644
+      when: item | splitext | last == '.j2'
+      with_items: "{{ custom_manifests|d([ ]) }}"
+
+    - name: custom manifest files
+      copy:
+        src: "/opt/deployment/pebbles-environments/data/k3s-manifests/{{ item }}"
+        dest: "/var/lib/rancher/k3s/server/manifests/{{ item }}"
+        owner: root
+        group: root
+        mode: 0644
+      when: item | splitext | last in ('.yaml', '.yml')
+      with_items: "{{ custom_manifests|d([ ]) }}"

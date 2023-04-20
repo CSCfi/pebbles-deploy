@@ -187,29 +187,11 @@
           mountOptions:
             - vers=4.1
 
+- import_playbook: deploy_k3s_manifests.yml
+
 - hosts: masters
   become: yes
   tasks:
-    - name: custom manifest templates
-      template:
-        src: "/opt/deployment/pebbles-environments/data/k3s-manifests/{{ item }}"
-        dest: "/var/lib/rancher/k3s/server/manifests/{{ item | splitext | first }}"
-        owner: root
-        group: root
-        mode: 0644
-      when: item | splitext | last == '.j2'
-      with_items: "{{ custom_manifests|d([ ]) }}"
-
-    - name: custom manifest files
-      copy:
-        src: "/opt/deployment/pebbles-environments/data/k3s-manifests/{{ item }}"
-        dest: "/var/lib/rancher/k3s/server/manifests/{{ item }}"
-        owner: root
-        group: root
-        mode: 0644
-      when: item | splitext | last in ('.yaml', '.yml')
-      with_items: "{{ custom_manifests|d([ ]) }}"
-
     - name: install sqlite3
       dnf:
         name: sqlite

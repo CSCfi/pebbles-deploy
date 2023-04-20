@@ -76,6 +76,7 @@
           (echo $repo; cd /opt/deployment/$repo && git branch --show-current && git show | head -3; echo)
         done
       register: _repo_version_output
+      changed_when: false
 
     - set_fact:
        repo_version_data: |
