@@ -191,7 +191,9 @@
                   HostName {{ item.private_v4 }}
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: {{ item.name }}"
           with_items: "{{ _os_server_facts.ansible_facts.openstack_servers }}"
-          when: item.name not in groups.nodes
+          when:
+            - item.name not in groups.nodes
+            - item.private_v4
 
     # db-farm
     - when:
