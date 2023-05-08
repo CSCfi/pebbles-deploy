@@ -39,8 +39,6 @@ def main():
 
     scaler = Scaler(dc, config)
     while not terminate:
-        scaler.update()
-
         # refresh config if it has been modified
         new_stat = os.stat(config_file)
         if new_stat.st_mtime != config_file_stat.st_mtime:
@@ -48,6 +46,10 @@ def main():
             config = yaml.safe_load(open(config_file, 'r'))
             scaler.set_config(config)
 
+        # run actual update
+        scaler.update()
+
+        # check signaled termination while sleeping
         for i in range(60):
             if terminate:
                 break
