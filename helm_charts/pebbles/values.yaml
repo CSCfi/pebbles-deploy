@@ -177,8 +177,11 @@ logstashMemoryLimit: 1200Mi
 logstashCpuRequest: 100m
 logstashCpuLimit: 1900m
 
-# Option to deploy private image registry
-private_registry_enabled: false
+# ----------------------------------------------------------------------------
+# Optional maintenance cron job
+maintenanceCronJobEnabled: False
+maintenanceCronJobSchedule: "45 0 * * *"
+maintenanceCronJobArgs: ["run_workspace_expiry_cleanup", "run_membership_expiry_cleanup"]
 
 # ----------------------------------------------------------------------------
 # Optional oauth2 settings

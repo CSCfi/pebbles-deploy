@@ -1,0 +1,34 @@
+---
+{{- if .Values.maintenanceCronJobEnabled }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: maintenance
+spec:
+  schedule: "{{ .Values.maintenanceCronJobSchedule }}"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: maintenance
+              image: {{ .Values.imagePrefix }}{{ .Values.apiImage }}
+              imagePullPolicy: Always
+              command: [ "python", "pebbles/maintenance/main.py" ]
+              args: {{ .Values.maintenanceCronJobArgs | toJson }}
+              env:
+                - name: PB_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: pebbles
+                      key: pb-secret-key
+                - name: PYTHONPATH
+                  value: /opt/app-root/src
+
+{{- end }}
