@@ -132,6 +132,7 @@ workerImagePullPolicy: IfNotPresent
 apiImagePullPolicy: IfNotPresent
 frontendImagePullPolicy: IfNotPresent
 adminFrontendImagePullPolicy: IfNotPresent
+adminFrontendEnabled: true
 #mountHostSrc: /CHANGE_ME/src/gitlab.ci.csc.fi/pebbles/pebbles
 #useSourceVolume: true
 apiDevelopmentMode: true
@@ -203,7 +204,9 @@ instances.
 You can update the helm installation by
 
 ```shell script
-helm upgrade pebbles deployment/helm_charts/pebbles --set instanceAppDomain=YOUR-MINIKUBE-IP-WITH-DASHES.nip.io
+helm upgrade pebbles helm_charts/pebbles \
+  -f local_values/local_k8s.yaml \
+  --set instanceAppDomain=YOUR-MINIKUBE-IP-WITH-DASHES.nip.io
 ```
 
 Also, add your minikube IP to /etc/hosts as an alias for the web server/API.
