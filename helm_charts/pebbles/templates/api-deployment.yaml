@@ -93,6 +93,7 @@ spec:
             - name: GUNICORN_CMD_ARGS
               value: >-
                 --access-logfile=/opt/log/access.log
+                --access-logformat='%(t)s "%(r)s" %(s)s %(b)s %({x-forwarded-for}i)s "%(f)s" %(M)s'
                 --log-file=/opt/log/error.log
                 --workers=1
                 --reload
@@ -102,6 +103,7 @@ spec:
             - name: GUNICORN_CMD_ARGS
               value: >-
                 --access-logfile=/opt/log/access.log
+                --access-logformat='%(t)s "%(r)s" %(s)s %(b)s %({x-forwarded-for}i)s "%(f)s" %(M)s'
                 --log-file=/opt/log/error.log
                 {{ .Values.apiGunicornExtraArgs }}
             {{- end }}
