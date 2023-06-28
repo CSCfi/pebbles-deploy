@@ -233,24 +233,41 @@ oc rsh deployment/db bash -c 'psql -d pebbles'
 
 ## Pycharm remote debugging
 
-Rebuild pebbles image with pycharm-dev-tools, they are commented out by default in requirements.txt.
+Rebuilding pebbles image for remote debugging:
 
-Uncomment and modify your local_values/local_k8s.yaml, key 'remoteDebugServerApi'. Note that you need to adapt the host
-name, the example works on MacOS.
+- Activate Pycharm debugging library pydevd-pycharm in requirements.in by removing the comment.
+- Compile **requirements.in.** by a command below and output requirements.txt file.
 
-Then update your deployment:
+```bash
+pip-compile
+```
+
+- Then Rebuild pebbles image
+
+```bash
+pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && docker build --tag pebbles:latest . --file=deployment/pebbles.Dockerfile ; popd
+```
+
+Upgrade helm:
+
+- Uncomment and modify your local_values/local_k8s.yaml, key `remoteDebugServerApi`. Note that you need to adapt the
+  host name, the example works on MacOS.
+
+- Then update your deployment:
 
 ```shell script
 helm upgrade pebbles helm_charts/pebbles -f local_values/local_k8s.yaml
 ```
 
+Set up pycharm debugger:
+
 Your API will now contact pycharm remote debugger at startup, so it won't start at first. Set up
-`Python Remote Debugging` configuration in PyCharm:
+`Python Remote Debugging` configuration in PyCharm.
 
 * set the port to 12345
 * set the source code mappings to YOUR_HOME_DIRECTORY_HERE/src/gitlab.ci.csc.fi/pebbles/pebbles=/opt/app-root/src
 
-Start debug, and the API container should connect and start.
+To start debug, delete API pod to restart it and the API container should connect and start.
 
 # Adding cluster resources for running the Environments
 
