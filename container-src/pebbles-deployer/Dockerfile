@@ -24,6 +24,7 @@ RUN dnf install -y \
     procps-ng \
     certbot \
     s3cmd \
+    httpd-tools \
  && dnf clean all
 
 # Install python requirements
