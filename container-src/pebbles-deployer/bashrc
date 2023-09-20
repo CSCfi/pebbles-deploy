@@ -101,44 +101,118 @@ list-application-images() {
     oc rsh -c api deployment/api bash -c 'PB_DEBUG=0 ./manage.py list_application_images'
 }
 
+print_oneliners_openstack() {
+    echo "List servers"
+    echo
+    echo "  openstack server list"
+    echo
+    echo "List Heat stacks"
+    echo
+    echo "  openstack stack list"
+    echo
+    echo "List volumes"
+    echo
+    echo "  openstack volume list"
+    echo
+    echo "List floating IPs"
+    echo
+    echo "  openstack floating ip list"
+    echo
+}
+
+print_oneliners_k3s() {
+    echo "Deploy K3s on OpenStack"
+    echo
+    echo "  cd pebbles-deploy"
+    echo "  ansible-playbook playbooks/site_k3s.yml"
+    echo
+    echo "Watch nodes and pods in the system"
+    echo
+    echo "  watch -n 10 'oc get nodes -o wide; oc get pods -o wide -A'"
+    echo
+    echo "See autoscaler logs"
+    echo
+    echo "  ssh $ENV_NAME-jump journalctl -f -u k3s-autoscaler --since -1h"
+    echo
+}
+
+print_oneliners_gitlab_runner() {
+    echo "Deploy GitLab runner on OpenStack"
+    echo
+    echo "  cd pebbles-deploy"
+    echo "  ansible-playbook playbooks/site_gitlab_runner.yml"
+    echo
+}
+
+print_oneliners_db_farm() {
+    echo "Deploy DB Farm on OpenStack"
+    echo
+    echo "  cd pebbles-deploy"
+    echo "  ansible-playbook playbooks/site_db_farm.yml"
+    echo
+}
+
+print_oneliners_pebbles() {
+    echo "Build, install and initialize Pebbles in an empty namespace with initial data defined in inventory"
+    echo
+    echo "  install-pebbles"
+    echo
+    echo "Upgrade an existing installation"
+    echo
+    echo "  helm-upgrade-pebbles [-r] [options for Helm]"
+    echo "    where -r will also update the values.yaml with 'refresh-ramdisk'"
+    echo
+    echo "Completely remove a development environment, including all data"
+    echo
+    echo "  helm delete pebbles; oc delete all --all; oc delete pvc --all; oc delete secret pebbles"
+    echo
+    echo "Restart a component (like api/frontend/worker/...). If component name is empty, restart all components."
+    echo
+    echo "  restart-pebbles [component name]"
+    echo
+    echo "Enter a database shell (running in the same namespace)"
+    echo
+    echo "  db-shell"
+    echo
+    echo "Enter a database shell (hosted externally)"
+    echo
+    echo "  db-shell-external"
+    echo
+    echo "Refresh helm values from pebbles-environments"
+    echo
+    echo "  refresh-ramdisk"
+    echo
+}
+
 source init_env.bash
 
 source deploy_functions.bash
 
+echo "Oneliners"
+echo "---------"
+echo
+
+case $DEPLOYMENT_TYPE in
+helm)
+    print_oneliners_pebbles
+    ;;
+k3s)
+    print_oneliners_k3s
+    print_oneliners_openstack
+    ;;
+gitlab-runner-heat)
+    print_oneliners_gitlab_runner
+    print_oneliners_openstack
+    ;;
+db-farm)
+    print_oneliners_db_farm
+    print_oneliners_openstack
+    ;;
+esac
+
 echo
 echo "Branches, view with 'branch-info'":
+echo "---------------------------------"
 echo
 branch-info
-echo
-echo "Deploy K3s on OpenStack followed by Pebbles:"
-echo
-echo "  cd pebbles-deploy"
-echo "  ansible-playbook playbooks/site_k3s.yml"
-echo "  helm-install-pebbles && initialize-pebbles $(openssl rand -hex 16)"
-echo
-echo "Build, install and initialize Pebbles in an empty namespace with initial data defined in inventory:"
-echo
-echo "  install-pebbles"
-echo
-echo "Upgrade an existing installation:"
-echo
-echo "  helm-upgrade-pebbles [-r] [options for Helm]"
-echo "    where -r will also update the values.yaml with 'refresh-ramdisk'"
-echo
-echo "Completely remove a development environment, including all data:"
-echo
-echo "  helm delete pebbles; oc delete all --all; oc delete pvc --all; oc delete secret pebbles"
-echo
-echo "To restart pods"
-echo "OPTION can be api/db/worker/frontend/admin-frontend/logstash/oauth2-proxy. If empty restarts all."
-echo
-echo "  restart-pebbles [OPTION]"
-echo
-echo "To enter database shell"
-echo
-echo "  db-shell"
-echo
-echo "refresh helm values from pebbles-environments"
-echo
-echo "  refresh-ramdisk"
 echo
