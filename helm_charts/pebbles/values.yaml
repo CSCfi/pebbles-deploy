@@ -123,6 +123,9 @@ apiAutomigrateDb: false
 # gunicorn extra arguments for production mode
 apiGunicornExtraArgs: "--workers=4 --max-requests=200"
 
+# Specify Gunicorn reload engine if needed
+#apiGunicornReloadEngine: poll
+
 # The level of access for the worker service account. If the service account
 # needs to be able to create namespaces, cluster admin rights are needed.
 # This is the case when provisioning sessions to local cluster to non-fixed namespaces,

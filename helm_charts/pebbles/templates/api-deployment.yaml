@@ -97,6 +97,9 @@ spec:
                 --log-file=/opt/log/error.log
                 --workers=1
                 --reload
+                {{- if .Values.apiGunicornReloadEngine }}
+                --reload-engine={{ .Values.apiGunicornReloadEngine }}
+                {{- end }}
             {{- else }}
             - name: PB_DEBUG
               value: '0'
