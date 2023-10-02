@@ -8,11 +8,11 @@ metadata:
     app: admin-frontend
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    {{- if .Values.ingressClass }}
-    kubernetes.io/ingress.class: "{{ .Values.ingressClass }}"
-    {{- end}}
 
 spec:
+  {{- if .Values.ingressClass }}
+  ingressClassName: "{{ .Values.ingressClass }}"
+  {{- end}}
   rules:
     - host: {{ .Values.ingressHost }}
       http:
