@@ -88,6 +88,11 @@ ingressHost: localhost
 # Optional ingress class, that gets set in kubernetes.io/ingress.class annotations
 #ingressClass: nginx
 
+# Namespaces from which to allow ingress traffic in default network policy
+#networkPolicyDefaultIngressNamespaces:
+#  - kube-system
+#  - ingress
+
 # IP whitelist for limiting connectivity to given ranges
 #ipWhitelist: '192.168.1.0/24 10.0.0.1'
 

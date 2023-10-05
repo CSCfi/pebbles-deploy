@@ -1,3 +1,4 @@
+{{- if .Values.networkPolicyDefaultIngressNamespaces }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -5,9 +6,12 @@ metadata:
 spec:
   ingress:
   - from:
-    - namespaceSelector:
-        matchLabels:
-          name: "kube-system"
+      {{- range .Values.networkPolicyDefaultIngressNamespaces }}
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: {{ . }}
+      {{- end }}
   policyTypes:
   - Ingress
   podSelector: {}
+{{- end }}
