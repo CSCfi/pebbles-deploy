@@ -122,6 +122,9 @@ ingressHost: localhost
 # nodeSelector:
 #   node-role.kubernetes.io/master: "true"
 
+# API Flask application reference
+apiFlaskApp: pebbles.server:app
+
 # Enable or disable running database automigration on API startup
 apiAutomigrateDb: false
 

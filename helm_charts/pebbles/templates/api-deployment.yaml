@@ -50,7 +50,7 @@ spec:
           imagePullPolicy: {{ .Values.apiImagePullPolicy }}
           env:
             - name: FLASK_APP
-              value: pebbles.server:app
+              value: {{ .Values.apiFlaskApp }}
             - name: PB_SQLALCHEMY_DATABASE_URI
               value: {{ .Values.databaseUri }}
             - name: PB_DATABASE_PASSWORD
@@ -77,9 +77,9 @@ spec:
             - name: APP_SCRIPT
               value: /opt/app-root/src/deployment/run_gunicorn.bash
             - name: APP_MODULE
-              value: pebbles.server:app
+              value: {{ .Values.apiFlaskApp }}
             - name: FLASK_APP
-              value: pebbles.server:app
+              value: {{ .Values.apiFlaskApp }}
             - name: PB_SQLALCHEMY_DATABASE_URI
               value: {{ .Values.databaseUri }}
             - name: PB_DATABASE_PASSWORD
