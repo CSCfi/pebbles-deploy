@@ -8,7 +8,7 @@
 
 - name: security group
   delegate_to: localhost
-  os_security_group:
+  openstack.cloud.security_group:
     state: present
     name: "{{ server_name }}"
     description: security group for database server {{ server_name }}
@@ -16,7 +16,7 @@
 - name: security group rules for ssh
   with_items: "{{ allow_ssh_from }}"
   delegate_to: localhost
-  os_security_group_rule:
+  openstack.cloud.security_group_rule:
     security_group: "{{ server_name }}"
     protocol: tcp
     port_range_min: 22
@@ -26,7 +26,7 @@
 
 - name: security group rules for databases
   delegate_to: localhost
-  os_security_group_rule:
+  openstack.cloud.security_group_rule:
     security_group: "{{ server_name }}"
     protocol: tcp
     port_range_min: "{{ item.0.port }}"
@@ -37,7 +37,7 @@
 
 - name: os_volume
   delegate_to: localhost
-  os_volume:
+  openstack.cloud.volume:
     state: present
     size: "{{ volume_size_gb }}"
     display_name: "{{ server_name }}-data"
@@ -61,7 +61,7 @@
 
 - name: provision VM
   delegate_to: localhost
-  os_server:
+  openstack.cloud.server:
     state: present
     name: "{{ server_name }}"
     image: "{{ image }}"
@@ -80,9 +80,10 @@
 
 - name: attach floating ip to VM
   delegate_to: localhost
-  os_floating_ip:
+  openstack.cloud.floating_ip:
     server: "{{ server_name }}"
     floating_ip_address: "{{ public_ip }}"
+    network: "{{ network }}"
 
 - name: lock server
   delegate_to: localhost

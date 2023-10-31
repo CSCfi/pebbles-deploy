@@ -19,7 +19,7 @@
       block:
       - name: Build the stack of drives
         register: heat_volumes
-        os_stack:
+        openstack.cloud.stack:
           name: "{{ stack_name }}"
           state: present
           template: "files/k3s-heat-volume-stack.yml"

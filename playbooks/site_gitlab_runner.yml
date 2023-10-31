@@ -6,7 +6,7 @@
     - pebbles_facts
   tasks:
     - name: Add public key to OpenStack for {{ cluster_name }}
-      os_keypair:
+      openstack.cloud.keypair:
         state: present
         name: "{{ cluster_name }}"
         public_key_file: "/dev/shm/{{ cluster_name }}/id_rsa.pub"
@@ -22,7 +22,7 @@
       block:
         - name: Build gitlab runner stack
           register: heat_stack
-          os_stack:
+          openstack.cloud.stack:
             name: "{{ cluster_name }}"
             state: present
             template: "files/gitlab-runner-heat-stack.yml"
@@ -39,11 +39,12 @@
               vm_ip: "{{ network_prefix }}.11"
 
         - name: Associate fixed floating IP with server node
-          os_floating_ip:
+          openstack.cloud.floating_ip:
             server: "{{ cluster_name }}"
             floating_ip_address: "{{ public_ip }}"
+            network: "{{ cluster_name }}-network"
 
-- include: generate_ssh_config.yml
+- import_playbook: generate_ssh_config.yml
 
 - hosts: localhost
   gather_facts: no

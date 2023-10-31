@@ -176,9 +176,33 @@
           with_items: "{{ groups.nodes | d([]) }}"
 
         - name: list node VMs
-          os_server_facts:
+          openstack.cloud.server_info:
             server: "{{ cluster_name }}-node-*"
           register: _os_server_facts
+
+        - name: preprocess address data for node VMs, extracting a list of addresses per node
+          set_fact:
+            _node_addresses: >
+              {{ 
+                _node_addresses | default([]) +
+                [
+                  {
+                    'name': item.name,
+                    'addresses': item.addresses[cluster_name + '-network'] 
+                      | default([])
+                      | selectattr('addr', 'defined') 
+                      | map(attribute='addr')
+                      | join(' ')
+                  }
+                ]
+              }}
+          with_items: "{{ _os_server_facts.servers }}"
+          when:
+            - item.name not in groups.nodes
+            - item.addresses is defined and item.addresses | length
+
+        - debug:
+            msg: "{{ _node_addresses | default([]) }}"
 
         - name: add ssh config entry for nodes (dynamic)
           blockinfile:
@@ -186,14 +210,11 @@
             mode: '0600'
             dest: "{{ ssh_config_file }}"
             block: |
-              Host {{ item.name }} {{ item.private_v4 }}
+              Host {{ item.name }} {{ item.addresses }}
                   User core
-                  HostName {{ item.private_v4 }}
+                  HostName {{ item.addresses }}
             marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: {{ item.name }}"
-          with_items: "{{ _os_server_facts.ansible_facts.openstack_servers }}"
-          when:
-            - item.name not in groups.nodes
-            - item.private_v4
+          with_items: "{{ _node_addresses|default([]) }}"
 
     # db-farm
     - when:

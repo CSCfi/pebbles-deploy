@@ -4,7 +4,7 @@
     - forked_image_name is defined
   block:
   - name: check existence of public image
-    os_image_facts:
+    openstack.cloud.image_info:
       image: "{{ public_image_name }}"
     failed_when: false
     changed_when: false
@@ -19,7 +19,7 @@
       public_image_id: "{{ openstack_image.id }}"
 
   - name: check existence of forked image
-    os_image_facts:
+    openstack.cloud.image_info:
       image: "{{ forked_image_name }}"
     failed_when: false
     changed_when: false
@@ -35,7 +35,7 @@
       command: glance image-download --file {{ image_dl_temp_dir.stdout }}/public_image.img {{ public_image_id }}
 
     - name: create fork from public image
-      os_image:
+      openstack.cloud.image:
         name: "{{ forked_image_name }}"
         is_public: no
         container_format: bare

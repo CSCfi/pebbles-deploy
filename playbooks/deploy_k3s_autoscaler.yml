@@ -4,11 +4,10 @@
   gather_facts: no
   tasks:
   - name: create server group for nodes that are added dynamically by autoscaler
-    os_server_group:
+    openstack.cloud.server_group:
       state: present
       name: "{{ cluster_name }}-server_group_node"
-      policies:
-        - soft-anti-affinity
+      policy: soft-anti-affinity
 
 - name: Install k3s-autoscaler
   hosts: jump_host

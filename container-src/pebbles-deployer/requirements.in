@@ -1,0 +1,21 @@
+#
+# Use 'pip-compile' from pip-tools package to generate requirements.txt from this file.
+# To update the requirements, run 'pip-compile -U'
+
+## Primary requirements
+ansible
+requests
+requests-oauthlib
+oslo.utils
+openshift
+python-heatclient
+python-novaclient
+python-openstackclient
+python-swiftclient
+openstacksdk
+
+# for hot-reload in development
+inotify
+
+# for generating requirements.txt
+pip-tools

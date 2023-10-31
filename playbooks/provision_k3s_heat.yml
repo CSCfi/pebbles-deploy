@@ -13,7 +13,7 @@
       when: public_image_name is defined
 
     - name: add public key to OpenStack for {{ cluster_name }}
-      os_keypair:
+      openstack.cloud.keypair:
         state: present
         name: "{{ cluster_name }}"
         public_key_file: "/dev/shm/{{ cluster_name }}/id_rsa.pub"
@@ -29,7 +29,7 @@
       block:
         - name: build K3s Heat stack
           register: heat_stack
-          os_stack:
+          openstack.cloud.stack:
             name: "{{ cluster_name }}"
             state: present
             template: "files/k3s-heat-stack.yml"
@@ -64,18 +64,20 @@
               compute_node_ids: "{{ compute_node_ids|default([]) }}"
 
         - name: associate floating IP with master node
-          os_floating_ip:
+          openstack.cloud.floating_ip:
             server: "{{ cluster_name }}-master"
             floating_ip_address: "{{ master_public_ip }}"
+            network: "{{ cluster_name }}-network"
 
         - name: associate floating IP with first jump host
-          os_floating_ip:
+          openstack.cloud.floating_ip:
             server: "{{ cluster_name }}-jump"
             floating_ip_address: "{{ jump_host_public_ip }}"
+            network: "{{ cluster_name }}-network"
           when: jump_host_public_ip is defined
 
         - name: associate volumes with master node
-          os_server_volume:
+          openstack.cloud.server_volume:
             server: "{{ cluster_name}}-master"
             state: present
             volume: "{{ item }}"
@@ -85,7 +87,7 @@
             - "{{ cluster_name }}-images"
 
         - name: associate nfs volume
-          os_server_volume:
+          openstack.cloud.server_volume:
             server: "{{ cluster_name}}-nfs"
             state: present
             volume: "{{ cluster_name}}-nfs"
@@ -98,7 +100,7 @@
 
       # endblock
 
-- include: generate_ssh_config.yml
+- import_playbook: generate_ssh_config.yml
 
 - hosts: localhost
   gather_facts: no

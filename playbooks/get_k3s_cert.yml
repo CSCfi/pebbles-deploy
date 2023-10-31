@@ -34,16 +34,16 @@
     - pebbles_facts
   tasks:
     - name: create security group
-      os_security_group:
+      openstack.cloud.security_group:
         name: temporary_cert_vm
 
     - name: create security group rule (allow traffic from jump)
-      os_security_group_rule:
+      openstack.cloud.security_group_rule:
         security_group: temporary_cert_vm
         remote_group: "{{ cluster_name }}-bastion"
 
     - name: create security group rules (ssh matching jump host access)
-      os_security_group_rule:
+      openstack.cloud.security_group_rule:
         security_group: temporary_cert_vm
         protocol: tcp
         port_range_min: 22
@@ -53,7 +53,7 @@
         - "{{ jump_host_allow_cidrs }}"
 
     - name: create security group rule (http from anywhere)
-      os_security_group_rule:
+      openstack.cloud.security_group_rule:
         security_group: temporary_cert_vm
         protocol: tcp
         port_range_min: 80
@@ -61,7 +61,7 @@
         remote_ip_prefix: 0.0.0.0/0
 
     - name: provision VM
-      os_server:
+      openstack.cloud.server:
         state: present
         name: temporary_cert_vm
         image: "{{ jump_host_vm_image }}"
@@ -84,10 +84,19 @@
         name: temporary_cert_vm
         ansible_ssh_host: "{{ master_public_ip }}"
 
-    - name: borrow floating ip from the master
-      os_floating_ip:
+    - name: borrow floating ip from the master (detach)
+      openstack.cloud.floating_ip:
+        server: "{{ cluster_name }}-master"
+        floating_ip_address: "{{ master_public_ip }}"
+        network: "{{ cluster_name }}-network"
+        state: absent
+        wait: yes
+
+    - name: borrow floating ip from the master (attach)
+      openstack.cloud.floating_ip:
         server: temporary_cert_vm
         floating_ip_address: "{{ master_public_ip }}"
+        network: "{{ cluster_name }}-network"
         state: present
         wait: yes
 
@@ -151,10 +160,19 @@
   roles:
     - pebbles_facts
   tasks:
-    - name: return floating ip to the master
-      os_floating_ip:
+    - name: return floating ip to the master (detach)
+      openstack.cloud.floating_ip:
+        server: temporary_cert_vm
+        floating_ip_address: "{{ master_public_ip }}"
+        network: "{{ cluster_name }}-network"
+        state: absent
+        wait: yes
+
+    - name: return floating ip to the master (attach)
+      openstack.cloud.floating_ip:
         server: "{{ cluster_name }}-master"
         floating_ip_address: "{{ master_public_ip }}"
+        network: "{{ cluster_name }}-network"
         state: present
         wait: yes
 
@@ -204,11 +222,11 @@
     - pebbles_facts
   tasks:
     - name: delete temporary VM
-      os_server:
+      openstack.cloud.server:
         name: temporary_cert_vm
         state: absent
 
     - name: delete temporary security group
-      os_security_group:
+      openstack.cloud.security_group:
         name: temporary_cert_vm
         state: absent

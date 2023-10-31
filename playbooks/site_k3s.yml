@@ -1,6 +1,6 @@
 ---
-- include: provision_k3s_heat_volumes.yml
-- include: provision_k3s_heat.yml
-- include: deploy_k3s.yml
-- include: private_registry.yml
-- include: deploy_k3s_autoscaler.yml
+- import_playbook: provision_k3s_heat_volumes.yml
+- import_playbook: provision_k3s_heat.yml
+- import_playbook: deploy_k3s.yml
+- import_playbook: private_registry.yml
+- import_playbook: deploy_k3s_autoscaler.yml

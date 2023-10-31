@@ -41,15 +41,14 @@
       register: ignition_def
 
     - name: create/query server group
-      os_server_group:
+      openstack.cloud.server_group:
         state: present
         name: "{{ cluster_name }}-server_group_node"
-        policies:
-          - soft-anti-affinity
+        policy: soft-anti-affinity
       register: _os_server_group
 
     - name: provision VM
-      os_server:
+      openstack.cloud.server:
         state: present
         name: "{{ server_name }}"
         image: "{{ fcos_image }}"
@@ -64,8 +63,8 @@
           - "{{ cluster_name }}-node"
         wait: yes
         scheduler_hints:
-          group: "{{ _os_server_group.id }}"
+          group: "{{ _os_server_group.server_group.id }}"
         userdata: "{{ ignition_def.stdout | string }}"
       register: _os_server
 
-- include: generate_ssh_config.yml
+- import_playbook: generate_ssh_config.yml

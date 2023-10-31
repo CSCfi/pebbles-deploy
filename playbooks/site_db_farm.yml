@@ -4,7 +4,7 @@
   gather_facts: no
   tasks:
     - name: Add public key to OpenStack for {{ cluster_name }}
-      os_keypair:
+      openstack.cloud.keypair:
         state: present
         name: "{{ cluster_name }}"
         public_key_file: "/dev/shm/{{ cluster_name }}/id_rsa.pub"
