@@ -50,7 +50,7 @@ during the first boot.
 
 ## Deprovisioning
 
-First remove the node VMs.
+First remove the node VMs - they not part of the stack but using shared stack provisioned resources.
 
 ```bash
 openstack server list | grep dev-cluster-X-node
