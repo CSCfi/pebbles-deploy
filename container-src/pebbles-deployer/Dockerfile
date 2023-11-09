@@ -92,6 +92,7 @@ RUN mkdir -p /opt/deployment/galaxy-roles/{k3s,nfs} \
  && curl -L https://github.com/geerlingguy/ansible-role-nfs/archive/11e9802153ffe19709e1fd3d1e49beb0d641d760.tar.gz \
   | tar xz --strip-components=1 -C /opt/deployment/galaxy-roles/nfs
 
-RUN ansible-galaxy install openstack
+RUN ansible-galaxy install openstack \
+ && ansible-galaxy collection install prometheus.prometheus
 
 CMD /bin/bash

@@ -229,6 +229,12 @@ resources:
           protocol: tcp
           port_range_min: 2049
           port_range_max: 2049
+        # prometheus node exporter accessible from infra VMs
+        - remote_mode: remote_group_id
+          remote_group_id: { get_resource: secgroup_infra }
+          protocol: tcp
+          port_range_min: 9100
+          port_range_max: 9100
 
   secgroup_infra:
     type: secgroup.yaml

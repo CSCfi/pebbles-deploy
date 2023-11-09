@@ -96,10 +96,15 @@
       when:
         - pb_installed | d(false) | bool == false
 
-    # Apply nfs role only if exports file is empty or does not exist. The role overrides it.
+    # Apply nfs role only if exports file is empty or does not exist. The role would overwrite it.
     - name: nfs
       when: not stat_etc_exports.stat.exists or stat_etc_exports.stat.size==0
+
     - name: nfs_provisioner
+
+    # Deploy node_exporter on NFS server using prometheus community galaxy role
+    - name: prometheus.prometheus.node_exporter
+
   tasks:
     - name: start and enable nfs-server (nfs role won't do it if there are no exports)
       systemd:
