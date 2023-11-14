@@ -35,6 +35,15 @@ workerMemoryLimit: 200Mi
 workerCpuRequest: 100m
 workerCpuLimit: 1900m
 
+# Polling ranges for controllers (should be adjusted based on number of workers,
+# the default values are for one worker)
+sessionControllerPollingIntervalSecMin: 2
+sessionControllerPollingIntervalSecMax: 5
+clusterControllerPollingIntervalSecMin: 30
+clusterControllerPollingIntervalSecMax: 90
+workspaceControllerPollingIntervalSecMin: 30
+workspaceControllerPollingIntervalSecMax: 90
+
 # Resources for db
 dbMemoryRequest: 200Mi
 dbMemoryLimit: 200Mi

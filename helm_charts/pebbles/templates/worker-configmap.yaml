@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: worker-configmap
+data:
+  SESSION_CONTROLLER_POLLING_INTERVAL_SEC_MIN: "{{ .Values.sessionControllerPollingIntervalSecMin}}"
+  SESSION_CONTROLLER_POLLING_INTERVAL_SEC_MAX: "{{ .Values.sessionControllerPollingIntervalSecMax}}"
+  CLUSTER_CONTROLLER_POLLING_INTERVAL_SEC_MIN: "{{ .Values.clusterControllerPollingIntervalSecMin}}"
+  CLUSTER_CONTROLLER_POLLING_INTERVAL_SEC_MAX: "{{ .Values.clusterControllerPollingIntervalSecMax}}"
+  WORKSPACE_CONTROLLER_POLLING_INTERVAL_SEC_MIN: "{{ .Values.workspaceControllerPollingIntervalSecMin}}"
+  WORKSPACE_CONTROLLER_POLLING_INTERVAL_SEC_MAX: "{{ .Values.workspaceControllerPollingIntervalSecMax}}"

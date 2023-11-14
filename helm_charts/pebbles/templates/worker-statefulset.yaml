@@ -77,6 +77,9 @@ spec:
             - name: REMOTE_DEBUG_SERVER
               value: {{ .Values.remoteDebugServerWorker }}
             {{- end }}
+          envFrom:
+            - configMapRef:
+                name: worker-configmap
           volumeMounts:
             - name: cluster-config
               mountPath: "/run/secrets/pebbles/cluster-config.yaml"
