@@ -134,6 +134,7 @@
         certbot certonly -n --standalone --http-01-port 80 --agree-tos
         --domains {{ domain_name }}
         --email {{ cert_email }}
+        --issuance-timeout 3600
         {{ certbot_extra_options | default('') }}
       args:
         creates: /etc/letsencrypt/live/{{ domain_name }}/privkey.pem
