@@ -235,17 +235,10 @@ oc rsh deployment/db bash -c 'psql -d pebbles'
 
 Rebuilding pebbles image for remote debugging:
 
-- Activate Pycharm debugging library pydevd-pycharm in requirements.in by removing the comment.
-- Compile **requirements.in.** by a command below and output requirements.txt file.
-
 ```bash
-pip-compile
-```
-
-- Then Rebuild pebbles image
-
-```bash
-pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && docker build --tag pebbles:latest . --file=deployment/pebbles.Dockerfile ; popd
+pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles
+docker build --tag pebbles:latest . --file=deployment/pebbles.Dockerfile --build-arg EXTRA_PIP_PACKAGES=pydevd-pycharm
+popd
 ```
 
 Upgrade helm:
