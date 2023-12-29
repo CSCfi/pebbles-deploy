@@ -16,10 +16,20 @@
             username: "{{ openshift_username }}"
             password: "{{ openshift_password }}"
           register: k8s_auth_results
+          when: openshift_password is defined
 
-        - set_fact:
+        - name: Extract authentication data from k8s_auth results
+          set_fact:
             k8s_auth: "{{ k8s_auth_results.k8s_auth }}"
-          when: openshift_username is defined
+          when: openshift_password is defined
+
+        - name: Set up authentication with token
+          set_fact:
+            k8s_auth:
+              host: "{{ openshift_host }}"
+              username:  "{{ openshift_username }}"
+              api_key: "{{ openshift_token }}"
+          when: openshift_token is defined
 
         - name: Create .kube directory
           file:
