@@ -9,9 +9,9 @@ parameters:
     description: >
       environment name, used for labels
     type: string
-  docker_vol_size:
+  k3slib_vol_size:
     description: >
-      Size of docker volume
+      Size of k3slib volume
     type: string
     default: '120'
   backup_vol_size:
@@ -31,12 +31,12 @@ parameters:
     default: '10'
 
 resources:
-    docker_volume:
+    k3slib_volume:
       type: OS::Cinder::Volume
       properties:
         name:
-          list_join: ['-', [{ get_param: env_name }, 'docker']]
-        size: { get_param: docker_vol_size }
+          list_join: ['-', [{ get_param: env_name }, 'k3slib']]
+        size: { get_param: k3slib_vol_size }
     backup_volume:
       type: OS::Cinder::Volume
       properties:

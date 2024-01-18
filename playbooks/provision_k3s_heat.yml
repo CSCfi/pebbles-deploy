@@ -82,7 +82,7 @@
             state: present
             volume: "{{ item }}"
           with_items:
-            - "{{ cluster_name }}-docker"
+            - "{{ cluster_name }}-k3slib"
             - "{{ cluster_name }}-backup"
             - "{{ cluster_name }}-images"
 
