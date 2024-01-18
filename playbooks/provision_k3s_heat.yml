@@ -84,7 +84,6 @@
           with_items:
             - "{{ cluster_name }}-k3slib"
             - "{{ cluster_name }}-backup"
-            - "{{ cluster_name }}-images"
 
         - name: associate nfs volume
           openstack.cloud.server_volume:
