@@ -15,40 +15,57 @@
   roles:
     - pebbles_facts
   tasks:
-    - name: download given version of k3s
-      import_tasks: ~/galaxy-roles/k3s/tasks/download.yml
+    - when: ansible_hostname in groups.masters
+      block:
+      - name: create a fresh object dump on master
+        command:
+          cmd: /usr/local/sbin/k3s_object_dump.sh
 
-    # for nodes, we explicitly stop and wait for the node to report NotReady
-    - name: stop k3s-agent service
-      systemd:
-        name: k3s-agent
-        state: stopped
-      when: ansible_hostname in groups.nodes
+      # stop master (API is down when the service is down)
+      - name: stop k3s-master service
+        systemd:
+          name: k3s-master
+          state: stopped
 
-    - name: wait for the node {{ ansible_hostname }} to be NotReady
-      delegate_to: localhost
-      become: no
-      shell: >
-        oc get node {{ ansible_hostname }}
-      register: result
-      until: result.stdout.find(' Ready ') == -1
-      retries: 30
-      delay: 5
-      changed_when: false
-      when: ansible_hostname in groups.nodes
+      - name: download given version of k3s
+        import_tasks: ~/galaxy-roles/k3s/tasks/download.yml
 
-    # master is simply restarted (API is down when the service is down)
-    - name: restart k3s-master service
-      systemd:
-        name: k3s-master
-        state: restarted
-      when: ansible_hostname in groups.masters
+      - name: create a fresh database backup on master
+        command:
+          cmd: /usr/local/sbin/k3s_sqlite_backup.sh
 
-    - name: start k3s-agent service
-      systemd:
-        name: k3s-agent
-        state: started
-      when: ansible_hostname in groups.nodes
+      # start master
+      - name: start k3s-master service
+        systemd:
+          name: k3s-master
+          state: started
+
+    - when: ansible_hostname in groups.nodes
+      block:
+      # for nodes, we explicitly stop and wait for the node to report NotReady
+      - name: stop k3s-agent service
+        systemd:
+          name: k3s-agent
+          state: stopped
+
+      - name: wait for the node {{ ansible_hostname }} to be NotReady
+        delegate_to: localhost
+        become: no
+        shell: >
+          oc get node {{ ansible_hostname }}
+        register: result
+        until: result.stdout.find(' Ready ') == -1
+        retries: 30
+        delay: 5
+        changed_when: false
+
+      - name: download given version of k3s
+        import_tasks: ~/galaxy-roles/k3s/tasks/download.yml
+
+      - name: start k3s-agent service
+        systemd:
+          name: k3s-agent
+          state: started
 
     - name: wait for the node {{ ansible_hostname }} to report 'Ready' in API before continuing
       delegate_to: localhost
