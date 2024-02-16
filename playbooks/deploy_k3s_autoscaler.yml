@@ -36,6 +36,9 @@
             dest: /run/pebbles/k3s-autoscaler
             state: directory
             mode: '0700'
+            seuser: system_u
+            serole: object_r
+            setype: container_file_t
 
         - name: create autoscaler configuration
           copy:
@@ -60,6 +63,9 @@
                 k3s_node_token: {{ _node_token.content | b64decode | trim }}
                 fcos_cgroups_v1: {{ fcos_cgroups_v1 | d(true) | bool }}
             mode: "0600"
+            seuser: system_u
+            serole: object_r
+            setype: container_file_t
           no_log: true
 
         - name: create openstack configuration
@@ -75,6 +81,9 @@
               OS_TENANT_NAME: {{ openstack_tenant_name }}
               OS_REGION: {{ openstack_region }}
             mode: "0600"
+            seuser: system_u
+            serole: object_r
+            setype: container_file_t
           no_log: true
 
         - name: slurp kubeconfig from master
@@ -94,12 +103,19 @@
               }}
             dest: /run/pebbles/k3s-autoscaler/kubeconfig
             mode: "0600"
+            seuser: system_u
+            serole: object_r
+            setype: container_file_t
           no_log: true
 
         - name: copy butane template
           copy:
             src: templates/butane/k3s-node.butane.j2
             dest: /run/pebbles/k3s-autoscaler/k3s-node.butane.j2
+            mode: "0600"
+            seuser: system_u
+            serole: object_r
+            setype: container_file_t
 
         - name: install k3s-autoscaler systemd service
           register: _autoscaler_service
@@ -131,6 +147,9 @@
 
               [Install]
               WantedBy=multi-user.target
+            seuser: system_u
+            serole: object_r
+            setype: container_file_t
 
         - name: reread systemd unit files
           systemd:
