@@ -147,6 +147,8 @@ initialize-pebbles() {
         return
     fi
     wait-for-api-readiness
+    # create database structure and initialize system
+    oc rsh deployment/api flask db upgrade
     oc rsh deployment/api python manage.py initialize_system -e admin@example.org -p $1
 }
 
@@ -154,7 +156,7 @@ initialize-pebbles() {
 initialize-pebbles-with-initial-data() {
     wait-for-api-readiness
     # create database structure
-    oc rsh deployment/api python manage.py create_database
+    oc rsh deployment/api flask db upgrade
     # load initial data
     oc rsh deployment/api python manage.py load_data /dev/stdin < /dev/shm/$ENV_NAME/initial_data.yaml
     # reset worker password to default secret
@@ -197,4 +199,3 @@ pebbles-tail-logs() {
 pebbles-rsync-src-api() {
   oc rsync ~/pebbles/pebbles $(oc get pods -l name=api | grep Running | cut -f 1 -d " " | head):.
 }
-

@@ -180,7 +180,7 @@ Initialize system with either
 a) development data that sets up a basic set of users and environments
 
 ```shell script
-oc rsh deployment/api bash -c 'python manage.py create_database' && \
+oc rsh deployment/api bash -c 'flask db upgrade' && \
 oc rsh deployment/api bash -c 'python manage.py load_data /dev/stdin' < ../pebbles/devel_dataset.yaml && \
 oc rsh deployment/api bash -c 'python manage.py reset_worker_password'
 
@@ -189,7 +189,8 @@ oc rsh deployment/api bash -c 'python manage.py reset_worker_password'
 b) just bare minimum
 
 ```shell script
-oc rsh $(oc get pod -o name -l name=api) python manage.py initialize_system -e admin@example.org -p admin
+oc rsh deployment/api bash -c 'flask db upgrade' && \
+oc rsh deployment/api bash -c 'python manage.py initialize_system -e admin@example.org -p admin'
 ```
 
 You can watch the progress with `oc get pods`, or run `watch oc get pods` in a different terminal window.
