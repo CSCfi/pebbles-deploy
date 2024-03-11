@@ -1,6 +1,6 @@
 #
 # Use 'pip-compile' from pip-tools package to generate requirements.txt from this file.
-# To update the requirements, run 'pip-compile -U'
+# To update the requirements, run 'pip-compile -v -U'
 
 ## Primary requirements
 ansible
@@ -13,9 +13,13 @@ python-novaclient
 python-openstackclient
 python-swiftclient
 openstacksdk
+jinja2
 
-# for hot-reload in development
+# for hot-reload/rsync-on-change in development
 inotify
 
 # for generating requirements.txt
 pip-tools
+
+# for parsing data from YAML files
+yq
