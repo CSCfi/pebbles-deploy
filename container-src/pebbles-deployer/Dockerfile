@@ -1,4 +1,4 @@
-FROM quay.io/fedora/fedora:38
+FROM quay.io/fedora/fedora:39
 
 LABEL maintainer="CSC Notebooks Team"
 RUN dnf makecache
@@ -25,19 +25,31 @@ RUN dnf install -y \
     certbot \
     s3cmd \
     httpd-tools \
+    age \
  && dnf clean all
 
 # Install python requirements
 COPY requirements.txt /root/requirements.txt
 RUN pip install --no-cache-dir -r /root/requirements.txt
 
-# Install helm
+# Install Helm
 RUN cd /tmp/ \
  && curl -LOs https://git.io/get_helm.sh \
  && chmod 700 get_helm.sh \
- && ./get_helm.sh -v v3.2.4 \
+ && ./get_helm.sh -v v3.14.0 \
  && rm /tmp/get_helm.sh
 RUN /usr/local/bin/helm completion bash > /etc/bash_completion.d/helm
+
+# Install Helm-Secrets plugin
+RUN helm plugin install https://github.com/jkroepke/helm-secrets --version v4.5.1
+
+# Install sops
+RUN cd /tmp/  \
+ && ARCH='' \
+ && if [[ $(uname -m) == 'aarch64' ]]; then ARCH='arm64'; else ARCH='amd64'; fi \
+ && curl -LO https://github.com/getsops/sops/releases/download/v3.8.1/sops-v3.8.1.linux.${ARCH} \
+ && mv sops-v3.8.1.linux.${ARCH} /usr/local/bin/sops \
+ && chmod +x /usr/local/bin/sops
 
 # Install oc and kubectl
 # Check the architecture, and download correct oc client from official mirror.
@@ -45,11 +57,11 @@ RUN cd /tmp/ \
  && ARCH='' \
  && if [[ $(uname -m) == 'aarch64' ]]; then ARCH='-arm64'; fi \
  && TARBALL=openshift-client-linux${ARCH}.tar.gz \
- && curl -LOs https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.9/${TARBALL} \
+ && curl -LOs https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.14/${TARBALL} \
  && tar xvfz ${TARBALL} \
  && install oc /usr/local/bin/oc \
  && install kubectl /usr/local/bin/kubectl \
- && rm ${TARBALL} oc kubectl
+ && rm ${TARBALL} oc kubectl README.md
 
 # Create completion for oc
 RUN /usr/local/bin/oc completion bash > /etc/bash_completion.d/oc
