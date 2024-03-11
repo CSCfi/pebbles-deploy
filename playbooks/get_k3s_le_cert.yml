@@ -15,7 +15,7 @@
 #
 # Example - use Let's Encrypt test server to avoid hitting rate limits during testing:
 #
-# $ ansible-playbook playbooks/get_k3s_cert.yml -e cert_email=EMAIL_HERE -e certbot_extra_options='--test-cert'
+# $ ansible-playbook playbooks/get_k3s_le_cert.yml -e cert_email=EMAIL_HERE -e certbot_extra_options='--test-cert'
 ---
 
 - name: Check arguments
@@ -68,7 +68,7 @@
         key_name: "{{ cluster_name }}"
         timeout: 200
         #flavor: "{{ jump_host_vm_flavor }}"
-        flavor: io.70GB
+        flavor: "{{ temporary_cert_vm_flavor | d('standard.small') }}"
         nics:
           - net-name: "{{ cluster_name }}-network"
         security_groups:
@@ -102,7 +102,7 @@
 
     - name: wait for SSH to work
       shell: >
-        ssh cloud-user@{{ master_public_ip }}
+        ssh -o ConnectTimeout=5 cloud-user@{{ master_public_ip }}
         'echo success'
       register: result
       until: result.stdout.find('success') != -1
