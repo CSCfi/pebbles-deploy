@@ -41,6 +41,7 @@
           template:
             src: kube_config.yaml.j2
             dest: /opt/deployment/.kube/config
+            mode: '0600'
     # end block
 
     - when: deployment_type in ('helm', 'k3s')
