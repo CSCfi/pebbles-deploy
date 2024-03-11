@@ -4,6 +4,7 @@
     - masters
     - nodes
     - nfs
+    - jump_host
   roles:
     - pebbles_facts
   tasks:
@@ -15,6 +16,7 @@
           - python3
           - dstat
           - vim
+          - tree
 
     - name: Start and enable sysstat
       systemd:
@@ -46,15 +48,28 @@
   gather_facts: yes
   become: yes
   tasks:
+
+    - name: mount tmpfs for K3s server directory to keep database and manifest contents in RAM only
+      become: True
+      mount:
+        name: /var/lib/rancher/k3s/server
+        src: tmpfs
+        fstype: tmpfs
+        # todo: add 'noswap' when the kernel supports it
+        opts: size=512M,uid=0,gid=0,mode=0700
+        state: mounted
+      when:
+        - k3s_server_on_ramdisk | d(false) | bool == true
+
     # See scripts/create_k3s_master_boostrap_data.bash for more info
-    # Use /var/lib/rancher/k3s/server/ as an indicator of an already bootstrapped system
+    # Use /var/lib/rancher/k3s/server/cred as an indicator of an already bootstrapped system
     - name: restore master bootstrap data
       shell: >
         echo "{{ vaulted_master_bootstrap_data }}"
         | base64 --decode
         | tar xvz -C /
       args:
-        creates: /var/lib/rancher/k3s/server/
+        creates: /var/lib/rancher/k3s/server/cred
       when:
         - vaulted_master_bootstrap_data is defined
         - restore_master_bootstrap_data | default(false) | bool
