@@ -84,10 +84,6 @@ databasePort: 5432
 # Master secret key for API. If not set, a random value is used
 #pbSecretKey: unsafe_danger_danger
 
-# To retain secrets between deployment updates, generated secret is only updated/created
-# when overrideSecret is set to 'true'
-#overrideSecret: false
-
 # Ingress type can be 'Ingress' for K8s ingresses or 'Route' for OpenShift Routes
 ingressType: Ingress
 

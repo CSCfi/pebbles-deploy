@@ -169,7 +169,7 @@ Deploy with Helm
 cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy
 
 echo "deploy with helm"
-helm upgrade -i pebbles helm_charts/pebbles -f local_values/local_k8s.yaml --set overrideSecret=1
+helm upgrade -i pebbles helm_charts/pebbles -f local_values/local_k8s.yaml
 
 echo "wait until api pod is running"
 while ! oc get pod -l name=api | egrep '1/1|2/2' | grep 'Running'; do echo 'Waiting for api pod'; sleep 5; done

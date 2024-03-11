@@ -165,7 +165,7 @@ initialize-pebbles-with-initial-data() {
 
 # installs system using Helm
 helm-install-pebbles() {
-    (cd ~/pebbles-deploy && helm install pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml --set overrideSecret=1)
+    (cd ~/pebbles-deploy && helm install pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml)
 }
 
 # upgrades deployment using Helm
