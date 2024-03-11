@@ -33,7 +33,7 @@ while getopts "p:P:e:o:c:t:sh" opt; do
         p)
             passfile=$OPTARG
             if [[ ! -e $passfile ]]; then
-                echo "vault password file $passfile does not exist"
+                echo "vault password file '$passfile' does not exist"
                 exit 1
             fi
             docker_opts="$docker_opts -v $passfile:/dev/shm/secret/vaultpass:ro"
@@ -41,7 +41,7 @@ while getopts "p:P:e:o:c:t:sh" opt; do
         P)
             passfile=$OPTARG
             if [[ ! -e $passfile ]]; then
-                echo "vault password file $passfile does not exist"
+                echo "vault password file '$passfile' does not exist"
                 exit 1
             fi
             docker_opts="$docker_opts -e VAULT_PASS=$(cat $passfile)"
@@ -51,10 +51,10 @@ while getopts "p:P:e:o:c:t:sh" opt; do
             docker_opts="$docker_opts -e ENV_NAME=$env_name"
             ;;
         c)  container_image=$OPTARG
-            echo "  using custom image $container_image"
+            echo "  using custom image '$container_image'"
             ;;
         t)  image_tag=$OPTARG
-            echo "  using custom image tag $image_tag"
+            echo "  using custom image tag '$image_tag'"
             ;;
         s)
             docker_opts="$docker_opts -e SKIP_SSH_CONFIG=1"
