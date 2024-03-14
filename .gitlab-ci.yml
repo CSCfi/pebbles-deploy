@@ -1,171 +1,75 @@
 ---
-image: docker:git
+image: quay.io/buildah/stable:v1.34
+
+variables:
+  KUBERNETES_MEMORY_REQUEST: "1Gi"
+  KUBERNETES_MEMORY_LIMIT: "1Gi"
+  REGISTRY_AUTH_FILE: /run/secrets/runner-job-secrets/docker_config_ci.json
+  RUNNER_AFTER_SCRIPT_TIMEOUT: 60m
 
 stages:
-  - info
   - build
-  - ci-pipeline
-  - mirroring
 
-info:
-  stage: info
-  script:
-    - echo "On branch $CI_COMMIT_REF_NAME"
+default:
+  # Setup buildah cache for all jobs
+  before_script:
+    - |
+      cat > /etc/containers/registries.conf.d/cache.conf <<EOF
+      [[registry]]
+      location = "private-registry:5000"
+      insecure = true
+      EOF
+  # Run build in after script to let individual jobs modify environment in the job script. We make use of
+  # all builds being identical. The build target is defined by COMPONENT in job variables.
+  after_script:
+    - cd "${CI_PROJECT_DIR}/container-src/${COMPONENT}"
+    - buildah build 
+      --storage-driver vfs 
+      --jobs 4
+      --layers --cache-from private-registry:5000/pebbles/cache --cache-to private-registry:5000/pebbles/cache 
+      --tag "${CI_IMAGE_REPO_CI}/${COMPONENT}:${CI_COMMIT_REF_NAME}"
+    - buildah push 
+      --storage-driver vfs 
+      "${CI_IMAGE_REPO_CI}/${COMPONENT}:${CI_COMMIT_REF_NAME}"
 
 build-deployer-image:
   stage: build
+  tags: ['new-runner']
+  variables:
+    COMPONENT: pebbles-deployer
+    KUBERNETES_MEMORY_REQUEST: "4Gi"
+    KUBERNETES_MEMORY_LIMIT: "4Gi"
   script:
-    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:${CI_COMMIT_REF_NAME} container-src/pebbles-deployer/.
-    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:${CI_COMMIT_REF_NAME}
-    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:${CI_COMMIT_REF_NAME} $CI_DOCKER_REPOSITORY_PUBLIC/pebbles-deployer:${CI_COMMIT_REF_NAME}
-    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/pebbles-deployer:${CI_COMMIT_REF_NAME}
-
-    # if we are on master branch, push to PUBLISH repo
-    - |
-      if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:master"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:master
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:master
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:latest
-        
-        export IMAGE_TAG="${CI_COMMIT_REF_NAME}-$(date +%Y-%m-%d_%H%M)"
-        echo "Tagging and publishing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:${IMAGE_TAG}"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-deployer:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:${IMAGE_TAG}
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-deployer:${IMAGE_TAG}
-      fi
+    - echo "building $COMPONENT"
 
 build-backup-image:
   stage: build
+  tags: ['new-runner']
+  variables:
+    COMPONENT: pebbles-backup
   script:
-    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-backup:${CI_COMMIT_REF_NAME} container-src/pebbles-backup/.
-    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-backup:${CI_COMMIT_REF_NAME}
-    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-backup:${CI_COMMIT_REF_NAME} $CI_DOCKER_REPOSITORY_PUBLIC/pebbles-backup:${CI_COMMIT_REF_NAME}
-    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/pebbles-backup:${CI_COMMIT_REF_NAME}
-
-    # if we are on master branch, push to PUBLISH repo
-    - |
-      if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:master"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-backup:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:master
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:master
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:latest"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-backup:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:latest
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:latest
-        
-        export IMAGE_TAG="${CI_COMMIT_REF_NAME}-$(date +%Y-%m-%d_%H%M)"
-        echo "Tagging and publishing $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:${IMAGE_TAG}"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/pebbles-backup:master $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:${IMAGE_TAG}
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/pebbles-backup:${IMAGE_TAG}
-      fi
+    - echo "building $COMPONENT"
 
 build-logstash-image:
   stage: build
+  tags: ['new-runner']
+  variables:
+    COMPONENT: logstash
   script:
-    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:${CI_COMMIT_REF_NAME} container-src/logstash/.
-    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/logstash:${CI_COMMIT_REF_NAME}
-    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:${CI_COMMIT_REF_NAME} $CI_DOCKER_REPOSITORY_PUBLIC/logstash:${CI_COMMIT_REF_NAME}
-    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/logstash:${CI_COMMIT_REF_NAME}
-
-    # if we are on master branch push to PUBLISH repo
-    - |
-      if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/logstash:master"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:master $CI_DOCKER_REPOSITORY_PUBLISH/logstash:master
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/logstash:master
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:master $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/logstash:latest
-
-        export IMAGE_TAG="${CI_COMMIT_REF_NAME}-$(date +%Y-%m-%d_%H%M)"
-        echo "Tagging and publishing $CI_DOCKER_REPOSITORY_PUBLISH/logstash:${IMAGE_TAG}"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/logstash:master $CI_DOCKER_REPOSITORY_PUBLISH/logstash:${IMAGE_TAG}
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/logstash:${IMAGE_TAG}
-      fi
+    - echo "building $COMPONENT"
 
 build-filebeat-image:
   stage: build
+  tags: ['new-runner']
+  variables:
+    COMPONENT: filebeat
   script:
-    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:${CI_COMMIT_REF_NAME} container-src/filebeat/.
-    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:${CI_COMMIT_REF_NAME}
-    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:${CI_COMMIT_REF_NAME} $CI_DOCKER_REPOSITORY_PUBLIC/filebeat:${CI_COMMIT_REF_NAME}
-    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/filebeat:${CI_COMMIT_REF_NAME}
-
-    # if we are on master branch push to PUBLISH repo
-    - |
-      if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:master"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:master $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:master
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:master
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:master $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:latest
-
-        export IMAGE_TAG="${CI_COMMIT_REF_NAME}-$(date +%Y-%m-%d_%H%M)"
-        echo "Tagging and publishing $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:${IMAGE_TAG}"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/filebeat:master $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:${IMAGE_TAG}
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/filebeat:${IMAGE_TAG}
-      fi
+    - echo "building $COMPONENT"
 
 build-k3s-autoscaler-image:
   stage: build
-  script:
-    - docker build --tag $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:${CI_COMMIT_REF_NAME} container-src/k3s-autoscaler/.
-    - docker push $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:${CI_COMMIT_REF_NAME}
-    - docker tag $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:${CI_COMMIT_REF_NAME} $CI_DOCKER_REPOSITORY_PUBLIC/k3s-autoscaler:${CI_COMMIT_REF_NAME}
-    - docker push $CI_DOCKER_REPOSITORY_PUBLIC/k3s-autoscaler:${CI_COMMIT_REF_NAME}
-
-    # if we are on master branch push to PUBLISH repo
-    - |
-      if [[ ${CI_COMMIT_REF_NAME} == 'master' ]]; then
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:master"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:master $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:master
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:master
-        echo "Tagging and pushing $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:latest"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:master $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:latest
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:latest
-
-        export IMAGE_TAG="${CI_COMMIT_REF_NAME}-$(date +%Y-%m-%d_%H%M)"
-        echo "Tagging and publishing $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:${IMAGE_TAG}"
-        docker tag $CI_DOCKER_REPOSITORY_PRIVATE/k3s-autoscaler:master $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:${IMAGE_TAG}
-        docker push $CI_DOCKER_REPOSITORY_PUBLISH/k3s-autoscaler:${IMAGE_TAG}
-      fi
-
-# TODO: we could support testing matching images for pebbles and pebbles-frontend instead of always using master
-ci-pipeline:
-  stage: ci-pipeline
-  needs: [ 'build-deployer-image' ]
+  tags: ['new-runner']
   variables:
-    ENV_NAME: "${CI_ENV_NAME}"
-    DEPROVISION_ENVIRONMENT: 1
-    PEBBLES_IMAGE_TAG: master
-    PEBBLES_FRONTEND_IMAGE_TAG: master
-    PEBBLES_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
-    PEBBLES_ENVIRONMENTS_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
-    PEBBLES_DEPLOY_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
-    ENV_NAME_QA: "${CI_ENV_NAME_QA}"
-  trigger:
-    project: pebbles/cicd-pipeline
-    branch: master
-    strategy: depend
-
-mirroring:
-  stage: mirroring
-  image: python:3.8
-  variables:
-    GITHUB_MIRROR: git@github.com:CSCfi/pebbles-deploy.git
+    COMPONENT: k3s-autoscaler
   script:
-    - mkdir mirror_dir
-    - cd mirror_dir
-    - echo "cloning the gitlab.ci repo"
-    - git clone $CI_REPOSITORY_URL pebbles-deploy
-    - cd pebbles-deploy
-    - echo "pushing to github repo"
-    - git checkout master
-    - mkdir ~/.ssh
-    - echo -e "Host github.com\n    StrictHostKeyChecking no\n" >> ~/.ssh/config
-    - eval `ssh-agent -s`
-    - ssh-agent bash -c 'ssh-add /root/ssh/pebbles-deploy-key/id_rsa; git push $GITHUB_MIRROR master'
-  rules:
-    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - echo "building $COMPONENT"
