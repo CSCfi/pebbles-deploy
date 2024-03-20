@@ -40,9 +40,6 @@ RUN cd /tmp/ \
  && rm /tmp/get_helm.sh
 RUN /usr/local/bin/helm completion bash > /etc/bash_completion.d/helm
 
-# Install Helm-Secrets plugin
-RUN helm plugin install https://github.com/jkroepke/helm-secrets --version v4.5.1
-
 # Install sops
 RUN cd /tmp/  \
  && ARCH='' \
@@ -92,12 +89,7 @@ USER 29295
 WORKDIR /opt/deployment
 ENV HOME=/opt/deployment
 
-COPY init_env.bash init_env.bash
-COPY bashrc .bashrc
-COPY deploy_functions.bash deploy_functions.bash
-COPY gitconfig .gitconfig
-
-# bake roles in the image to reduce dependencies
+# bake Ansible roles in the image to reduce runtime dependencies
 RUN mkdir -p /opt/deployment/galaxy-roles/{k3s,nfs} \
  && curl https://a3s.fi/notebooks-devel-public/ansible-role-k3s-f0d5728956.tar.gz \
   | tar xz -C /opt/deployment/galaxy-roles/k3s \
@@ -106,5 +98,14 @@ RUN mkdir -p /opt/deployment/galaxy-roles/{k3s,nfs} \
 
 RUN ansible-galaxy install openstack \
  && ansible-galaxy collection install prometheus.prometheus
+
+# Install Helm-Secrets plugin
+RUN helm plugin install https://github.com/jkroepke/helm-secrets --version v4.5.1
+
+# copy scripts
+COPY bin bin
+# copy config
+COPY bashrc .bashrc
+COPY gitconfig .gitconfig
 
 CMD /bin/bash

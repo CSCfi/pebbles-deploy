@@ -184,9 +184,9 @@ print_oneliners_pebbles() {
     echo
 }
 
-source init_env.bash
+source bin/init_env.bash
 
-source deploy_functions.bash
+source bin/deploy_functions.bash
 
 echo "Oneliners"
 echo "---------"
