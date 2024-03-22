@@ -1,3 +1,28 @@
+# stage: build ksops
+FROM docker.io/library/golang:1.22-alpine as ksops-build
+ARG KSOPS_COMMIT_ID=c6d9ce857ed5cfab07321bd5528c83350cc30d52
+
+WORKDIR /go/src
+
+RUN wget -O - https://codeload.github.com/viaduct-ai/kustomize-sops/zip/$KSOPS_COMMIT_ID | unzip /dev/stdin
+
+WORKDIR /go/src/kustomize-sops-$KSOPS_COMMIT_ID
+
+# separate module download to its own layer for caching
+RUN go mod download -x
+
+# build ksops and move to a fixed location to be picked up later by final layer
+RUN go build -o ksops && mv ksops /go/bin/ksops
+
+# stage: build kustomize
+FROM docker.io/library/golang:1.22-alpine as kustomize-build
+ARG KUSTOMIZE_COMMIT_ID=9da0cf8b4c6bc3bd6d492c66757c89df74d8f63e
+
+WORKDIR /go/bin
+
+RUN GOBIN=$(pwd)/ GO111MODULE=on go install sigs.k8s.io/kustomize/kustomize/v5@$KUSTOMIZE_COMMIT_ID
+
+# stage: final image
 FROM quay.io/fedora/fedora:39
 
 LABEL maintainer="CSC Notebooks Team"
@@ -62,6 +87,12 @@ RUN cd /tmp/ \
 
 # Create completion for oc
 RUN /usr/local/bin/oc completion bash > /etc/bash_completion.d/oc
+
+# Copy kustomize binary into place
+COPY --from=kustomize-build /go/bin/kustomize /usr/local/bin/kustomize
+
+# Copy ksops binary into place
+COPY --from=ksops-build /go/bin/ksops /usr/local/bin/ksops
 
 # Choose an arbitrary GID so that vault password can be made group readable when mounted as a volume
 # in a reasonably safe way
