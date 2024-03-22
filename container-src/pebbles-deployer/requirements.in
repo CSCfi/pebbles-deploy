@@ -12,6 +12,7 @@ python-heatclient
 python-novaclient
 python-openstackclient
 python-swiftclient
+python-troveclient
 openstacksdk
 jinja2
 
