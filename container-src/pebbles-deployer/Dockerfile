@@ -138,5 +138,6 @@ COPY bin bin
 # copy config
 COPY bashrc .bashrc
 COPY gitconfig .gitconfig
+COPY vimrc .vimrc
 
 CMD /bin/bash
