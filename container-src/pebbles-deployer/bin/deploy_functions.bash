@@ -199,3 +199,19 @@ pebbles-tail-logs() {
 pebbles-rsync-src-api() {
   oc rsync ~/pebbles/pebbles $(oc get pods -l name=api | grep Running | cut -f 1 -d " " | head):.
 }
+
+# Apply kustomized manifests to cluster. Supports plugins, e.g. ksops.
+# Takes path to kustomize/ directory as the only argument, defaults to kustomize/ directory in environment root.
+# Usage e.g.: pb-kustomize-apply ./kustomize/
+pb-kustomize-apply() {
+  kustomizedir=${1:-"$ENV_BASE_DIR"/kustomize/}
+  kustomize build --enable-alpha-plugins --enable-exec $kustomizedir | oc apply -f -
+}
+
+# Delete kustomized manifests from cluster. Supports plugins, e.g. ksops.
+# Takes path to kustomize/ directory as the only argument, defaults to kustomize/ directory in environment root.
+# Usage e.g.: pb-kustomize-delete ./kustomize/
+pb-kustomize-delete() {
+  kustomizedir=${1:-"$ENV_BASE_DIR"/kustomize/}
+  kustomize build --enable-alpha-plugins --enable-exec $kustomizedir | oc delete -f -
+}
