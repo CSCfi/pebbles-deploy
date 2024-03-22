@@ -130,6 +130,9 @@ RUN mkdir -p /opt/deployment/galaxy-roles/{k3s,nfs} \
 RUN ansible-galaxy install openstack \
  && ansible-galaxy collection install prometheus.prometheus
 
+# Add GitLab Helm repo for gitlab-runner
+RUN helm repo add gitlab https://charts.gitlab.io
+
 # Install Helm-Secrets plugin
 RUN helm plugin install https://github.com/jkroepke/helm-secrets --version v4.5.1
 
