@@ -215,3 +215,34 @@ pb-kustomize-delete() {
   kustomizedir=${1:-"$ENV_BASE_DIR"/kustomize/}
   kustomize build --enable-alpha-plugins --enable-exec $kustomizedir | oc delete -f -
 }
+
+# Install/upgrade deployment using Helm. Uses chart and name specified in .env.yaml, values and secrets
+# from environment base directory
+pb-helm-upgrade() {
+    # construct a list of values files
+    values_files=$(ls $ENV_BASE_DIR/*values*.yaml)
+    vf_options=''
+    for vf in $values_files; do
+        vf_options="$vf_options -f $vf"
+    done
+
+    # construct a list of secrets files
+    secrets_files=$(ls $ENV_BASE_DIR/*secrets*.yaml)
+    sf_options=''
+    for sf in $secrets_files; do
+        sf_options="$sf_options -f secrets://$sf"
+    done
+
+    # extract Helm installation name and chart
+    helm_name=$(yq -r '.helmName' $ENV_BASE_DIR/.env.yaml)
+    helm_chart=$(yq -r '.helmChart' $ENV_BASE_DIR/.env.yaml)
+
+    # define Kustomize post renderer, if 'kustomize' subdir is present
+    post_options=''
+    if [[ -d $ENV_BASE_DIR/kustomize ]]; then
+        post_options="--post-renderer $HOME/bin/kustomize-post-renderer.bash"
+    fi
+
+    echo "Running helm upgrade -i $helm_name $helm_chart $vf_options $sf_options $post_options \"$@\""
+    helm upgrade -i $helm_name $helm_chart $vf_options $sf_options $post_options "$@"
+}
