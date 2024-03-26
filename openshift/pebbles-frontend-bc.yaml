@@ -19,3 +19,10 @@ spec:
       buildArgs:
       - name: APP_VERSION
         value: "unknown"
+  resources:
+    limits:
+      memory: 4Gi
+      cpu: 2
+    requests:
+      cpu: 1
+      memory: 1Gi
