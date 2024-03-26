@@ -96,6 +96,9 @@ refresh-ramdisk() {
 # example: cat /dev/shm/$ENV_NAME/values.yaml | yaml2json | jq -r '.clusterKubeconfig' > ~/.kube/config-clusters
 alias yaml2json="python3 -c 'import sys, yaml, json; y=yaml.safe_load(sys.stdin.read()); print(json.dumps(y))'"
 
+# Alias to change working directory to environment base directory
+alias cde="cd $ENV_BASE_DIR"
+
 # Alias to list application images using manage.py. Turn off debug to get clean output
 list-application-images() {
     oc rsh -c api deployment/api bash -c 'PB_DEBUG=0 ./manage.py list_application_images'
