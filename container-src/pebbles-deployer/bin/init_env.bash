@@ -70,7 +70,7 @@ pushd /opt/deployment/pebbles-deploy/playbooks > /dev/null
 
 if [[ ! -e /dev/shm/${env_name}/deployment_data.sh ]]; then
     print_header "Initializing ramdisk contents"
-    SKIP_DYNAMIC_INVENTORY=1 ansible-playbook initialize_ramdisk.yml
+    ansible-playbook initialize_ramdisk.yml
 fi
 
 print_header "Sourcing deployment data"
