@@ -99,13 +99,13 @@ fi
 # More info on format: https://unix.stackexchange.com/questions/105958/terminal-prompt-not-wrapping-correctly
 case $DEPLOYMENT_ROLE in
 production)
-    export PS1='\[${YELLOW}\]\[${RED_BG}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\] > '
+    export PS1='\[${YELLOW}\]\[${RED_BG}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\]\n\D{%Y%m%d-%H:%M:%S}> '
     ;;
 qa)
-    export PS1='\[${YELLOW}\]\[${BLUE_BG}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\] > '
+    export PS1='\[${YELLOW}\]\[${BLUE_BG}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\]\n\D{%Y%m%d-%H:%M:%S}> '
     ;;
 *)
-    export PS1='\[${YELLOW}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\] > '
+    export PS1='\[${YELLOW}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\]\n\D{%Y%m%d-%H:%M:%S}> '
     ;;
 esac
 
