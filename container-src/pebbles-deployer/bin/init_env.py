@@ -85,7 +85,9 @@ def init_deployment_data():
             sopsAgeRecipients=pathlib.Path('/dev/shm/secret/age.public.key').read_text()
         )
         f.write(format_with_jinja2(DEPLOYMENT_DATA_TEMPLATE, values))
-        f.write('\n')
+        if 'envVariables' in values:
+            var_strings = [f"export {key}={value}" for key, value in values['envVariables'].items()]
+            f.write("\n".join(var_strings) + "\n")
     print(f'Wrote deployment data to /dev/shm/{os.environ["ENV_NAME"]}/deployment_data.sh')
 
 
@@ -93,29 +95,39 @@ def render_file_templates():
     """ Render file templates defined in .env.yaml."""
     env_def = read_env_def()
     for file_def in env_def['files']:
-        path = file_def.get('path', None)
-        if not path:
-            raise RuntimeError('No path specified for file')
-
-        path = format_with_jinja2(path, env_def)
         kind = file_def.get('kind', 'file')
+        path = file_def.get('path', None)
         mode = file_def.get('mode', 0o644)
         if isinstance(mode, str):
             mode = int(mode, 8)
 
-        # process file content with variables defined in environment
-        content = format_with_jinja2(file_def.get('content'), env_def)
+        if kind == 'symlink':
+            source, target = file_def['source'], file_def['target']
+            print('creating %s from %s to %s' % (kind, source, target))
+            pathlib.Path(target).symlink_to(pathlib.Path(source))
 
-        print('creating %s %s %o' % (kind, path, mode))
-        if kind == 'file':
+        elif kind == 'directory':
+            if not path:
+                raise RuntimeError('No path specified for directory')
+            path = format_with_jinja2(path, env_def)
+
+            print('creating %s %s %o' % (kind, path, mode))
+            pathlib.Path(path).mkdir(parents=True, exist_ok=True, mode=mode)
+            pathlib.Path(path).chmod(mode=mode)
+
+        elif kind == 'file':
+            if not path:
+                raise RuntimeError('No path specified for file')
+            path = format_with_jinja2(path, env_def)
+
+            # process file content with variables defined in environment
+            content = format_with_jinja2(file_def.get('content'), env_def)
+            print('creating %s %s %o' % (kind, path, mode))
             if not pathlib.Path(path).exists():
                 pathlib.Path(path).touch(mode=0o600)
             pathlib.Path(path).chmod(mode=0o600)
             with open(path, mode='w') as f:
                 f.write(content)
-            pathlib.Path(path).chmod(mode=mode)
-        elif kind == 'directory':
-            pathlib.Path(path).mkdir(parents=True, exist_ok=True, mode=mode)
             pathlib.Path(path).chmod(mode=mode)
 
 
