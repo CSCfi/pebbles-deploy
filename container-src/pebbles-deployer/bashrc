@@ -60,6 +60,28 @@ extract-from-helm-values() {
     | jq -r ".$1"
 }
 
+# Alias to re-encrypt a sops encrypted file for given recipient (=public key). Uses the default Age key for decryption.
+sops-rotate-age-key() {
+    new_recipient=$1
+    if [[ -z "$new_recipient" ]]; then
+        echo "usage: sops-rotate-age-key <new_recipient> <encrypted_file> [<encrypted_file>]"
+        return 1
+    fi
+    shift
+    # test new recipient
+    echo "test" | age -r $new_recipient > /dev/null
+    if [[ $? != 0 ]]; then
+        echo "'$new_recipient' does not seem to be a valid age public key"
+        return 1
+    fi
+    # process remaining arguments as files
+    for secret_file in $*; do
+        echo "re-encrypting file $secret_file"
+        sops -d $secret_file \
+        | sops -e --age $new_recipient --input-type "${secret_file##*.}" --output $secret_file /dev/stdin
+    done
+}
+
 # open psql in database pod
 db-shell() {
     oc rsh deployment/db bash -c 'psql -d pebbles'
