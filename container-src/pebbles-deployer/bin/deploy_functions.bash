@@ -158,7 +158,8 @@ initialize-pebbles-with-initial-data() {
     # create database structure
     oc rsh deployment/api flask db upgrade
     # load initial data
-    oc rsh deployment/api python manage.py load_data /dev/stdin < /dev/shm/$ENV_NAME/initial_data.yaml
+    initial_data_file=${1:-"/dev/shm/$ENV_NAME/initial_data.yaml"}
+    oc rsh deployment/api python manage.py load_data /dev/stdin < $initial_data_file
     # reset worker password to default secret
     oc rsh deployment/api python manage.py reset_worker_password
 }
