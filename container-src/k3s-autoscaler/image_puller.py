@@ -11,9 +11,10 @@ class ImagePuller:
     Class to warm cache on cluster nodes
     """
 
-    def __init__(self, dynamic_client, config):
+    def __init__(self, dynamic_client, config, pull_history):
         self.dynamic_client = dynamic_client
         self.config = config
+        self.pull_history = pull_history if pull_history else set()
 
     def update(self, target_nodes, reference_pods):
         """This method extracts a list of images in given pods and creates pull-jobs on given nodes"""
@@ -27,7 +28,7 @@ class ImagePuller:
         # then select one pair of node-image to pull, if any
         if missing_pairs:
             node, image = ImagePuller._select_node_and_image(missing_pairs)
-            ImagePuller._pull(self.dynamic_client, node, image)
+            self._pull(self.dynamic_client, node, image)
 
         # TODO: add support for a static list of images, perhaps a ConfigMap in the cluster
 
@@ -73,10 +74,18 @@ class ImagePuller:
             res.extend(image.names)
         return res
 
-    @staticmethod
-    def _pull(dynamic_client, node, image):
-        """Creates a pull-job for given node and image. In case there is already a job running, it does nothing"""
+    def _pull(self, dynamic_client, node, image):
+        """Creates a pull-job for given node and image. In case there is already a job running, it does nothing.
+           It also keeps track and skips images that have already been recorded as pulled to avoid getting
+           stuck in a pull loop in case the image name in the application does not match the image that the
+           node reports.
+        """
         node_name = node.metadata.name
+        history_key = f'{node_name}:{image}'
+        if history_key in self.pull_history:
+            logging.debug(f'Image {image} already pulled on {node_name}, skipping')
+            return
+
         api = dynamic_client.resources.get(api_version='batch/v1', kind='Job')
 
         existing_jobs = api.get(
@@ -89,6 +98,8 @@ class ImagePuller:
             return
 
         logging.info('pulling %s on %s', image, node_name)
+
+        self.pull_history.add(history_key)
 
         job_yaml = utils.parse_jinja2('pull-job.yaml.j2', dict(node=node_name, image=image))
         logging.debug('creating job\n%s' % job_yaml)

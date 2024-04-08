@@ -14,8 +14,8 @@ rely purely on the current K3s state.
 
 1) Scale up
    If free memory is less than configured target, spawn a new node VM. Node is initially tainted so no workloads can
-   start before autoscaler removes that taint. This is to avoid a racecondition when autoscaler gives up waiting for the
-   node and deletes it while the node just becomes ready and starts accepting workloads
+   start before autoscaler removes that taint. This is to avoid a race condition when autoscaler gives up waiting for 
+   the node and deletes it while the node just becomes ready and starts accepting workloads
 
 2) Mark old node as unschedulable to start draining it
    If there is enough capacity, start draining a node that is older than oldNodeAgeLimitHours 

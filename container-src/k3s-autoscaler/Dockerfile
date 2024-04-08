@@ -1,4 +1,4 @@
-FROM quay.io/fedora/fedora:36
+FROM quay.io/fedora/fedora:40
 
 LABEL maintainer="CSC Notebooks Team"
 
@@ -12,7 +12,7 @@ RUN mkdir /opt/app
 
 # Copy and install python requirements
 COPY requirements.txt /opt/app/
-RUN pip install --no-cache-dir -r /opt/app/requirements.txt
+RUN pip install --no-cache-dir --no-warn-script-location -r /opt/app/requirements.txt
 
 # Copy sources over
 COPY *.py /opt/app/

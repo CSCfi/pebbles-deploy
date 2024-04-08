@@ -1,0 +1,11 @@
+#
+# Use 'pip-compile' from pip-tools package to generate requirements.txt from this file.
+# To update the requirements, run 'pip-compile -v -U'
+
+## Primary requirements
+kubernetes
+openshift
+python-openstackclient
+PyYAML
+Jinja2
+python-dateutil

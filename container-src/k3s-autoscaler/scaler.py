@@ -61,6 +61,10 @@ class Scaler:
 
         self._next_memory_summary_log_ts = 0
 
+        # Store image puller history here to keep image puller disposable. This will accumulate over time, but
+        # the memory cost is estimated to be fairly low.
+        self.pull_history = None
+
     def set_config(self, config):
 
         self.config = config
@@ -268,8 +272,9 @@ class Scaler:
         osd.delete_vm(node_name)
 
     def _run_image_puller(self):
-        puller = ImagePuller(self.dc, self.config)
+        puller = ImagePuller(self.dc, self.config, self.pull_history)
         puller.update(self._get_active_user_nodes(), self._get_pods_on_nodes(self._get_user_nodes()))
+        self.pull_history = puller.pull_history
 
     def _get_retired_nodes(self):
         # find out nodes that can be taken out of the cluster
