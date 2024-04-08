@@ -284,3 +284,11 @@ bouncerFromDomain: 'example.org'
 bouncerToDomain: 'service.example.com'
 bouncerTlsCert: ''
 bouncerTlsKey: ''
+
+# ----------------------------------------------------------------------------
+#
+# General settings
+#
+
+# Batch job API version, the default works for old K8s versions
+batchJobApiVersion: batch/v1beta1

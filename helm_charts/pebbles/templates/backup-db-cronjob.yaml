@@ -1,6 +1,6 @@
 ---
 {{- if .Values.backupEnabled }}
-apiVersion: batch/v1beta1
+apiVersion: {{ .Values.batchJobApiVersion }}
 kind: CronJob
 metadata:
   name: backup-db
