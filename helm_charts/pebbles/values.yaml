@@ -290,5 +290,8 @@ bouncerTlsKey: ''
 # General settings
 #
 
+# Control secret base64 encoding
+secretsEncodedByHelm: false
+
 # Batch job API version, the default works for old K8s versions
 batchJobApiVersion: batch/v1beta1
