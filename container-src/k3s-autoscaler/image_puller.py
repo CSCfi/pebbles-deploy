@@ -23,12 +23,18 @@ class ImagePuller:
         images = ImagePuller._find_active_images(reference_pods)
 
         # find out a list of node-image pairs for missing images
-        missing_pairs = ImagePuller.find_missing_node_image_pairs(target_nodes, images)
+        missing_pairs = ImagePuller._find_missing_node_image_pairs(target_nodes, images, self.pull_history)
+        if missing_pairs:
+            logging.debug('missing node-image pairs:')
+            for pair in missing_pairs:
+                logging.debug(f'  {pair[0].metadata.name} - {pair[1]}')
 
         # then select one pair of node-image to pull, if any
         if missing_pairs:
             node, image = ImagePuller._select_node_and_image(missing_pairs)
-            self._pull(self.dynamic_client, node, image)
+            ImagePuller._pull(self.dynamic_client, node, image)
+            history_key = f'{node.metadata.name}:{image}'
+            self.pull_history.add(history_key)
 
         # TODO: add support for a static list of images, perhaps a ConfigMap in the cluster
 
@@ -47,14 +53,23 @@ class ImagePuller:
         return res
 
     @staticmethod
-    def find_missing_node_image_pairs(nodes, images):
-        """Finds out a list of images missing from nodes"""
+    def _find_missing_node_image_pairs(nodes, images, pull_history):
+        """Finds out a list of images missing from nodes.
+           Skip images that have been recorded as pulled to avoid getting stuck in a pull loop in case
+           the image name in the application does not match the image that the node reports.
+        """
         missing_pairs = []
         for node in nodes:
+            node_name = node.metadata.name
             images_on_node = ImagePuller._extract_images_from_node(node)
             for image in images:
-                if image not in images_on_node:
+                history_key = f'{node_name}:{image}'
+                if image in images_on_node or history_key in pull_history:
+                    continue
+                else:
                     missing_pairs.append((node, image))
+
+        missing_pairs.sort(key=lambda x: x[0].metadata.name)
         return missing_pairs
 
     @staticmethod
@@ -74,18 +89,10 @@ class ImagePuller:
             res.extend(image.names)
         return res
 
-    def _pull(self, dynamic_client, node, image):
-        """Creates a pull-job for given node and image. In case there is already a job running, it does nothing.
-           It also keeps track and skips images that have already been recorded as pulled to avoid getting
-           stuck in a pull loop in case the image name in the application does not match the image that the
-           node reports.
-        """
+    @staticmethod
+    def _pull(dynamic_client, node, image):
+        """Creates a pull-job for given node and image. In case there is already a job running, it does nothing."""
         node_name = node.metadata.name
-        history_key = f'{node_name}:{image}'
-        if history_key in self.pull_history:
-            logging.debug(f'Image {image} already pulled on {node_name}, skipping')
-            return
-
         api = dynamic_client.resources.get(api_version='batch/v1', kind='Job')
 
         existing_jobs = api.get(
@@ -98,8 +105,6 @@ class ImagePuller:
             return
 
         logging.info('pulling %s on %s', image, node_name)
-
-        self.pull_history.add(history_key)
 
         job_yaml = utils.parse_jinja2('pull-job.yaml.j2', dict(node=node_name, image=image))
         logging.debug('creating job\n%s' % job_yaml)
