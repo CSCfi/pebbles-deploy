@@ -23,12 +23,14 @@ def create_kube_client():
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=int(os.environ.get('AUTOSCALER_LOGLEVEL', logging.INFO)),
+        format='%(levelname)s - %(message)s'
+    )
     logging.info('Starting autoscaler')
 
     global terminate
-    # wire our handler to
-    # - SIGTERM for controlled shutdowns by systemd
+    # wire our handler to handle SIGTERM for controlled shutdowns by systemd
     signal.signal(signal.SIGTERM, handler)
 
     dc = DynamicClient(create_kube_client())

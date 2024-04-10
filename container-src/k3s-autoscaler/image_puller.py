@@ -32,9 +32,10 @@ class ImagePuller:
         # then select one pair of node-image to pull, if any
         if missing_pairs:
             node, image = ImagePuller._select_node_and_image(missing_pairs)
-            ImagePuller._pull(self.dynamic_client, node, image)
-            history_key = f'{node.metadata.name}:{image}'
-            self.pull_history.add(history_key)
+            job_created = ImagePuller._pull(self.dynamic_client, node, image)
+            if job_created:
+                history_key = f'{node.metadata.name}:{image}'
+                self.pull_history.add(history_key)
 
         # TODO: add support for a static list of images, perhaps a ConfigMap in the cluster
 
@@ -91,7 +92,9 @@ class ImagePuller:
 
     @staticmethod
     def _pull(dynamic_client, node, image):
-        """Creates a pull-job for given node and image. In case there is already a job running, it does nothing."""
+        """Creates a pull-job for given node and image. In case there is already a job running, it does nothing.
+           Returns: client response object if job was created, else None.
+        """
         node_name = node.metadata.name
         api = dynamic_client.resources.get(api_version='batch/v1', kind='Job')
 
@@ -102,11 +105,10 @@ class ImagePuller:
 
         if existing_jobs.items:
             logging.info('pull job that started at %s is still active', existing_jobs.items[0].status.startTime)
-            return
+            return None
 
         logging.info('pulling %s on %s', image, node_name)
 
         job_yaml = utils.parse_jinja2('pull-job.yaml.j2', dict(node=node_name, image=image))
         logging.debug('creating job\n%s' % job_yaml)
-
         return api.create(body=yaml.safe_load(job_yaml), namespace='default')
