@@ -109,6 +109,36 @@ db-shell-external() {
     rm $PGPASSFILE
 }
 
+# open psql in DBaaS
+pb-db-shell() {
+    # extract database host and port from Helm values
+    export PGHOST=$(yq -r '.databaseHost' ${ENV_BASE_DIR}/values.yaml)
+    export PGPORT=$(yq -r '.databasePort' ${ENV_BASE_DIR}/values.yaml)
+    export PGDATABASE=$(yq -r '.databaseName' ${ENV_BASE_DIR}/values.yaml)
+    export PGUSER=$(yq -r '.databaseUser' ${ENV_BASE_DIR}/values.yaml)
+
+    # defaults for databases with default user and database name
+    [[ $PGDATABASE == 'null' ]] && export PGDATABASE=pebbles
+    [[ $PGUSER == 'null' ]] && export PGUSER=pebbles
+
+    # extract db password from database secret file
+    db_password=$(sops -d --extract '["databasePassword"]' ${ENV_BASE_DIR}/secrets-database.yaml)
+
+    # create a password file
+    export PGPASSFILE=/dev/shm/$ENV_NAME/.pgpass
+    touch $PGPASSFILE && chmod 600 $PGPASSFILE
+    # hostname:port:database:username:password
+    echo "$PGHOST:$PGPORT:$PGDATABASE:$PGUSER:$db_password" > $PGPASSFILE
+    unset db_password
+
+    # finally open the shell
+    psql
+
+    # clean up
+    rm $PGPASSFILE
+    unset PGHOST PGPORT PGDATABASE PGUSER PGPASSFILE
+}
+
 # Useful when developing Helm charts when generated values.yaml needs to be updated after inventory changes.
 refresh-ramdisk() {
     (cd /opt/deployment/pebbles-deploy && ansible-playbook playbooks/initialize_ramdisk.yml)
