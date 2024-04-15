@@ -3,7 +3,7 @@
 Script to initializes deployment container for Helm + Kustomize based environments. This script is expected to be run
 as part of init_env.bash based startup.
 
-The deployment data (credentials, namespace definition) is defined in .env.yaml and .env_secrets.yaml files.
+The deployment data (credentials, namespace definition) is defined in .env.yaml and .env_secrets.sops.yaml files.
 
 Requires ENV_BASE_DIR environment variable to be set and pointing to the base directory of the environment.
 """
@@ -19,10 +19,10 @@ import yaml
 
 
 def read_env_def():
-    """ Read environment definition from .env.yaml and .env_secrets.yaml."""
+    """ Read environment definition from .env.yaml and .env_secrets.sops.yaml."""
     env_def = yaml.safe_load(open(f'{os.environ["ENV_BASE_DIR"]}/.env.yaml', 'r'))
     res = subprocess.run(
-        args=f'sops --decrypt {os.environ["ENV_BASE_DIR"]}/.env_secrets.yaml'.split(),
+        args=f'sops --decrypt {os.environ["ENV_BASE_DIR"]}/.env_secrets.sops.yaml'.split(),
         check=True,
         capture_output=True
     )
@@ -139,5 +139,5 @@ if __name__ == '__main__':
     init_age_secret_key()
     # generate environment specific environment variables file
     init_deployment_data()
-    # process file templates defined in .env.yaml and .env_secrets.yaml
+    # process file templates defined in .env.yaml and .env_secrets.sops.yaml
     render_file_templates()
