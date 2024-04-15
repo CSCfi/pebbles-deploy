@@ -152,6 +152,52 @@ initialize-pebbles() {
     oc rsh deployment/api python manage.py initialize_system -e admin@example.org -p $1
 }
 
+# create database structure
+pb-create-database() {
+  oc rsh deployment/api flask db upgrade
+}
+
+# load data from yaml files in environment definition to database, decrypt sops if needed
+# usage e.g.: pb-load-data file1.yaml file2.sops.yaml file3.yaml
+pb-load-data() {
+  for file in "$@"; do
+    if [ -f "$ENV_BASE_DIR/$file" ]; then
+      if [[ "$file" == *\.sops\.* ]]; then
+        echo
+        echo "Loading encrypted file $ENV_BASE_DIR/$file to database"
+        echo
+        sops --decrypt --age "$SOPS_AGE_RECIPIENTS" "$ENV_BASE_DIR/$file" | \
+        yq -r '.initial_data' | \
+        oc rsh deployment/api python manage.py load_data /dev/stdin
+      else
+        echo
+        echo "Loading file $ENV_BASE_DIR/$file to database"
+        echo
+        oc rsh deployment/api python manage.py load_data /dev/stdin < "$ENV_BASE_DIR/$file"
+      fi
+    else
+      echo
+      echo "File $ENV_BASE_DIR/$file not found"
+      echo
+    fi
+  done
+}
+
+# reset worker password to default secret
+pb-reset-worker-password() {
+  oc rsh deployment/api python manage.py reset_worker_password
+}
+
+# initializes system with initial data files passed as arguments
+# the file including initial users needs to be the first argument, e.g.:
+# pb-initialize-database devel-users.sops.yaml initial-data.yaml
+pb-initialize-database() {
+  wait-for-api-readiness
+  pb-create-database
+  pb-load-data "$@"
+  pb-reset-worker-password
+}
+
 # initializes system with initial data from inventory
 initialize-pebbles-with-initial-data() {
     wait-for-api-readiness

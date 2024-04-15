@@ -239,6 +239,37 @@ print_oneliners_pebbles() {
     echo
 }
 
+print_oneliners_helm() {
+    echo "Build, install and initialize Pebbles in an empty namespace with initial data defined in inventory"
+    echo
+    echo "  install-pebbles"
+    echo
+    echo "Create or upgrade a new or existing installation"
+    echo
+    echo "  helm-upgrade-pebbles [options for Helm]"
+    echo
+    echo "Initialize system with initial data"
+    echo
+    echo "  pb-initialize-database [initial data files]"
+    echo
+    echo "Completely remove a development environment, including all data"
+    echo
+    echo "  helm delete pebbles; oc delete all --all; oc delete pvc --all; oc delete secret pebbles"
+    echo
+    echo "Restart a component (like api/frontend/worker/...). If component name is empty, restart all components."
+    echo
+    echo "  restart-pebbles [component name]"
+    echo
+    echo "Enter a DBaaS database shell"
+    echo
+    echo "  pb-db-shell"
+    echo
+    echo "Refresh helm values from pebbles-environments"
+    echo
+    echo "  refresh-ramdisk"
+    echo
+}
+
 source bin/init_env.bash
 
 source bin/deploy_functions.bash
@@ -249,7 +280,7 @@ echo
 
 case $DEPLOYMENT_TYPE in
 helm)
-    print_oneliners_pebbles
+    print_oneliners_helm
     ;;
 k3s)
     print_oneliners_k3s
