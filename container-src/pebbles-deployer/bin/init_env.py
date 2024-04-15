@@ -45,6 +45,7 @@ def init_age_secret_key():
         pathlib.Path('/dev/shm/secret/age.secret.key').symlink_to(os.environ['AGE_KEY_FILE'])
 
     if not os.path.exists('/dev/shm/secret/age.secret.key'):
+        print()
         age_secret_key = getpass.getpass("age secret key: ")
         with open('/dev/shm/secret/age.secret.key', mode='w') as f:
             f.write(age_secret_key)
@@ -103,9 +104,11 @@ def render_file_templates():
 
         if kind == 'symlink':
             source, target = file_def['source'], file_def['target']
-            print('creating %s from %s to %s' % (kind, source, target))
-            pathlib.Path(target).symlink_to(pathlib.Path(source))
-
+            if not pathlib.Path(target).exists():
+                print('creating %s from %s to %s' % (kind, source, target))
+                pathlib.Path(target).symlink_to(pathlib.Path(source))
+            else:
+                print(f'skipping symlink {target}, already exists')
         elif kind == 'directory':
             if not path:
                 raise RuntimeError('No path specified for directory')
