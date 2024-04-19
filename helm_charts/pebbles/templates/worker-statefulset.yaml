@@ -116,6 +116,11 @@ spec:
           volumeMounts:
             - mountPath: /opt/log
               name: log
+            {{- if .Values.deployCentralLogging }}
+            - mountPath: /usr/share/filebeat/filebeat.yml
+              subPath: filebeat.yml
+              name: filebeat-config-file
+            {{- end }}
         {{- end }}
       volumes:
         - name: cluster-config
@@ -129,6 +134,14 @@ spec:
             secretName: cluster-kubeconfig
         - name: log
           emptyDir: {}
+        {{- if .Values.deployCentralLogging }}
+        - name: filebeat-config-file
+          configMap:
+            name: filebeat-config
+            items:
+              - key: filebeat
+                path: filebeat.yml
+        {{- end }}
       {{- if .Values.backupEnabled }}
         - name: backup-secret
           secret:

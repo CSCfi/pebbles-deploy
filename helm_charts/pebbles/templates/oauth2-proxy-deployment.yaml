@@ -138,6 +138,11 @@ spec:
           volumeMounts:
             - mountPath: /opt/log
               name: log
+            {{- if .Values.deployCentralLogging }}
+            - mountPath: /usr/share/filebeat/filebeat.yml
+              subPath: filebeat.yml
+              name: filebeat-config-file
+            {{- end }}
         {{- end }}
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -146,5 +151,13 @@ spec:
       volumes:
         - name: log
           emptyDir: {}
+      {{- if .Values.deployCentralLogging }}
+        - name: filebeat-config-file
+          configMap:
+            name: filebeat-config
+            items:
+              - key: filebeat
+                path: filebeat.yml
+        {{- end }}
 
 {{- end }}

@@ -184,6 +184,21 @@ backup:
 # deploy logstash and filebeat sidecar containers
 deployCentralLogging: true
 
+# filebeat.yml configuration file contents
+filebeatConfig: |
+  filebeat.config:
+    modules:
+      path: ${path.config}/modules.d/*.yml
+      reload.enabled: false
+  filebeat.inputs:
+    - type: log
+      enabled: true
+      paths:
+        - /opt/log/*.log
+  output:
+    logstash:
+      hosts: ["logstash:5044"]
+
 #logstashStorageClass: standard-rwo
 #logstashVolumeSize: 1Gi
 

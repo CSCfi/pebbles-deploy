@@ -179,6 +179,11 @@ spec:
           volumeMounts:
             - mountPath: /opt/log
               name: log
+            {{- if .Values.deployCentralLogging }}
+            - mountPath: /usr/share/filebeat/filebeat.yml
+              subPath: filebeat.yml
+              name: filebeat-config-file
+            {{- end }}
         {{- end }}
       volumes:
         - name: cluster-config
@@ -195,3 +200,11 @@ spec:
             path: {{ .Values.mountHostSrc }}
             type: Directory
       {{- end }}
+      {{- if .Values.deployCentralLogging }}
+        - name: filebeat-config-file
+          configMap:
+            name: filebeat-config
+            items:
+              - key: filebeat
+                path: filebeat.yml
+        {{- end }}
