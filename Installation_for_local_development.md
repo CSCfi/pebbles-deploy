@@ -148,7 +148,6 @@ deployCentralLogging: false
 backupEnabled: false
 
 oauth2LoginEnabled: false
-oauth2ProxySecret: ""
 oauth2ProxyClientId: ""
 oauth2ProxyClientSecret: ""
 
