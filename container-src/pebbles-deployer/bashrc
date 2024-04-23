@@ -117,12 +117,19 @@ pb-db-shell() {
     export PGDATABASE=$(yq -r '.databaseName' ${ENV_BASE_DIR}/values.yaml)
     export PGUSER=$(yq -r '.databaseUser' ${ENV_BASE_DIR}/values.yaml)
 
+    # Explicitly require SSL to avoid connecting over plain TCP
+    export PGSSLMODE=require
+
     # defaults for databases with default user and database name
     [[ $PGDATABASE == 'null' ]] && export PGDATABASE=pebbles
     [[ $PGUSER == 'null' ]] && export PGUSER=pebbles
 
     # extract db password from database secret file
-    db_password=$(sops -d --extract '["databasePassword"]' ${ENV_BASE_DIR}/secrets-database.yaml)
+    if [[ ! -e ${ENV_BASE_DIR}/secrets-database.sops.yaml ]]; then
+        echo "ERROR: database password needs to be stored in secrets-database.sops.yaml"
+        return 1
+    fi
+    db_password=$(sops -d --extract '["databasePassword"]' ${ENV_BASE_DIR}/secrets-database.sops.yaml)
 
     # create a password file
     export PGPASSFILE=/dev/shm/$ENV_NAME/.pgpass
@@ -136,7 +143,7 @@ pb-db-shell() {
 
     # clean up
     rm $PGPASSFILE
-    unset PGHOST PGPORT PGDATABASE PGUSER PGPASSFILE
+    unset PGHOST PGPORT PGDATABASE PGUSER PGPASSFILE PGSSLMODE
 }
 
 # Useful when developing Helm charts when generated values.yaml needs to be updated after inventory changes.
