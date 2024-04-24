@@ -1,4 +1,4 @@
-{{- if and .Values.deployCentralLogging .Values.logstashVolumeSize }}
+{{- if and .Values.deployCentralLogging .Values.deployLogstash .Values.logstashVolumeSize }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

@@ -183,6 +183,7 @@ backup:
 
 # deploy logstash and filebeat sidecar containers
 deployCentralLogging: true
+deployLogstash: true
 
 # filebeat.yml configuration file contents
 filebeatConfig: |
