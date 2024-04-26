@@ -21,6 +21,6 @@ spec:
         value: "unknown"
   resources:
     limits:
-      cpu: 2
+      cpu: 1
     requests:
       cpu: 1

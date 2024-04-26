@@ -97,12 +97,12 @@ build-image-all() {
 # builds all images from local sources in parallel
 build-image-all-parallel() {
     # trigger builds, starting from the heaviest to lightest
-    build-image-pebbles-frontend
-    build-image-pebbles-admin-frontend
     build-image-pebbles
     build-image-logstash
     build-image-filebeat
     build-image-pebbles-backup
+    build-image-pebbles-frontend
+    build-image-pebbles-admin-frontend
 
     # wait for at least one of the builds to be running
     while ! oc get pods -l openshift.io/build.name | grep Running; do
