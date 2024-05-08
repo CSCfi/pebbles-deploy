@@ -59,7 +59,7 @@ spec:
   strategy:
     dockerStrategy:
       buildArgs:
-        - name: APP_VERSION
+        - name: PB_APP_VERSION
           value: "$(date -Is)"
 EOF
     # create a build for current source branch, only taking files under version control
