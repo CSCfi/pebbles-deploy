@@ -224,11 +224,14 @@ oauth2ProxyReplicas: 1
 oauth2ProxyImage: quay.io/oauth2-proxy/oauth2-proxy:v7.4.0
 
 # oauth2-proxy redis backend, sclorg image
-oauth2ProxyRedisImage: quay.io/centos7/redis-5-centos7:20220610
-oauth2ProxyRedisArgs: ['run-redis', '--bind', '127.0.0.1', '--logfile', '/opt/log/oauth2-proxy-redis.log']
+#oauth2ProxyRedisImage: quay.io/centos7/redis-5-centos7:20220610
+#oauth2ProxyRedisArgs: ['run-redis', '--bind', '127.0.0.1', '--logfile', '/opt/log/oauth2-proxy-redis.log']
 # alternative way: use official Redis image
 #oauth2ProxyRedisImage: redis:7.0.1
 #oauth2ProxyRedisArgs: ['--bind', '127.0.0.1', '--logfile', '/opt/log/oauth2-proxy-redis.log']
+# valkey backend, bitnami image
+oauth2ProxyRedisImage: docker.io/bitnami/valkey:7.2.5
+oauth2ProxyRedisArgs: ['valkey-server', '--bind', '127.0.0.1', '--logfile', '/opt/log/oauth2-proxy-redis.log']
 
 # Resources for oauth2-proxy
 oauth2MemoryRequest: 512Mi
