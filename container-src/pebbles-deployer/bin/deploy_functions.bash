@@ -293,3 +293,45 @@ pb-helm-upgrade() {
     echo "Running helm upgrade -i $helm_name $helm_chart $vf_options $sf_options $post_options \"$@\""
     helm upgrade -i $helm_name $helm_chart $vf_options $sf_options $post_options "$@"
 }
+
+# Merge kubeconfig of the current cluster to the cluster kubeconfig of an environment. Run the script in a DC
+# for the cluster. Takes path to the SOPS-encrypted cluster kubeconfig file of the environment as the only argument
+# Usage example:
+# pb-merge-kubeconfig-to-secret ~/pebbles-env-1/secrets-cluster-kubeconfig.sops.yaml
+pb-merge-kubeconfig-to-secret() {
+  secret_kubeconfig_path=$1
+
+  read -s -p "age secret key for target environment: " AGE_SECRET
+  export SOPS_AGE_KEY=$AGE_SECRET
+  echo
+  age_public_key=$(echo "$SOPS_AGE_KEY" | age-keygen -y)
+
+  echo
+  echo "using recipient $age_public_key to encrypt the final file"
+  echo
+
+  # change 'default' to cluster name in kubeconfig
+  sed "s/: default$/: $ENV_NAME/g" ~/.kube/config > ~/.kube/config_sed
+
+  # remove top level mapping of secret kubeconfig
+  sops --age $age_public_key -d $secret_kubeconfig_path | yq -r '.clusterKubeconfig' > /dev/shm/cluster-kubeconfig.flat
+
+  # merge cluster kubeconfig to environment kubeconfig
+  KUBECONFIG=/dev/shm/cluster-kubeconfig.flat:~/.kube/config_sed kubectl config view --flatten > /dev/shm/cluster-kubeconfig.yml
+
+  # add back top level mapping
+  yq -y '{"clusterKubeconfig": .}' /dev/shm/cluster-kubeconfig.yml > /dev/shm/cluster-kubeconfig-final.yml
+
+  # make kubeconfig into a multiline string
+  sed -i 's/clusterKubeconfig:/& |/' /dev/shm/cluster-kubeconfig-final.yml
+
+  # encrypt merged secret kubeconfig and replace the old cluster kubeconfig with the new one
+  sops -e --age $age_public_key /dev/shm/cluster-kubeconfig-final.yml > $secret_kubeconfig_path
+
+  echo "merged kubeconfig written to $secret_kubeconfig_path"
+
+  # delete kubeconfig from /dev/shm/ and extra kubeconfig from ~/.kube/
+  rm /dev/shm/cluster-kubeconfig-final.yml /dev/shm/cluster-kubeconfig.yml /dev/shm/cluster-kubeconfig.flat ~/.kube/config_sed
+
+  unset SOPS_AGE_KEY
+}
