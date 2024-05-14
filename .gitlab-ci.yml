@@ -9,6 +9,7 @@ variables:
 
 stages:
   - build
+  - cicd-pipeline
 
 default:
   # Setup buildah cache for all jobs
@@ -73,3 +74,13 @@ build-k3s-autoscaler-image:
     COMPONENT: k3s-autoscaler
   script:
     - echo "building $COMPONENT"
+
+# call pipeline project
+cicd-pipeline:
+  stage: cicd-pipeline
+  variables:
+    PEBBLES_DEPLOY_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
+  trigger:
+    project: pebbles/cicd-pipeline
+    branch: main
+    strategy: depend
