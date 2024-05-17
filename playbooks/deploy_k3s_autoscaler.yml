@@ -140,6 +140,7 @@
                 -e AUTOSCALER_CONFIG_FILE=/run/pebbles/k3s-autoscaler/autoscaler-config.yaml \
                 -e KUBECONFIG_FILE=/run/pebbles/k3s-autoscaler/kubeconfig \
                 -e OPENSTACK_CREDENTIALS_FILE=/run/pebbles/k3s-autoscaler/openstack_credentials.yaml \
+                -e AUTOSCALER_LOGLEVEL={{ autoscaler_loglevel | d(20) }} \
                 -v /run/pebbles/k3s-autoscaler:/run/pebbles/k3s-autoscaler:z \
                 {{ autoscaler_image }}
               ExecStop=/bin/podman rm -f k3s-autoscaler
