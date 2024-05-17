@@ -74,8 +74,8 @@ class Scaler:
         self.maximum_number_of_nodes = self.config.get('maximumNumberOfNodes')
 
         logging.info('Using config')
-        for key in ('clusterName', 'flavor', 'image',
-                    'freeMemoryTarget', 'minimumFreeNodeMemory', 'maximumNumberOfNodes', 'oldNodeAgeLimitHours'):
+        for key in ('clusterName', 'flavor', 'image', 'volumeSize',
+        'freeMemoryTarget', 'minimumFreeNodeMemory', 'maximumNumberOfNodes', 'oldNodeAgeLimitHours'):
             logging.info('  %s: %s', key, config.get(key, 'Not set, using default'))
 
     def update(self):
@@ -199,7 +199,7 @@ class Scaler:
         osd = OpenStackDriver(dict(OPENSTACK_CREDENTIALS_FILE=os.environ.get('OPENSTACK_CREDENTIALS_FILE')))
         osd.connect()
 
-        server = osd.provision_vm(
+        server = osd.create_server(
             name=node_name,
             image=self.config.get('image'),
             flavor=self.config.get('flavor'),
@@ -209,6 +209,11 @@ class Scaler:
             server_group=cluster_name + '-server_group_node',
             user_data=ignition_data
         )
+        if self.config.get('volumeSize', 0):
+            logging.debug('creating volume %s', node_name)
+            osd.create_volume(node_name, self.config.get('volumeSize'))
+            logging.debug('attaching volume %s', node_name)
+            osd.attach_volume(node_name, node_name)
 
         logging.info('Provisioned VM %s %s', server.name, server.id)
 
@@ -222,18 +227,18 @@ class Scaler:
                 logging.info('initial taint has been removed and node %s is now ready', node_name)
                 break
 
-            if time.time() - start_ts > 10 * 60:
+            if time.time() - start_ts > 15 * 60:
                 logging.error('node %s failed to become ready, deleting VM', node_name)
                 self._delete_openstack_vm(node_name)
                 break
 
-            sleep(30)
+            sleep(10)
 
     def _initialize_fresh_node(self, node_name):
         node = [n for n in self._get_initially_tainted_ready_nodes() if n.metadata.name == node_name][0]
 
         new_taints = [dict(key=x.key, value=x.value, effect=x.effect) for x in node.spec.taints if
-                      x.key != 'autoscaler-initially-tainted']
+            x.key != 'autoscaler-initially-tainted']
         api_node = self.dc.resources.get(api_version='v1', kind='Node')
         body = dict(
             kind='Node',
@@ -269,7 +274,11 @@ class Scaler:
     def _delete_openstack_vm(self, node_name):
         osd = OpenStackDriver(dict(OPENSTACK_CREDENTIALS_FILE=os.environ.get('OPENSTACK_CREDENTIALS_FILE')))
         osd.connect()
-        osd.delete_vm(node_name)
+        # if there is a matching volume, detach and delete that as well
+        if osd.find_volume(node_name):
+            osd.detach_volume(node_name, node_name)
+            osd.delete_volume(node_name)
+        osd.delete_server(node_name)
 
     def _run_image_puller(self):
         puller = ImagePuller(self.dc, self.config, self.pull_history)

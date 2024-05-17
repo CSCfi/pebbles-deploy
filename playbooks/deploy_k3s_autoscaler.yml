@@ -46,6 +46,7 @@
             content: |
               clusterName: {{ cluster_name }}
               flavor: {{ fcos_flavor }}
+              volumeSize: {{ fcos_volume_size | d(0) }}
               image: {{ fcos_image }}
               
               freeMemoryTarget: {{ free_memory_target }}

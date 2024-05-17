@@ -39,6 +39,12 @@ class OpenStackDriver:
     def list_servers(self):
         return self.conn.compute.servers()
 
+    def list_volumes(self):
+        return self.conn.block_storage.volumes()
+
+    def find_volume(self, volume_name):
+        return self.conn.block_storage.find_volume(volume_name)
+
     def list_images(self):
         return self.conn.compute.images()
 
@@ -48,7 +54,8 @@ class OpenStackDriver:
     def find_flavor(self, flavor_name):
         return self.conn.compute.find_flavor(flavor_name)
 
-    def provision_vm(self, name, image, flavor, keypair, network, security_groups, server_group, user_data):
+    def create_server(self, name, image, flavor, keypair, network, security_groups, server_group, user_data):
+        logging.debug('Creating server %s' % name)
         sec_groups = [dict(name=x) for x in security_groups]
         server_group_id = self.conn.compute.find_server_group(server_group).id
         server = self.conn.compute.create_server(
@@ -64,14 +71,42 @@ class OpenStackDriver:
 
         return server
 
-    def delete_vm(self, name):
+    def delete_server(self, name):
+        logging.debug('Deleting server %s' % name)
         self.conn.compute.delete_server(self.conn.compute.find_server(name))
+
+    def create_volume(self, volume_name, volume_size):
+        logging.debug('Creating volume %s' % volume_name)
+        volume = self.conn.block_storage.create_volume(name=volume_name, size=volume_size)
+        return volume
+
+    def delete_volume(self, name):
+        logging.debug('Deleting volume %s' % name)
+        self.conn.block_storage.delete_volume(self.conn.block_storage.find_volume(name))
+
+    def attach_volume(self, server_name, volume_name):
+        logging.debug('Attaching volume %s to server %s', volume_name, server_name)
+        # we need to wait for the server to be active before attempting to attach the disk
+        server = self.conn.compute.find_server(server_name)
+        self.conn.compute.wait_for_server(server)
+        self.conn.compute.create_volume_attachment(
+            server,
+            self.conn.block_storage.find_volume(volume_name)
+        )
+
+    def detach_volume(self, server_name, volume_name):
+        logging.debug('Detaching volume %s from server %s', volume_name, server_name)
+        server = self.conn.compute.find_server(server_name)
+        volume = self.conn.block_storage.find_volume(volume_name)
+        self.conn.compute.delete_volume_attachment(server, volume)
+        self.conn.block_storage.wait_for_status(volume, status='available')
 
 
 if __name__ == '__main__':
     driver = OpenStackDriver(dict(OPENSTACK_CREDENTIALS_FILE=os.environ.get('OPENSTACK_CREDENTIALS_FILE')))
     driver.connect()
     print(driver.list_servers())
+    print(driver.list_volumes())
     print(driver.list_flavors())
     print(driver.list_images())
     print(driver.find_flavor('io.70GB'))
