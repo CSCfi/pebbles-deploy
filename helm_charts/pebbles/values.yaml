@@ -74,9 +74,11 @@ dbDeploymentEnabled: true
 # __PASSWORD__ will be replaced with databasePassword by Pebbles api server during startup
 databaseUri: postgresql://pebbles:__PASSWORD__@db/pebbles
 
-# host and port to connect to when testing if database is up. should match the values in databaseUri.
+# Host, port, user and database name to connect to. Should match the values in databaseUri.
 databaseHost: db
 databasePort: 5432
+databaseUser: pebbles
+databaseName: pebbles
 
 # Database password. If not set, a random value is used.
 #databasePassword: pebbles

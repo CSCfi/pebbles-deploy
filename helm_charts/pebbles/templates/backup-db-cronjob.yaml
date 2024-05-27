@@ -86,7 +86,7 @@ spec:
                 - name: PGPORT
                   value: "{{ .Values.databasePort }}"
                 - name: PGDATABASE
-                  value: pebbles
+                  value: "{{ .Values.databaseName }}"
                 - name: PGUSER
                   valueFrom:
                     secretKeyRef:
