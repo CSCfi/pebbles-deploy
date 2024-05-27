@@ -90,7 +90,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: copier
-          image: docker-registry.rahti.csc.fi/pebbles-public-images/pebbles-deployer:latest
+          image: image-registry.apps.2.rahti.csc.fi/pebbles-public-images/pebbles-deployer:main
           command:
             - /bin/bash
             - -c
