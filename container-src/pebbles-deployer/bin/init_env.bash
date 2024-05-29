@@ -47,20 +47,23 @@ if [[ -e $ENV_BASE_DIR/.env.yaml ]]; then
     echo "found .env.yaml in environment base directory, using init_env.py"
     $HOME/bin/init_env.py
 # Ansible inventory based environment
-elif [[ ! -e /dev/shm/secret/vaultpass ]]; then
-    mkdir -p /dev/shm/secret/
-    touch /dev/shm/secret/vaultpass
-    chmod 600 /dev/shm/secret/vaultpass
-    if [[ -e /run/pebbles/secret/vaultpass_$env_name ]]; then
-        cp /run/pebbles/secret/vaultpass_$env_name /dev/shm/secret/vaultpass
-        echo "vaultpass is copied for $env_name"
-    else
-       if [[ -z ${VAULT_PASS} ]]; then
-           read -s -p "vault password: " VAULT_PASS
-       fi
-       echo $VAULT_PASS > /dev/shm/secret/vaultpass
-       echo "Wrote vault password to /dev/shm/secret/vaultpass"
-       unset VAULT_PASS
+else
+    # read vault pass if necessary (skip when launching addition shells in an existing container)
+    if [[ ! -e /dev/shm/secret/vaultpass ]]; then
+        mkdir -p /dev/shm/secret/
+        touch /dev/shm/secret/vaultpass
+        chmod 600 /dev/shm/secret/vaultpass
+        if [[ -e /run/pebbles/secret/vaultpass_$env_name ]]; then
+            cp /run/pebbles/secret/vaultpass_$env_name /dev/shm/secret/vaultpass
+            echo "vaultpass is copied for $env_name"
+        else
+           if [[ -z ${VAULT_PASS} ]]; then
+               read -s -p "vault password: " VAULT_PASS
+           fi
+           echo $VAULT_PASS > /dev/shm/secret/vaultpass
+           echo "Wrote vault password to /dev/shm/secret/vaultpass"
+           unset VAULT_PASS
+        fi
     fi
     export ANSIBLE_INVENTORY=$ENV_BASE_DIR
     echo "ANSIBLE_INVENTORY set to $ANSIBLE_INVENTORY"
