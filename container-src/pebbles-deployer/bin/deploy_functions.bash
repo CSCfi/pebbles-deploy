@@ -54,7 +54,7 @@ build-image-from-project-src() {
     oc get imagestream ${name} || oc create -f ~/pebbles-deploy/openshift/${name}-is.yaml
 
     # patch buildconfig to include application version (timestamp for a devel build)
-    oc patch buildconfig ${name} --patch-file /dev/stdin <<EOF
+    oc patch buildconfig ${name} --patch-file /dev/stdin << EOF
 spec:
   strategy:
     dockerStrategy:
@@ -64,7 +64,7 @@ spec:
 EOF
     # create a build for current source branch, only taking files under version control
     tmpfile=$(mktemp -u /tmp/src-${name}-XXXXXX.tar)
-    tar cfv $tmpfile --exclude-vcs-ignores --exclude-vcs -C ~/${name} `git -C ~/${name} ls-files`
+    tar cfv $tmpfile --exclude-vcs-ignores --exclude-vcs -C ~/${name} $(git -C ~/${name} ls-files)
     oc start-build ${name} --from-archive $tmpfile "$@"
     rm -v $tmpfile
 }
@@ -106,14 +106,14 @@ build-image-all-parallel() {
 
     # wait for at least one of the builds to be running
     while ! oc get pods -l openshift.io/build.name | grep Running; do
-      echo "Waiting for builds to start"
-      sleep 2
+        echo "Waiting for builds to start"
+        sleep 2
     done
 
     # wait for all builds to have ended
     while oc get pods -l openshift.io/build.name | grep Running; do
-      echo "Waiting for builds to end"
-      sleep 10
+        echo "Waiting for builds to end"
+        sleep 10
     done
 }
 
@@ -123,9 +123,9 @@ list-image-tags() {
         return
     fi
     image_url="${PUBLIC_IMAGE_REPO_URL}/$1"
-    skopeo list-tags $image_url | jq -r '.Tags[]' \
-    | sort \
-    | xargs --replace echo "$image_url:{}"
+    skopeo list-tags $image_url | jq -r '.Tags[]' |
+        sort |
+        xargs --replace echo "$image_url:{}"
 }
 
 # blocks until API pod is ready
@@ -154,54 +154,54 @@ initialize-pebbles() {
 
 # create database structure
 pb-create-database() {
-  oc rsh deployment/api flask db upgrade
+    oc rsh deployment/api flask db upgrade
 }
 
 # load data from yaml files in environment definition to database, decrypt sops if needed
 # usage e.g.: pb-load-data file1.yaml file2.sops.yaml file3.yaml
 pb-load-data() {
-  for file in "$@"; do
-    if [ -f "$ENV_BASE_DIR/$file" ]; then
-      if [[ "$file" == *\.sops\.* ]]; then
-        echo
-        echo "Loading encrypted file $ENV_BASE_DIR/$file to database"
-        echo
-        sops --decrypt --age "$SOPS_AGE_RECIPIENTS" "$ENV_BASE_DIR/$file" | \
-        yq -r '.initial_data' | \
-        oc rsh deployment/api python manage.py load_data /dev/stdin
-      else
-        echo
-        echo "Loading file $ENV_BASE_DIR/$file to database"
-        echo
-        oc rsh deployment/api python manage.py load_data /dev/stdin < "$ENV_BASE_DIR/$file"
-      fi
-    else
-      echo
-      echo "File $ENV_BASE_DIR/$file not found"
-      echo
-    fi
-  done
+    for file in "$@"; do
+        if [ -f "$ENV_BASE_DIR/$file" ]; then
+            if [[ "$file" == *\.sops\.* ]]; then
+                echo
+                echo "Loading encrypted file $ENV_BASE_DIR/$file to database"
+                echo
+                sops --decrypt --age "$SOPS_AGE_RECIPIENTS" "$ENV_BASE_DIR/$file" |
+                    yq -r '.initial_data' |
+                    oc rsh deployment/api python manage.py load_data /dev/stdin
+            else
+                echo
+                echo "Loading file $ENV_BASE_DIR/$file to database"
+                echo
+                oc rsh deployment/api python manage.py load_data /dev/stdin < "$ENV_BASE_DIR/$file"
+            fi
+        else
+            echo
+            echo "File $ENV_BASE_DIR/$file not found"
+            echo
+        fi
+    done
 }
 
 # reset worker password to default secret
 pb-reset-worker-password() {
-  oc rsh deployment/api python manage.py reset_worker_password
+    oc rsh deployment/api python manage.py reset_worker_password
 }
 
 # initializes system with initial data files passed as arguments
 # the file including initial users needs to be the first argument, e.g.:
 # pb-initialize-database devel-users.sops.yaml initial-data.yaml
 pb-initialize-database() {
-  if [[ $# -eq 0 ]]; then
-    echo
-    echo "ERROR: pb-initialize-database needs initial data files as arguments"
-    echo
-    return
-  fi
-  wait-for-api-readiness
-  pb-create-database
-  pb-load-data "$@"
-  pb-reset-worker-password
+    if [[ $# -eq 0 ]]; then
+        echo
+        echo "ERROR: pb-initialize-database needs initial data files as arguments"
+        echo
+        return
+    fi
+    wait-for-api-readiness
+    pb-create-database
+    pb-load-data "$@"
+    pb-reset-worker-password
 }
 
 # initializes system with initial data from inventory
@@ -223,19 +223,22 @@ helm-install-pebbles() {
 
 # upgrades deployment using Helm
 helm-upgrade-pebbles() {
-    if [[ "zzz$1" == 'zzz-r' ]]; then shift ; refresh-ramdisk; fi
+    if [[ "zzz$1" == 'zzz-r' ]]; then
+        shift
+        refresh-ramdisk
+    fi
     (cd ~/pebbles-deploy && helm upgrade pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml "$@")
 }
 
 # Builds, installs and initializes system. Uses local source directories and initial data from inventory
 install-pebbles() {
     if [[ ! -f /dev/shm/$ENV_NAME/initial_data.yaml ]]; then
-      echo "No initial data for this environment found. The manual steps are"
-      echo
-      echo " build-image-all && helm-install-pebbles && initialize-pebbles <admin password>"
-      echo
-      echo "Take a look at ~/deploy_functions.bash to see what is going on under the hood"
-      return 1
+        echo "No initial data for this environment found. The manual steps are"
+        echo
+        echo " build-image-all && helm-install-pebbles && initialize-pebbles <admin password>"
+        echo
+        echo "Take a look at ~/deploy_functions.bash to see what is going on under the hood"
+        return 1
     fi
 
     build-image-all-parallel
@@ -246,27 +249,27 @@ install-pebbles() {
 }
 
 pebbles-tail-logs() {
-  oc rsh deployment/logstash bash -c "tail -f data/opt/log/$1*"
+    oc rsh deployment/logstash bash -c "tail -f data/opt/log/$1*"
 }
 
 pebbles-rsync-src-api() {
-  oc rsync ~/pebbles/pebbles $(oc get pods -l name=api | grep Running | cut -f 1 -d " " | head):.
+    oc rsync ~/pebbles/pebbles $(oc get pods -l name=api | grep Running | cut -f 1 -d " " | head):.
 }
 
 # Apply kustomized manifests to cluster. Supports plugins, e.g. ksops.
 # Takes path to kustomize/ directory as the only argument, defaults to kustomize/ directory in environment root.
 # Usage e.g.: pb-kustomize-apply ./kustomize/
 pb-kustomize-apply() {
-  kustomizedir=${1:-"$ENV_BASE_DIR"/kustomize/}
-  kustomize build --enable-alpha-plugins --enable-exec $kustomizedir | oc apply -f -
+    kustomizedir=${1:-"$ENV_BASE_DIR"/kustomize/}
+    kustomize build --enable-alpha-plugins --enable-exec $kustomizedir | oc apply -f -
 }
 
 # Delete kustomized manifests from cluster. Supports plugins, e.g. ksops.
 # Takes path to kustomize/ directory as the only argument, defaults to kustomize/ directory in environment root.
 # Usage e.g.: pb-kustomize-delete ./kustomize/
 pb-kustomize-delete() {
-  kustomizedir=${1:-"$ENV_BASE_DIR"/kustomize/}
-  kustomize build --enable-alpha-plugins --enable-exec $kustomizedir | oc delete -f -
+    kustomizedir=${1:-"$ENV_BASE_DIR"/kustomize/}
+    kustomize build --enable-alpha-plugins --enable-exec $kustomizedir | oc delete -f -
 }
 
 # Install/upgrade deployment using Helm. Uses chart and name specified in .env.yaml, values and secrets
@@ -305,39 +308,39 @@ pb-helm-upgrade() {
 # Usage example:
 # pb-merge-kubeconfig-to-secret ~/pebbles-env-1/secrets-cluster-kubeconfig.sops.yaml
 pb-merge-kubeconfig-to-secret() {
-  secret_kubeconfig_path=$1
+    secret_kubeconfig_path=$1
 
-  read -s -p "age secret key for target environment: " AGE_SECRET
-  export SOPS_AGE_KEY=$AGE_SECRET
-  echo
-  age_public_key=$(echo "$SOPS_AGE_KEY" | age-keygen -y)
+    read -s -p "age secret key for target environment: " AGE_SECRET
+    export SOPS_AGE_KEY=$AGE_SECRET
+    echo
+    age_public_key=$(echo "$SOPS_AGE_KEY" | age-keygen -y)
 
-  echo
-  echo "using recipient $age_public_key to encrypt the final file"
-  echo
+    echo
+    echo "using recipient $age_public_key to encrypt the final file"
+    echo
 
-  # change 'default' to cluster name in kubeconfig
-  sed "s/: default$/: $ENV_NAME/g" ~/.kube/config > ~/.kube/config_sed
+    # change 'default' to cluster name in kubeconfig
+    sed "s/: default$/: $ENV_NAME/g" ~/.kube/config > ~/.kube/config_sed
 
-  # remove top level mapping of secret kubeconfig
-  sops --age $age_public_key -d $secret_kubeconfig_path | yq -r '.clusterKubeconfig' > /dev/shm/cluster-kubeconfig.flat
+    # remove top level mapping of secret kubeconfig
+    sops --age $age_public_key -d $secret_kubeconfig_path | yq -r '.clusterKubeconfig' > /dev/shm/cluster-kubeconfig.flat
 
-  # merge cluster kubeconfig to environment kubeconfig
-  KUBECONFIG=/dev/shm/cluster-kubeconfig.flat:~/.kube/config_sed kubectl config view --flatten > /dev/shm/cluster-kubeconfig.yml
+    # merge cluster kubeconfig to environment kubeconfig
+    KUBECONFIG=/dev/shm/cluster-kubeconfig.flat:~/.kube/config_sed kubectl config view --flatten > /dev/shm/cluster-kubeconfig.yml
 
-  # add back top level mapping
-  yq -y '{"clusterKubeconfig": .}' /dev/shm/cluster-kubeconfig.yml > /dev/shm/cluster-kubeconfig-final.yml
+    # add back top level mapping
+    yq -y '{"clusterKubeconfig": .}' /dev/shm/cluster-kubeconfig.yml > /dev/shm/cluster-kubeconfig-final.yml
 
-  # make kubeconfig into a multiline string
-  sed -i 's/clusterKubeconfig:/& |/' /dev/shm/cluster-kubeconfig-final.yml
+    # make kubeconfig into a multiline string
+    sed -i 's/clusterKubeconfig:/& |/' /dev/shm/cluster-kubeconfig-final.yml
 
-  # encrypt merged secret kubeconfig and replace the old cluster kubeconfig with the new one
-  sops -e --age $age_public_key /dev/shm/cluster-kubeconfig-final.yml > $secret_kubeconfig_path
+    # encrypt merged secret kubeconfig and replace the old cluster kubeconfig with the new one
+    sops -e --age $age_public_key /dev/shm/cluster-kubeconfig-final.yml > $secret_kubeconfig_path
 
-  echo "merged kubeconfig written to $secret_kubeconfig_path"
+    echo "merged kubeconfig written to $secret_kubeconfig_path"
 
-  # delete kubeconfig from /dev/shm/ and extra kubeconfig from ~/.kube/
-  rm /dev/shm/cluster-kubeconfig-final.yml /dev/shm/cluster-kubeconfig.yml /dev/shm/cluster-kubeconfig.flat ~/.kube/config_sed
+    # delete kubeconfig from /dev/shm/ and extra kubeconfig from ~/.kube/
+    rm /dev/shm/cluster-kubeconfig-final.yml /dev/shm/cluster-kubeconfig.yml /dev/shm/cluster-kubeconfig.flat ~/.kube/config_sed
 
-  unset SOPS_AGE_KEY
+    unset SOPS_AGE_KEY
 }
