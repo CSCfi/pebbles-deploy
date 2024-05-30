@@ -192,6 +192,12 @@ pb-reset-worker-password() {
 # the file including initial users needs to be the first argument, e.g.:
 # pb-initialize-database devel-users.sops.yaml initial-data.yaml
 pb-initialize-database() {
+  if [[ $# -eq 0 ]]; then
+    echo
+    echo "ERROR: pb-initialize-database needs initial data files as arguments"
+    echo
+    return
+  fi
   wait-for-api-readiness
   pb-create-database
   pb-load-data "$@"
