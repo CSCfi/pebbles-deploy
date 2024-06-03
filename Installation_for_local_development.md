@@ -28,7 +28,7 @@ Here is how to deploy nginx ingress controller for docker for mac
 https://kubernetes.github.io/ingress-nginx/deploy/
 
 ```shell script
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.7.0/deploy/static/provider/cloud/deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
 ```
 
 If you encounter problems with accessing pebbles on localhost, restarting docker/laptop after installation may help.
@@ -73,7 +73,7 @@ Linux:
 
 ```shell script
 curl -LO https://git.io/get_helm.sh
-bash ./get_helm.sh -v v3.9.0
+bash ./get_helm.sh -v v3.15.0
 ```
 
 Mac:
@@ -135,12 +135,16 @@ adminFrontendImagePullPolicy: IfNotPresent
 adminFrontendEnabled: true
 #mountHostSrc: /CHANGE_ME/src/gitlab.ci.csc.fi/pebbles/pebbles
 #useSourceVolume: true
+
 apiDevelopmentMode: true
 apiDisableCORS: true
+apiFlaskApp: pebbles.app:create_app()
+
 #remoteDebugServerWorker: host.docker.internal
 #remoteDebugServerApi: host.docker.internal
 ingressHost: localhost
 ingressClass: nginx
+
 databaseVolumeSize: 1Gi
 
 deployCentralLogging: false
@@ -156,6 +160,7 @@ clusterConfig: |
     - name: local_kubernetes
       driver: KubernetesLocalDriver
       ingressClass: nginx
+
 ```
 
 Note the image pull policies that make it possible to use locally build images already present in Docker.
