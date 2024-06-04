@@ -139,7 +139,7 @@ pb-db-shell() {
     unset db_password
 
     # finally open the shell
-    psql
+    psql $*
 
     # clean up
     rm $PGPASSFILE
