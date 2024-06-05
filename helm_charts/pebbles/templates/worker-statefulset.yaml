@@ -26,6 +26,13 @@ spec:
         - name: wait-for-api
           image: {{ .Values.imagePrefix }}{{ .Values.workerImage }}
           imagePullPolicy: {{ .Values.workerImagePullPolicy }}
+          resources:
+            requests:
+              cpu: {{ .Values.workerCpuRequest }}
+              memory: {{ .Values.workerMemoryRequest }}
+            limits:
+              cpu: {{ .Values.workerCpuLimit }}
+              memory: {{ .Values.workerMemoryLimit }}
           command:
             - bash
             - -c

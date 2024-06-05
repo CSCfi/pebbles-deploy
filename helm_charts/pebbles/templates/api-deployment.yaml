@@ -43,7 +43,13 @@ spec:
               value: "{{ .Values.databaseHost }}"
             - name: PGPORT
               value: "{{ .Values.databasePort }}"
-
+          resources:
+            requests:
+              cpu: {{ .Values.apiCpuRequest }}
+              memory: {{ .Values.apiMemoryRequest }}
+            limits:
+              cpu: {{ .Values.apiCpuLimit }}
+              memory: {{ .Values.apiMemoryLimit }}
       {{- if .Values.apiAutomigrateDb }}
         - name: automigration
           image: {{ .Values.imagePrefix }}{{ .Values.apiImage }}
