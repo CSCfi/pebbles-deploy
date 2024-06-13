@@ -12,29 +12,7 @@ checking out the repositories and launching a deployment container.
 
 # Development installation
 
-## One shot installation
-
-Once you are running the deployment container for your environment (say, pebbles-devel-3 in this case) you can do the
-initial installation by simply running `install-pebbles`
-
-```shell script
-install-pebbles
-```
-
-This alias will build, install and initialize Pebbles in an empty namespace with initial data defined in inventory. To
-watch the progress, open another terminal window/pane, enter the deployment container and run
-
-```shell script
-watch oc get pods
-```
-
-For a more fine-grained process or updating an existing installation, read on.
-
-## Step-by-step installation
-
-Here is a fine-grained version of installation.
-
-### Building images from local sources
+## Building images from local sources
 
 There are several build commands for building all images or a single image. You can list them with tab-completion:
 
@@ -47,25 +25,27 @@ build-image-from-container-src      build-image-pebbles-admin-frontend
 ```
 
 Usually `build-image-all-parallel` is the best choice for the first build. After the builds have finished, you can
-list the images (`imagestreams` in OpenShift talk) with:
+list the images (`imagestreams` in OpenShift talk).
 
 ```shell script
+build-image-all-parallel
 oc get imagestream
 ```
 
-### Helm install
+## Helm installö
 
 Once the images have been built, install Pebbles with
 
 ```shell script
-helm-install-pebbles
+pb-helm-upgrade
 ```
 
-At this point the database is empty, so the installation does not actually work. To initialize database content and
+At this point the database is empty, so the system does not actually work. To initialize database content and
 set worker password, run:
 
 ```shell script
-initialize-pebbles-with-initial-data
+cde
+pb-initialize-database devel-users.sops.yaml initial-data.yaml
 ```
 
 After this point, the system should be up and running happily.
@@ -89,11 +69,11 @@ build-image-pebbles-frontend --follow && restart-pebbles frontend
 
 ## Upgrade deployment
 
-To change the Helm deployment, you can use a shortcut to refresh any contents generated from pebbles-environments and
-upgrade Helm deployment by:
+To change the Helm deployment, you can use a shortcut to reflect changes in pebbles-environments and
+Helm charts by upgrading Helm deployment by:
 
 ```shell script
-helm-upgrade-pebbles -r
+pb-helm-upgrade
 ```
 
 # Notes
@@ -102,11 +82,3 @@ helm-upgrade-pebbles -r
 
 All aliases in deployment container are defined in `container-src/pebbles-deployer/deploy_functions.bash`. Take a look
 at the definitions to see what they are actually doing and copy and customize to need.
-
-## Login timeouts
-
-OpenShift session will time out after 24h. You can refresh the credentials with
-
-```shell script
-refresh-ramdisk
-```

@@ -204,58 +204,6 @@ pb-initialize-database() {
     pb-reset-worker-password
 }
 
-# initializes system with initial data from inventory
-initialize-pebbles-with-initial-data() {
-    wait-for-api-readiness
-    # create database structure
-    oc rsh deployment/api flask db upgrade
-    # load initial data
-    initial_data_file=${1:-"/dev/shm/$ENV_NAME/initial_data.yaml"}
-    oc rsh deployment/api python manage.py load_data /dev/stdin < $initial_data_file
-    # reset worker password to default secret
-    oc rsh deployment/api python manage.py reset_worker_password
-}
-
-# installs system using Helm
-helm-install-pebbles() {
-    (cd ~/pebbles-deploy && helm install pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml)
-}
-
-# upgrades deployment using Helm
-helm-upgrade-pebbles() {
-    if [[ "zzz$1" == 'zzz-r' ]]; then
-        shift
-        refresh-ramdisk
-    fi
-    (cd ~/pebbles-deploy && helm upgrade pebbles helm_charts/pebbles -f /dev/shm/$ENV_NAME/values.yaml "$@")
-}
-
-# Builds, installs and initializes system. Uses local source directories and initial data from inventory
-install-pebbles() {
-    if [[ ! -f /dev/shm/$ENV_NAME/initial_data.yaml ]]; then
-        echo "No initial data for this environment found. The manual steps are"
-        echo
-        echo " build-image-all && helm-install-pebbles && initialize-pebbles <admin password>"
-        echo
-        echo "Take a look at ~/deploy_functions.bash to see what is going on under the hood"
-        return 1
-    fi
-
-    build-image-all-parallel
-
-    helm status pebbles 2>&1 > /dev/null || helm-install-pebbles
-
-    initialize-pebbles-with-initial-data
-}
-
-pebbles-tail-logs() {
-    oc rsh deployment/logstash bash -c "tail -f data/opt/log/$1*"
-}
-
-pebbles-rsync-src-api() {
-    oc rsync ~/pebbles/pebbles $(oc get pods -l name=api | grep Running | cut -f 1 -d " " | head):.
-}
-
 # Apply kustomized manifests to cluster. Supports plugins, e.g. ksops.
 # Takes path to kustomize/ directory as the only argument, defaults to kustomize/ directory in environment root.
 # Usage e.g.: pb-kustomize-apply ./kustomize/

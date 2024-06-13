@@ -32,6 +32,7 @@ processes, change the labels on the mounted directories:
 cd ~/src/gitlab.ci.csc.fi/pebbles/
 chcon -Rt svirt_sandbox_file_t pebbles*
 ```
+
 ## Launching a deployment container
 
 Deployments are done in a dedicated Docker container. Different environments will have dedicated instances.
@@ -43,7 +44,8 @@ cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/
 ./scripts/run_deployment_container.bash -e pebbles-devel-1 
 
 ```
-The container will ask for Ansible vault password for that environment at startup. Then it will set up
+
+The container will ask for Ansible vault password for or Age key that environment at startup. Then it will set up
 the environment ready for deployment, including ssh configuration, ssh keys, certificates, deployment robot credentials
 etc.
 
@@ -53,9 +55,9 @@ initialization playbook does not have to ask it interactively. There is a
 script called `read_vault_pass_from_clipboard.bash` under the scripts directory
 for doing this.
 
-## Using dcterm - Deployment Container TERMinal 
+## Using dcterm - Deployment Container TERMinal
 
-`scripts/dcterm.bash` is a handy script that either starts a deployment container or executes a new shell in an 
+`scripts/dcterm.bash` is a handy script that either starts a deployment container or executes a new shell in an
 existing one if it already exists. You could set up an alias in your local shell to invoke it by adding a definition
 in your profile. This assumes bash:
 
@@ -77,7 +79,7 @@ $ dcterm pebbles-devel-3
 ## Provisioning and configuring
 
 In the deployment container, first check that you are on the branches that you wish to use. The branches are mounted
-from your laptop's directory. Check out the branches on your laptop and double check with branch-info 
+from your laptop's directory. Check out the branches on your laptop and double check with branch-info
 
 ```bash
 branch-info
