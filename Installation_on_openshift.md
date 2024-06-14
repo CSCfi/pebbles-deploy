@@ -32,7 +32,7 @@ build-image-all-parallel
 oc get imagestream
 ```
 
-## Helm installö
+## Helm install
 
 Once the images have been built, install Pebbles with
 
