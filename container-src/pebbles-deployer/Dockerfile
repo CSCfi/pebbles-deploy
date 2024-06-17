@@ -22,6 +22,22 @@ WORKDIR /go/bin
 
 RUN GOBIN=$(pwd)/ GO111MODULE=on go install sigs.k8s.io/kustomize/kustomize/v5@$KUSTOMIZE_COMMIT_ID
 
+# stage: build glow
+FROM docker.io/library/golang:1.22-alpine as glow-build
+ARG GLOW_COMMIT_ID=1eacfb4ff1240d16811e48c4454a6ff627ee6d30
+
+WORKDIR /go/src
+
+RUN wget -O - https://codeload.github.com/charmbracelet/glow/zip/$GLOW_COMMIT_ID | unzip /dev/stdin
+
+WORKDIR /go/src/glow-$GLOW_COMMIT_ID
+
+# separate module download to its own layer for caching
+RUN go mod download -x
+
+# build glow and move to a fixed location to be picked up later by final layer
+RUN go build -o glow && mv glow /go/bin/glow
+
 # stage: final image
 FROM quay.io/fedora/fedora:39
 
@@ -93,6 +109,9 @@ COPY --from=kustomize-build /go/bin/kustomize /usr/local/bin/kustomize
 
 # Copy ksops binary into place
 COPY --from=ksops-build /go/bin/ksops /usr/local/bin/ksops
+
+# Copy glow binary into place
+COPY --from=glow-build /go/bin/glow /usr/local/bin/glow
 
 # Choose an arbitrary GID so that vault password can be made group readable when mounted as a volume
 # in a reasonably safe way

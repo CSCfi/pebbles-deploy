@@ -55,9 +55,9 @@ restart-pebbles() {
 
 # extract keys from Helm values on ramdisk
 extract-from-helm-values() {
-    cat /dev/shm/$ENV_NAME/values.yaml \
-    | python -c 'import json, sys, yaml ; y=yaml.safe_load(sys.stdin.read()) ; json.dump(y, sys.stdout)' \
-    | jq -r ".$1"
+    cat /dev/shm/$ENV_NAME/values.yaml |
+        python -c 'import json, sys, yaml ; y=yaml.safe_load(sys.stdin.read()) ; json.dump(y, sys.stdout)' |
+        jq -r ".$1"
 }
 
 # Alias to re-encrypt a sops encrypted file for given recipient (=public key). Uses the default Age key for decryption.
@@ -77,8 +77,8 @@ sops-rotate-age-key() {
     # process remaining arguments as files
     for secret_file in $*; do
         echo "re-encrypting file $secret_file"
-        sops -d $secret_file \
-        | sops -e --age $new_recipient --input-type "${secret_file##*.}" --output $secret_file /dev/stdin
+        sops -d $secret_file |
+            sops -e --age $new_recipient --input-type "${secret_file##*.}" --output $secret_file /dev/stdin
     done
 }
 
@@ -273,27 +273,33 @@ source bin/init_env.bash
 
 source bin/deploy_functions.bash
 
-echo "Oneliners"
-echo "---------"
-echo
+if [[ -e ${ENV_BASE_DIR}/README.md ]]; then
+    # Render README.md in the environmnet
+    glow ${ENV_BASE_DIR}/README.md
+else
+    # Print generic oneliners based on deployment type
+    echo "Oneliners"
+    echo "---------"
+    echo
 
-case $DEPLOYMENT_TYPE in
-helm)
-    print_oneliners_helm
-    ;;
-k3s)
-    print_oneliners_k3s
-    print_oneliners_openstack
-    ;;
-gitlab-runner-heat)
-    print_oneliners_gitlab_runner
-    print_oneliners_openstack
-    ;;
-db-farm)
-    print_oneliners_db_farm
-    print_oneliners_openstack
-    ;;
-esac
+    case $DEPLOYMENT_TYPE in
+    helm)
+        print_oneliners_helm
+        ;;
+    k3s)
+        print_oneliners_k3s
+        print_oneliners_openstack
+        ;;
+    gitlab-runner-heat)
+        print_oneliners_gitlab_runner
+        print_oneliners_openstack
+        ;;
+    db-farm)
+        print_oneliners_db_farm
+        print_oneliners_openstack
+        ;;
+    esac
+fi
 
 echo
 echo "Branches, view with 'branch-info'":
