@@ -79,7 +79,9 @@ build-k3s-autoscaler-image:
 cicd-pipeline:
   stage: cicd-pipeline
   variables:
+    # test using current branch code and image
     PEBBLES_DEPLOY_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
+    PEBBLES_DEPLOY_IMAGE_TAG: "${CI_COMMIT_REF_NAME}"
   trigger:
     project: pebbles/cicd-pipeline
     branch: main
