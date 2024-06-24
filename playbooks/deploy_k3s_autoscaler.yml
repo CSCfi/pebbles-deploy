@@ -70,7 +70,7 @@
             setype: container_file_t
           no_log: true
 
-        - name: create openstack configuration
+        - name: create openstack configuration (username and password)
           copy:
             dest: /run/pebbles/k3s-autoscaler/openstack_credentials.yaml
             content: |
@@ -87,6 +87,23 @@
             serole: object_r
             setype: container_file_t
           no_log: true
+          when: openstack_username is defined
+
+        - name: create openstack configuration (application credentials)
+          copy:
+            dest: /run/pebbles/k3s-autoscaler/openstack_credentials.yaml
+            content: |
+              OS_AUTH_URL: {{ openstack_auth_url }}
+              OS_IDENTITY_API_VERSION: 3
+              OS_AUTH_TYPE: v3applicationcredential
+              OS_APPLICATION_CREDENTIAL_ID: "{{ openstack_application_credential_id }}"
+              OS_APPLICATION_CREDENTIAL_SECRET: "{{ openstack_application_credential_secret }}"
+            mode: "0600"
+            seuser: system_u
+            serole: object_r
+            setype: container_file_t
+          no_log: true
+          when: openstack_application_credential_id is defined
 
         - name: slurp kubeconfig from master
           slurp:

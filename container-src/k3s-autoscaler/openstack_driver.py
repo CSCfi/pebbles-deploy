@@ -17,14 +17,24 @@ def get_openstack_credentials(config):
     else:
         logging.debug("no config, trying environment vars")
         source_config = os.environ
-
-    return dict(
-        version='2.1',
-        auth_url=source_config['OS_AUTH_URL'],
-        username=source_config['OS_USERNAME'],
-        password=source_config['OS_PASSWORD'],
-        project_id=source_config['OS_TENANT_ID'],
-        user_domain_id='default')
+    if 'OS_USERNAME' in source_config:
+        return dict(
+            version='2.1',
+            auth_url=source_config['OS_AUTH_URL'],
+            username=source_config['OS_USERNAME'],
+            password=source_config['OS_PASSWORD'],
+            project_id=source_config['OS_TENANT_ID'],
+            user_domain_id='default')
+    elif 'OS_APPLICATION_CREDENTIAL_ID' in source_config:
+        return dict(
+            version='2.1',
+            auth_url=source_config['OS_AUTH_URL'],
+            auth_type=source_config['OS_AUTH_TYPE'],
+            application_credential_id=source_config['OS_APPLICATION_CREDENTIAL_ID'],
+            application_credential_secret=source_config['OS_APPLICATION_CREDENTIAL_SECRET'],
+        )
+    else:
+        raise Exception('No credentials provided')
 
 
 class OpenStackDriver:

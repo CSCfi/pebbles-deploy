@@ -18,7 +18,9 @@
       export OS_TENANT_ID="{{ openstack_tenant_id }}"
       export OS_TENANT_NAME="{{ openstack_tenant_name }}"
       export OS_REGION="{{ openstack_region }}"
-  when: openstack_auth_url | default('') | regex_search('(/v3)')
+  when:
+    - openstack_username is defined
+    - openstack_auth_url | default('') | regex_search('(/v3)')
 
 - name: Create OpenStack openrc.sh for Keystone API v2.0
   copy:
@@ -31,7 +33,22 @@
       export OS_TENANT_ID="{{ openstack_tenant_id }}"
       export OS_TENANT_NAME="{{ openstack_tenant_name }}"
       export OS_REGION="{{ openstack_region }}"
-  when: openstack_auth_url | default('') | regex_search('(/v2.0)')
+  when:
+    - openstack_username is defined
+    - openstack_auth_url | default('') | regex_search('(/v2.0)')
+
+- name: Create OpenStack openrc.sh for application credentials
+  copy:
+    dest: "/dev/shm/{{ cluster_name }}/openrc.sh"
+    mode: 0600
+    content: |
+      export OS_AUTH_URL="{{ openstack_auth_url }}"
+      export OS_IDENTITY_API_VERSION=3
+      export OS_AUTH_TYPE=v3applicationcredential
+      export OS_APPLICATION_CREDENTIAL_ID="{{ openstack_application_credential_id }}"
+      export OS_APPLICATION_CREDENTIAL_SECRET="{{ openstack_application_credential_secret }}"
+  when:
+    - openstack_application_credential_id is defined
 
 - when: ssh_private_key is defined
   block:
