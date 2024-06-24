@@ -295,6 +295,9 @@ oauth2ProxyRedirectUrl: http://localhost/oauth2/callback
 #agreementPrivacyPath: https://privacy-link
 #agreementLogoPath: assets/images/login/csc_front_logo.jpg
 
+# Public structured config for frontend
+publicStructuredConfig: {}
+
 # The url that is used in generated absolute hyperlinks
 #baseUrl: http://localhost
 

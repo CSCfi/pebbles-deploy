@@ -76,3 +76,6 @@ data:
 {{- if .Values.authConfig }}
 {{ .Values.authConfig | indent 4}}
 {{- end }}
+
+  public-structured-config.yaml: |
+{{ .Values.publicStructuredConfig | toYaml | indent 4}}
