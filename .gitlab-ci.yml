@@ -1,17 +1,56 @@
 ---
-image: quay.io/buildah/stable:v1.34
-
 variables:
   KUBERNETES_MEMORY_REQUEST: "1Gi"
   KUBERNETES_MEMORY_LIMIT: "1Gi"
   REGISTRY_AUTH_FILE: /run/secrets/runner-job-secrets/docker_config_ci.json
   RUNNER_AFTER_SCRIPT_TIMEOUT: 60m
+  PEBBLES_DEPLOY_IMAGE_TAG:
+    description: 'use custom tag for pebbles-deploy in cicd-pipeline'
+    value: 'main'
+  # Parameters for running the builds manually
+  BUILD_ALL_IMAGES:
+    description: 'Build all images regardless of changes'
+    value: 'false'
+    options:
+      - 'false'
+      - 'true'
+  BUILD_SINGLE_IMAGE:
+    description: 'Build a single image regardless of changes'
+    value: ''
+    options:
+      - ''
+      - filebeat
+      - k3s-autoscaler
+      - logstash
+      - pebbles-backup
+      - pebbles-deployer
 
 stages:
   - build
   - cicd-pipeline
 
-default:
+# We make use of all builds being identical. The build target is defined by COMPONENT in job variables.
+.job_template: &job_definition
+  stage: build
+  tags: ['new-runner']
+  image: quay.io/buildah/stable:v1.36
+  rules:
+    # feature branch: build only images that have been modified
+    - if: $CI_COMMIT_BRANCH
+      changes:
+        compare_to: 'refs/heads/main'
+        paths:
+          - "container-src/$COMPONENT/**/*"
+    # merge to main: build changed images compared to the previous commit
+    - if: ($CI_COMMIT_REF_NAME == 'main' && $CI_PIPELINE_SOURCE == "push")
+      changes:
+        paths:
+          - "container-src/$COMPONENT/**/*"
+    # pipeline UI: build all images if desired
+    - if: $BUILD_ALL_IMAGES == 'true'
+    # pipeline UI: build a single image
+    - if: $BUILD_SINGLE_IMAGE == $COMPONENT
+
   # Setup buildah cache for all jobs
   before_script:
     - |
@@ -20,9 +59,7 @@ default:
       location = "private-registry:5000"
       insecure = true
       EOF
-  # Run build in after script to let individual jobs modify environment in the job script. We make use of
-  # all builds being identical. The build target is defined by COMPONENT in job variables.
-  after_script:
+  script:
     - cd "${CI_PROJECT_DIR}/container-src/${COMPONENT}"
     - buildah build 
       --storage-driver vfs 
@@ -33,47 +70,32 @@ default:
       --storage-driver vfs 
       "${CI_IMAGE_REPO_CI}/${COMPONENT}:${CI_COMMIT_REF_NAME}"
 
-build-deployer-image:
-  stage: build
-  tags: ['new-runner']
+build-pebbles-deployer-image:
   variables:
     COMPONENT: pebbles-deployer
     KUBERNETES_MEMORY_REQUEST: "4Gi"
     KUBERNETES_MEMORY_LIMIT: "4Gi"
-  script:
-    - echo "building $COMPONENT"
+  <<: *job_definition
 
-build-backup-image:
-  stage: build
-  tags: ['new-runner']
+build-pebbles-backup-image:
   variables:
     COMPONENT: pebbles-backup
-  script:
-    - echo "building $COMPONENT"
+  <<: *job_definition
 
 build-logstash-image:
-  stage: build
-  tags: ['new-runner']
   variables:
     COMPONENT: logstash
-  script:
-    - echo "building $COMPONENT"
+  <<: *job_definition
 
 build-filebeat-image:
-  stage: build
-  tags: ['new-runner']
   variables:
     COMPONENT: filebeat
-  script:
-    - echo "building $COMPONENT"
+  <<: *job_definition
 
 build-k3s-autoscaler-image:
-  stage: build
-  tags: ['new-runner']
   variables:
     COMPONENT: k3s-autoscaler
-  script:
-    - echo "building $COMPONENT"
+  <<: *job_definition
 
 # call pipeline project
 cicd-pipeline:
