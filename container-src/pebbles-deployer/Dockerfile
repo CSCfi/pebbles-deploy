@@ -42,7 +42,6 @@ RUN go build -o glow && mv glow /go/bin/glow
 FROM quay.io/fedora/fedora:39
 
 LABEL maintainer="CSC Notebooks Team"
-RUN dnf makecache
 
 # Install base packages
 RUN dnf install -y \
@@ -58,7 +57,7 @@ RUN dnf install -y \
     diffutils \
     findutils \
     postgresql \
-    vim \
+    vim nano \
     skopeo \
     xz \
     butane \
