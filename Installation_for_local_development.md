@@ -3,11 +3,40 @@
 This document helps you get going with Pebbles development by showing how to deploy Pebbles on a local Kubernetes
 running on your laptop (MacOS or Linux). Note that these only work within CSC networks for CSC employees.
 
-For MacOS, install Docker Desktop and enable Kubernetes.
+For MacOS, install Podman and Kind. You can also use Docker Desktop and enable Kubernetes.
 
 For Linux, install Minikube.
 
 # Bootstrap
+
+## Podman on Mac
+
+Prepare your shell enviroment. In .zshrc (or equivalent), add
+
+```shell script
+# podman settings
+export DOCKER_EXECUTABLE=podman
+export KIND_EXPERIMENTAL_PROVIDER=podman
+```
+
+Take a fresh shell, and install podman, kind and pebbles.
+
+```shell script
+# first install podman and kind
+brew install podman kind
+
+# then initialize the podman VM with 3GiB of RAM
+podman machine init --memory 3072 --rootful
+
+# start the machine
+podman machine start
+
+# enable memory compression (swapping to a compressed ramdisk)
+podman machine ssh $HOME/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/scripts/podman_enable_zram_swap.bash
+
+# deploy Kind with NGINX ingress controller
+$HOME/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/scripts/podman_kind.bash
+```
 
 ## Local Kubernetes
 
@@ -94,30 +123,21 @@ On Linux + minikube, you will need change the docker context to point to the doc
 eval $(minikube docker-env)
 ```
 
-## Building pebbles image
-
-Use _one_ of the options below.
-
-Build using pebbles dockerfile:
+Build images using podman:
 
 ```shell script
-pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles && docker build --tag pebbles:latest . --file=deployment/pebbles.Dockerfile ; popd
+cd ~/src/gitlab.ci.csc.fi/pebbles
+pushd pebbles; podman build --tag pebbles:latest . --file=deployment/pebbles.Dockerfile; popd
+pushd pebbles-frontend; podman build . -t pebbles-frontend:latest -f deployment/Dockerfile.multi-stage; popd
+pushd pebbles-admin-frontend; podman build . -t pebbles-admin-frontend:latest -f deployment/Dockerfile.multi-stage; popd
 ```
 
-## Building pebbles-frontend image
-
-This is taken from pebbles-frontend/deployment/building.md "Multi-stage build":
+If using podman/kind, load images to kind (kind runs in podman, but it does not share images. It needs its own copy):
 
 ```shell script
-pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-frontend/ && docker build . -t pebbles-frontend:latest -f deployment/Dockerfile.multi-stage ; popd
-```
-
-## Building pebbles-admin-frontend image
-
-This is taken from pebbles-admin-frontend/deployment/building.md:
-
-```shell script
-pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-admin-frontend/ && docker build . -t pebbles-admin-frontend:latest -f deployment/Dockerfile.multi-stage ; popd
+podman save localhost/pebbles:latest | kind load image-archive /dev/stdin
+podman save localhost/pebbles-frontend:latest | kind load image-archive /dev/stdin
+podman save localhost/pebbles-admin-frontend:latest | kind load image-archive /dev/stdin
 ```
 
 # Deploying with Helm
@@ -128,6 +148,10 @@ Next we create a configuration file for local deployment for Helm.
 Create local_values/local_k8s.yaml file with the following contents:
 
 ```yaml
+dbImage: quay.io/fedora/postgresql-15:latest
+# enable localhost prefix for podman/kind
+#imagePrefix: localhost/
+
 workerImagePullPolicy: IfNotPresent
 apiImagePullPolicy: IfNotPresent
 frontendImagePullPolicy: IfNotPresent
@@ -163,7 +187,7 @@ clusterConfig: |
 
 ```
 
-Note the image pull policies that make it possible to use locally build images already present in Docker.
+Note the image pull policies that make it possible to use locally built images already present in Docker.
 
 ## Deploy Pebbles
 

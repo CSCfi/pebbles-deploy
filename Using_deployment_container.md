@@ -18,10 +18,8 @@ We have a deployment container with all dependencies preinstalled. To build the 
 run the build script located in `pebbles-deploy/container-src/pebbles-deployer`:
 
 ```bash
-cd ~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/container-src/pebbles-deployer
-
 # use sudo if needed
-./build.bash
+~/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/container-src/pebbles-deployer/build.bash
 ```
 
 __Note on SELinux__: If you are running under SELinux enforcing mode, the container processes
