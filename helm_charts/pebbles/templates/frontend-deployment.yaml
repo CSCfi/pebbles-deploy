@@ -15,6 +15,7 @@ spec:
       labels:
         name: frontend
     spec:
+      terminationGracePeriodSeconds: 3600
       {{- if .Values.nodeSelector }}
       nodeSelector:
         {{- range $key, $value := .Values.nodeSelector }}
@@ -46,3 +47,9 @@ spec:
               port: 8080
             initialDelaySeconds: 3
             timeoutSeconds: 3
+          {{- if .Values.frontendPreStopSleepSeconds }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ['sleep', '{{ .Values.frontendPreStopSleepSeconds }}']
+          {{- end }}

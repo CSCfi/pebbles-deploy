@@ -317,6 +317,14 @@ bouncerTlsKey: ''
 
 # ----------------------------------------------------------------------------
 #
+# PreStop Lifecycle hook settings. 10-second sleep seems to be enough for OKD router to update the endpoints.
+#
+adminFrontendPreStopSleepSeconds: 10
+frontendPreStopSleepSeconds: 10
+apiPreStopSleepSeconds: 10
+
+# ----------------------------------------------------------------------------
+#
 # General settings
 #
 
