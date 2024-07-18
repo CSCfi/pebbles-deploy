@@ -6,6 +6,8 @@
 
 set -ex
 
+# if environment variable DOCKER_EXECUTABLE is not set, use docker as default
+DOCKER_EXECUTABLE="${DOCKER_EXECUTABLE:-docker}"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-docker build --pull=true -t ${1-cscfi/pebbles-deployer} $SCRIPT_DIR
+$DOCKER_EXECUTABLE build --pull=true -t ${1-cscfi/pebbles-deployer} $SCRIPT_DIR

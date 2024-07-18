@@ -7,6 +7,9 @@
 # the first command line argument.
 #
 
+# if environment variable DOCKER_EXECUTABLE is not set, use docker as default
+DOCKER_EXECUTABLE="${DOCKER_EXECUTABLE:-docker}"
+
 # figure out where we live to find run_deployment_container.bash
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -27,11 +30,11 @@ if [[ -z $env_name ]]; then
 fi
 
 # check if a deployment container is already running
-if docker ps | grep -q ${env_name}-deployer; then
+if $DOCKER_EXECUTABLE ps | grep -q ${env_name}-deployer; then
     echo
     echo "Launching a new shell in existing container '${env_name}-deployer'"
     echo
-    docker exec -it ${env_name}-deployer bash
+    $DOCKER_EXECUTABLE exec -it ${env_name}-deployer bash
 else
     # Check the OS to find the ramdisk path
     OS="$(uname -s)"

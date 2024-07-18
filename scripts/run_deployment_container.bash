@@ -2,10 +2,12 @@
 
 # Script to run a temporary deployment container. Should be executed in
 # playbooks/pebbles-deploy directory. Use sudo if that is required for
-# launching docker. Further sessions can be opened by running
+# launching docker/podman. Further sessions can be opened by running
 #
-#  docker exec -it [environment_name]-deployer bash
+#  $DOCKER_EXECUTABLE exec -it [environment_name]-deployer bash
 
+# if environment variable DOCKER_EXECUTABLE is not set, use docker as default
+DOCKER_EXECUTABLE="${DOCKER_EXECUTABLE:-docker}"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 print_usage_and_exit() {
@@ -70,7 +72,7 @@ while getopts "p:P:e:E:o:c:t:sh" opt; do
 done
 shift "$((OPTIND-1))"
 
-docker run --rm \
+$DOCKER_EXECUTABLE run --rm \
     -v $SCRIPT_DIR/../../pebbles:/opt/deployment/pebbles:rw \
     -v $SCRIPT_DIR/../../pebbles-environments:/opt/deployment/pebbles-environments:rw \
     -v $SCRIPT_DIR/../../pebbles-deploy:/opt/deployment/pebbles-deploy:rw \
