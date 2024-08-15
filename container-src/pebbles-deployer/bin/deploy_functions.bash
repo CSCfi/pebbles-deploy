@@ -160,6 +160,13 @@ pb-create-database() {
 # load data from yaml files in environment definition to database, decrypt sops if needed
 # usage e.g.: pb-load-data file1.yaml file2.sops.yaml file3.yaml
 pb-load-data() {
+    load_data_opts=''
+    # pass -u update option to manage.py load_data
+    if [[ "$1" == '-u' ]]; then
+        load_data_opts='-u'
+        shift
+    fi
+
     for file in "$@"; do
         if [ -f "$ENV_BASE_DIR/$file" ]; then
             if [[ "$file" == *\.sops\.* ]]; then
@@ -168,12 +175,12 @@ pb-load-data() {
                 echo
                 sops --decrypt --age "$SOPS_AGE_RECIPIENTS" "$ENV_BASE_DIR/$file" |
                     yq -r '.initial_data' |
-                    oc rsh deployment/api python manage.py load_data /dev/stdin
+                    oc rsh deployment/api python manage.py load_data $load_data_opts /dev/stdin
             else
                 echo
                 echo "Loading file $ENV_BASE_DIR/$file to database"
                 echo
-                oc rsh deployment/api python manage.py load_data /dev/stdin < "$ENV_BASE_DIR/$file"
+                oc rsh deployment/api python manage.py load_data $load_data_opts /dev/stdin < "$ENV_BASE_DIR/$file"
             fi
         else
             echo
