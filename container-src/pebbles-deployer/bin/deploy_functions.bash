@@ -168,19 +168,19 @@ pb-load-data() {
     fi
 
     for file in "$@"; do
-        if [ -f "$ENV_BASE_DIR/$file" ]; then
+        if [ -f "$file" ]; then
             if [[ "$file" == *\.sops\.* ]]; then
                 echo
-                echo "Loading encrypted file $ENV_BASE_DIR/$file to database"
+                echo "Loading encrypted file $file to database"
                 echo
-                sops --decrypt --age "$SOPS_AGE_RECIPIENTS" "$ENV_BASE_DIR/$file" |
+                sops --decrypt --age "$SOPS_AGE_RECIPIENTS" "$file" |
                     yq -r '.initial_data' |
                     oc rsh deployment/api python manage.py load_data $load_data_opts /dev/stdin
             else
                 echo
-                echo "Loading file $ENV_BASE_DIR/$file to database"
+                echo "Loading file $file to database"
                 echo
-                oc rsh deployment/api python manage.py load_data $load_data_opts /dev/stdin < "$ENV_BASE_DIR/$file"
+                oc rsh deployment/api python manage.py load_data $load_data_opts /dev/stdin < "$file"
             fi
         else
             echo
