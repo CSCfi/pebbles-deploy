@@ -64,11 +64,11 @@
     - name: set target directory depending on inventory style
       set_fact:
         cert_target_dir: >-
-          {{ env_uses_shared_group_vars | ternary("group_vars/" + cluster_name, cluster_name + "/group_vars/all") }}
+          /opt/deployment/pebbles-environments/{{ env_uses_shared_group_vars | ternary("group_vars/" + cluster_name, cluster_name + "/group_vars/all") }}
 
     - name: write new certificate
       copy:
-        dest: /opt/deployment/pebbles-environments/{{ cert_target_dir }}/cert.yml
+        dest: "{{ cert_target_dir }}/cert.yml"
         content: |
           # Ansible generated certificate file
           ---
@@ -87,7 +87,7 @@
     - name: encrypt the vault file
       shell: >
         ansible-vault encrypt /tmp/temp_vault_cert.yaml
-        --output /opt/deployment/pebbles-environments/{{ cert_target_dir }}/vault_cert.yml
+        --output {{ cert_target_dir }}/vault_cert.yml
 
     - name: delete the temporary vault file
       file:
