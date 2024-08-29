@@ -1,7 +1,7 @@
 # Default values for pebbles
 
 # Images to deploy
-dbImage: centos/postgresql-95-centos7:latest
+dbImage: quay.io/fedora/postgresql-15:latest
 imagePrefix: ''
 apiImage: pebbles:latest
 workerImage: pebbles:latest
