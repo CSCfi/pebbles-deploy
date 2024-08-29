@@ -162,10 +162,9 @@ adminFrontendEnabled: true
 
 apiDevelopmentMode: true
 apiDisableCORS: true
-apiFlaskApp: pebbles.app:create_app()
 
-#remoteDebugServerWorker: host.docker.internal
-#remoteDebugServerApi: host.docker.internal
+#remoteDebugServerWorker: host.containers.internal
+#remoteDebugServerApi: host.containers.internal
 ingressHost: localhost
 ingressClass: nginx
 
@@ -187,7 +186,7 @@ clusterConfig: |
 
 ```
 
-Note the image pull policies that make it possible to use locally built images already present in Docker.
+Note the image pull policies that make it possible to use locally built images already present in container runtime.
 
 ## Deploy Pebbles
 
@@ -266,14 +265,14 @@ Rebuilding pebbles image for remote debugging:
 
 ```bash
 pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles
-docker build --tag pebbles:latest . --file=deployment/pebbles.Dockerfile --build-arg EXTRA_PIP_PACKAGES=pydevd-pycharm
+podman build --tag pebbles:latest . --file=deployment/pebbles.Dockerfile --build-arg EXTRA_PIP_PACKAGES=pydevd-pycharm
 popd
 ```
 
 Upgrade helm:
 
 - Uncomment and modify your local_values/local_k8s.yaml, key `remoteDebugServerApi`. Note that you need to adapt the
-  host name, the example works on MacOS.
+  host name, the example works at least with Podman on Mac.
 
 - Then update your deployment:
 
