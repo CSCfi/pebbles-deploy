@@ -30,5 +30,21 @@ spec:
                       key: pb-secret-key
                 - name: PYTHONPATH
                   value: /opt/app-root/src
-
+                {{- if .Values.enableBeatsLogging }}
+                - name: PB_BEATS_LOGGING_CONFIG_FILE_PATH
+                  value: "{{ .Values.beatsLoggingConfigFilePath }}"
+                - name: PB_ENABLE_BEATS_LOGGING
+                  value: "{{ .Values.enableBeatsLogging }}"
+                - name: PB_BEATS_HOST
+                  value: "{{ .Values.beatsHost }}"
+                - name: PB_BEATS_PORT
+                  value: "{{ .Values.beatsPort }}"
+                {{- end }}
+              volumeMounts:
+                - name: beats-configmap
+                  mountPath: run/configmaps/pebbles/beats-configmap
+          volumes:
+            - name: beats-configmap
+              configMap:
+                name: beats-configmap
 {{- end }}

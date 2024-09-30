@@ -211,6 +211,10 @@ logstashMemoryLimit: 1200Mi
 logstashCpuRequest: 100m
 logstashCpuLimit: 1900m
 
+# Configuration for beats logging
+enableBeatsLogging: false
+beatsLoggingConfigFilePath: /run/configmaps/pebbles/beats-configmap/logging.yaml
+
 # ----------------------------------------------------------------------------
 # Optional maintenance cron job
 maintenanceCronJobEnabled: False
