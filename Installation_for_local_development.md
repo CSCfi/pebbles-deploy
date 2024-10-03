@@ -168,6 +168,9 @@ apiDisableCORS: true
 ingressHost: localhost
 ingressClass: nginx
 
+# Enable this on podman/kind to allow ingress traffic 
+#networkPolicyDefaultIngressNamespaces: ["ingress-nginx"]
+
 databaseVolumeSize: 1Gi
 
 deployCentralLogging: false
@@ -263,10 +266,15 @@ oc rsh deployment/db bash -c 'psql -d pebbles'
 
 Rebuilding pebbles image for remote debugging:
 
-```bash
+```shell script
 pushd ~/src/gitlab.ci.csc.fi/pebbles/pebbles
 podman build --tag pebbles:latest . --file=deployment/pebbles.Dockerfile --build-arg EXTRA_PIP_PACKAGES=pydevd-pycharm
 popd
+```
+
+If using Kind, update the image on the node
+```shell script
+podman save localhost/pebbles:latest | kind load image-archive /dev/stdin
 ```
 
 Upgrade helm:
