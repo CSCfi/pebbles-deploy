@@ -82,7 +82,7 @@
       export DEPLOYMENT_TYPE="{{ deployment_type | d('helm') }}"
       export DEPLOYMENT_ROLE="{{ deployment_role | d('development') }}"
       export PUBLIC_DOMAIN_NAME="{{ domain_name | d('domain_name_not_set')}}"
-      export PUBLIC_IMAGE_REPO_URL="{{ public_image_repo_url | d('public_image_repo_url_not_set')}}"
+      export PEBBLES_PUBLIC_IMAGE_REPO_URL="{{ pebbles_public_image_repo_url | d('pebbles_public_image_repo_url_not_set')}}"
       export S3CMD_CONFIG=/dev/shm/{{ cluster_name }}/s3cfg
 
 - name: Export initial data

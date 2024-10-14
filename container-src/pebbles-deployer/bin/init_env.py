@@ -71,7 +71,7 @@ DEPLOYMENT_DATA_TEMPLATE = """\
 export DEPLOYMENT_TYPE="{{ deploymentType | d('helm') }}"
 export DEPLOYMENT_ROLE="{{ deploymentRole | d('development') }}"
 export PUBLIC_DOMAIN_NAME="{{ domainName | d('domain_name_not_set')}}"
-export PUBLIC_IMAGE_REPO_URL="{{ publicImageRepoUrl | d('public_image_repo_url_not_set')}}"
+export PEBBLES_PUBLIC_IMAGE_REPO_URL="{{ pebblesPublicImageRepoUrl | d('pebbles_public_image_repo_url_not_set')}}"
 export S3CMD_CONFIG=/dev/shm/{{ envName }}/s3cfg
 export SOPS_AGE_RECIPIENTS={{ sopsAgeRecipients | d('') }}
 """

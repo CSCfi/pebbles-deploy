@@ -122,7 +122,7 @@ list-image-tags() {
         echo 'list-image-tags needs image name (like "pebbles") as an argument' > /dev/stderr
         return
     fi
-    image_url="${PUBLIC_IMAGE_REPO_URL}/$1"
+    image_url="docker://${PEBBLES_PUBLIC_IMAGE_REPO_URL}/$1"
     skopeo list-tags $image_url | jq -r '.Tags[]' |
         sort |
         xargs --replace echo "$image_url:{}"
