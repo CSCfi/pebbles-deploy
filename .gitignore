@@ -9,3 +9,6 @@ local_values.yaml
 local_values/
 local_files/
 /venv/
+
+# MacOS
+.DS_Store
