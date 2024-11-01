@@ -1,6 +1,6 @@
 FROM quay.io/fedora/fedora:40
 
-LABEL maintainer="CSC Notebooks Team"
+LABEL maintainer="CSC Noppe Team"
 
 # Install packages
 RUN dnf install -y \

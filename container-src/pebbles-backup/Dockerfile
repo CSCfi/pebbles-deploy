@@ -1,6 +1,6 @@
 FROM docker.io/library/almalinux:8
 
-LABEL maintainer="CSC Notebooks Team"
+LABEL maintainer="CSC Noppe Team"
 RUN dnf makecache
 
 # Install base packages

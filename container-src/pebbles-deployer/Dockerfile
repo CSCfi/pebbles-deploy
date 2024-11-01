@@ -41,7 +41,7 @@ RUN go build -o glow && mv glow /go/bin/glow
 # stage: final image
 FROM quay.io/fedora/fedora:39
 
-LABEL maintainer="CSC Notebooks Team"
+LABEL maintainer="CSC Noppe Team"
 
 # Install base packages
 RUN dnf install -y \
