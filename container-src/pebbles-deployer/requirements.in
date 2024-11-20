@@ -3,7 +3,8 @@
 # To update the requirements, run 'pip-compile -v -U'
 
 ## Primary requirements
-ansible
+# ansible pinned to latest confirmed working version, upgrade to 10< needs changes to playbooks
+ansible==9.*
 requests
 requests-oauthlib
 oslo.utils

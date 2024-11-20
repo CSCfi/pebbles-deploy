@@ -1,2 +1,6 @@
+# client wants to see clouds top level key
+clouds: {}
+
+# speed up provisioning by using cache
 cache:
    expiration_time: 3600

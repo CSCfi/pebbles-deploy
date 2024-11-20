@@ -39,7 +39,7 @@ RUN go mod download -x
 RUN go build -o glow && mv glow /go/bin/glow
 
 # stage: final image
-FROM quay.io/fedora/fedora:39
+FROM quay.io/fedora/fedora:40
 
 LABEL maintainer="CSC Noppe Team"
 
