@@ -79,6 +79,7 @@ $DOCKER_EXECUTABLE run --rm \
     -v $SCRIPT_DIR/../../pebbles-frontend:/opt/deployment/pebbles-frontend:rw \
     -v $SCRIPT_DIR/../../pebbles-admin-frontend:/opt/deployment/pebbles-admin-frontend:rw \
     -v $SCRIPT_DIR/../../pebbles-status-display:/opt/deployment/pebbles-status-display:rw \
+    -v $SCRIPT_DIR/../../imagebuilder:/opt/deployment/imagebuilder:rw \
     --name ${env_name}-deployer \
     $docker_opts \
     $container_image:$image_tag $*

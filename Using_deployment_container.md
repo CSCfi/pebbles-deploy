@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-Clone pebbles, pebbles-frontend, pebbes-admin-frontend, pebbles-deploy and pebbles-environments
+Clone pebbles, pebbles-frontend, pebbes-admin-frontend, pebbles-deploy, pebbles-environments and imagebuilder
 
 ```bash
 mkdir -p ~/src/gitlab.ci.csc.fi/pebbles
@@ -12,6 +12,7 @@ git clone https://gitlab.ci.csc.fi/pebbles/pebbles-frontend
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-admin-frontend
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-deploy
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-environments
+git clone https://gitlab.ci.csc.fi/pebbles/imagebuilder
 ```
 
 We have a deployment container with all dependencies preinstalled. To build the container,
