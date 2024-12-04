@@ -21,7 +21,7 @@ futures==3.0.5
 idna==2.5
 ipaddress==1.0.18
 iso8601==0.1.11
-Jinja2==2.9.6
+Jinja2==2.11.3
 jmespath==0.9.3
 jsonpatch==1.16
 jsonpointer==1.10
