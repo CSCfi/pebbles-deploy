@@ -131,4 +131,14 @@ storage:
       mode: 0644
       contents:
         inline: |
-          user.max_user_namespaces = {{ fcos_max_user_namespaces|d('0') }}
+          user.max_user_namespaces = {{ fcos_max_user_namespaces|d(0) }}
+
+{% if fcos_max_user_namespaces|d(0) == 0 %}
+    # fix irqbalance when user namespaces are disabled. Adapted from https://access.redhat.com/solutions/7097092
+    - path: /etc/systemd/system/irqbalance.service.d/override.conf
+      mode: 0644
+      contents:
+        inline: |
+          [Service]
+          PrivateUsers=false
+{% endif %}
