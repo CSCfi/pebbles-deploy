@@ -38,6 +38,12 @@ if [[ ! -z ${CI_COMMIT_REF_NAME} ]]; then
     cd /opt/deployment/pebbles-deploy
     git checkout -b ${PEBBLES_DEPLOY_COMMIT_REF_NAME} -t origin/${PEBBLES_DEPLOY_COMMIT_REF_NAME} || true
     git pull
+    # imagebuilder: clone and checkout branch if it exists
+    cd /opt/deployment
+    git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/pebbles/imagebuilder.git
+    cd /opt/deployment/imagebuilder
+    git checkout -b ${IMAGEBUILDER_COMMIT_REF_NAME} -t origin/${IMAGEBUILDER_COMMIT_REF_NAME} || true
+    git pull
     popd > /dev/null
     echo 'CI initialization done'
 fi
