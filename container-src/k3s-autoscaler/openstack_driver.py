@@ -108,8 +108,20 @@ class OpenStackDriver:
         logging.debug('Detaching volume %s from server %s', volume_name, server_name)
         server = self.conn.compute.find_server(server_name)
         volume = self.conn.block_storage.find_volume(volume_name)
-        self.conn.compute.delete_volume_attachment(server, volume)
-        self.conn.block_storage.wait_for_status(volume, status='available')
+
+        n_retries = 0
+        while True:
+            try:
+                self.conn.compute.delete_volume_attachment(server, volume)
+                self.conn.block_storage.wait_for_status(volume, status='available')
+                break
+            except Exception as ex:
+                logging.warning('Failure %s detaching volume %s.', ex, volume_name)
+                n_retries += 1
+                if n_retries <= 3:
+                    logging.info('Retrying detaching %s', volume_name)
+                else:
+                    raise ex
 
 
 if __name__ == '__main__':
