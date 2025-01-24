@@ -10,8 +10,7 @@ spec:
       kind: ImageStreamTag
       name: pebbles-frontend:latest
   source:
-    git:
-      uri: https://github.com/CSCfi/pebbles-frontend/
+    binary: {}
   strategy:
     type: Docker
     dockerStrategy:

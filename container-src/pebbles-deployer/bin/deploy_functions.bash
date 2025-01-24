@@ -16,7 +16,7 @@ build-image-from-container-src() {
     # The buildconfig has contextDir set, so build from root dir.
     # Create an archive to exclude version control and ignored files from the build
     tmpfile=$(mktemp -u /tmp/src-XXXXXX.tar.gz)
-    tar cfv $tmpfile --exclude-vcs-ignores --exclude-vcs -C ~/pebbles-deploy container-src
+    tar cfv $tmpfile --exclude-vcs-ignores --exclude-vcs -C ~/pebbles-deploy container-src/${name}
     oc start-build ${name} --from-archive $tmpfile "$@"
     rm -v $tmpfile
 }
@@ -89,7 +89,6 @@ build-image-all() {
     build-image-pebbles --follow
     build-image-pebbles-frontend --follow
     build-image-pebbles-admin-frontend --follow
-    build-image-logstash --follow
     build-image-filebeat --follow
     build-image-pebbles-backup --follow
 }
@@ -98,7 +97,6 @@ build-image-all() {
 build-image-all-parallel() {
     # trigger builds, starting from the heaviest to lightest
     build-image-pebbles
-    build-image-logstash
     build-image-filebeat
     build-image-pebbles-backup
     build-image-pebbles-frontend

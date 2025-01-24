@@ -10,8 +10,7 @@ spec:
       kind: ImageStreamTag
       name: pebbles-backup:latest
   source:
-    git:
-      uri: https://github.com/CSCfi/pebbles-deploy/
+    binary: {}
     contextDir: container-src/pebbles-backup
   strategy:
     type: Docker

@@ -10,8 +10,7 @@ spec:
       kind: ImageStreamTag
       name: pebbles:latest
   source:
-    git:
-      uri: https://github.com/CSCfi/pebbles/
+    binary: {}
   strategy:
     type: Docker
     dockerStrategy:

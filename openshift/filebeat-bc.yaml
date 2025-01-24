@@ -10,8 +10,7 @@ spec:
       kind: ImageStreamTag
       name: filebeat:latest
   source:
-    git:
-      uri: https://github.com/CSCfi/pebbles-deploy/
+    binary: {}
     contextDir: container-src/filebeat
   strategy:
     type: Docker
