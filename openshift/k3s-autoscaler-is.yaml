@@ -1,0 +1,9 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  labels:
+    build: k3s-autoscaler
+  name: k3s-autoscaler
+spec:
+  lookupPolicy:
+    local: false

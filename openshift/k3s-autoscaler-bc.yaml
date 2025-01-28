@@ -1,0 +1,16 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  labels:
+    build: k3s-autoscaler
+  name: k3s-autoscaler
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: k3s-autoscaler:latest
+  source:
+    binary: {}
+    contextDir: container-src/k3s-autoscaler
+  strategy:
+    type: Docker

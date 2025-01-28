@@ -35,9 +35,14 @@ build-image-pebbles-deployer() {
     build-image-from-container-src pebbles-deployer "$@"
 }
 
-# builds pebbles-deployer in the current OpenShift namespace
+# builds pebbles-backup in the current OpenShift namespace
 build-image-pebbles-backup() {
     build-image-from-container-src pebbles-backup "$@"
+}
+
+# builds k3s-autoscaler in the current OpenShift namespace
+build-image-k3s-autoscaler() {
+    build-image-from-container-src k3s-autoscaler "$@"
 }
 
 build-image-from-project-src() {
