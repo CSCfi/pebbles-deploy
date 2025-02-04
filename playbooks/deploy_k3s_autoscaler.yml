@@ -62,7 +62,7 @@
                 k3s_channel: {{ k3s_channel | d('stable') }}
                 k3s_installer_url: {{ k3s_installer_url|d("https://get.k3s.io") }}
                 k3s_node_token: {{ _node_token.content | b64decode | trim }}
-                fcos_cgroups_v1: {{ fcos_cgroups_v1 | d(true) | bool }}
+                fcos_cgroups_v1: {{ fcos_cgroups_v1 | d(false) | bool }}
                 fcos_max_user_namespaces: {{ fcos_max_user_namespaces | d(0) }}
             mode: "0600"
             seuser: system_u
