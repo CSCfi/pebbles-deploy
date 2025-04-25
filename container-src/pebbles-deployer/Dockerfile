@@ -40,6 +40,7 @@ RUN go build -o glow && mv glow /go/bin/glow
 
 # stage: final image
 FROM quay.io/fedora/fedora:40
+ARG PEBBLES_DEPLOY_SRC="https://github.com/CSCfi/pebbles-deploy.git"
 
 LABEL maintainer="CSC Noppe Team"
 
@@ -153,6 +154,9 @@ RUN helm repo add gitlab https://charts.gitlab.io
 
 # Install Helm-Secrets plugin
 RUN helm plugin install https://github.com/jkroepke/helm-secrets --version v4.5.1
+
+# clone pebbles-deploy, from the public mirror by default
+RUN git clone --depth 1 $PEBBLES_DEPLOY_SRC
 
 # copy scripts
 COPY bin bin

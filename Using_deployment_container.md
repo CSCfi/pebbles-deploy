@@ -63,6 +63,7 @@ in your profile. This assumes bash:
 ```shell script
 $ grep dcterm $HOME/.bash_profile
 alias dcterm='$HOME/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/scripts/dcterm.bash'
+alias dcterm-dev='RDC_CLI_OPTIONS="$RDC_CLI_OPTIONS -d" $HOME/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/scripts/dcterm.bash'
 ```
 
 After setting up the alias, you can use it with
@@ -74,6 +75,8 @@ $ dcterm pebbles-devel-3
 # in another terminal, this will launch a shell in the already running container 
 $ dcterm pebbles-devel-3
 ```
+To start a development version of the container with Pebbles repositories, including `pebbles-deploy`, mounted from
+your laptop, use `dcterm-dev` alias.
 
 ## Provisioning and configuring
 

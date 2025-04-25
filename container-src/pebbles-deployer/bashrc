@@ -23,14 +23,22 @@ short_cwd() {
 }
 
 branch-info() {
-    for repo in pebbles pebbles-deploy pebbles-environments pebbles-frontend pebbles-admin-frontend; do
-        branch=$(cd /opt/deployment/$repo && parse_git_branch)
-        num_modified=$(cd /opt/deployment/$repo && git status --porcelain | wc -l)
-        if [[ num_modified -eq 0 ]]; then
-            printf "%23s: %s\n" $repo $branch
-        else
-            printf "%23s: %s (modified: %d)\n" $repo $branch $num_modified
+    printf  "%23s %10s %12s %8s %s\n" "repository" "revision" "commit date" "modified" "branch"
+    printf  "%23s %10s %12s %8s %s\n" "----------" "--------" "-----------" "--------" "------"
+    for repo in pebbles pebbles-{,deploy,environments,frontend,admin-frontend,status-display} imagebuilder; do
+        # skip repos that have not been loopback mounted
+        if [ ! -e /opt/deployment/$repo/.git ]; then
+            continue
         fi
+        branch=$(cd /opt/deployment/$repo && parse_git_branch)
+        revision=$(cd /opt/deployment/$repo && git show --no-patch --format=%h)
+        rev_date=$(cd /opt/deployment/$repo && git show --no-patch --format=%cs)
+        num_modified=$(cd /opt/deployment/$repo && git status --porcelain | wc -l)
+        if [ $num_modified -eq 0 ]; then
+            num_modified=' '
+        fi
+
+        printf "%23s %10s %12s %8s %s \n" $repo $revision $rev_date " $num_modified" $branch
     done
 }
 

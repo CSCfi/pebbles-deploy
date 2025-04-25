@@ -25,7 +25,7 @@ fi
 
 # check if we have the environment name figured out
 if [[ -z $env_name ]]; then
-    echo "unable to extract environment name from tmux or shell arguments"
+    echo "ERROR: unable to extract environment name from tmux or shell arguments"
     exit 1
 fi
 

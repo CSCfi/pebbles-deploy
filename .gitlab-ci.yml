@@ -32,8 +32,8 @@ stages:
 # We make use of all builds being identical. The build target is defined by COMPONENT in job variables.
 .job_template: &job_definition
   stage: build
-  tags: ['new-runner']
-  image: quay.io/buildah/stable:v1.36
+  tags: [ 'new-runner' ]
+  image: quay.io/buildah/stable:v1.39
   rules:
     # feature branch: build only images that have been modified
     - if: $CI_COMMIT_BRANCH
@@ -61,13 +61,14 @@ stages:
       EOF
   script:
     - cd "${CI_PROJECT_DIR}/container-src/${COMPONENT}"
-    - buildah build 
-      --storage-driver vfs 
+    - buildah build
+      --storage-driver vfs
       --jobs 4
-      --layers --cache-from private-registry:5000/pebbles/cache --cache-to private-registry:5000/pebbles/cache 
+      --layers --cache-from private-registry:5000/pebbles/cache --cache-to private-registry:5000/pebbles/cache
       --tag "${CI_IMAGE_REPO_CI}/${COMPONENT}:${CI_COMMIT_REF_NAME}"
-    - buildah push 
-      --storage-driver vfs 
+      ${BUILDAH_EXTRA_ARGS}
+    - buildah push
+      --storage-driver vfs
       "${CI_IMAGE_REPO_CI}/${COMPONENT}:${CI_COMMIT_REF_NAME}"
 
 build-pebbles-deployer-image:
@@ -75,6 +76,9 @@ build-pebbles-deployer-image:
     COMPONENT: pebbles-deployer
     KUBERNETES_MEMORY_REQUEST: "4Gi"
     KUBERNETES_MEMORY_LIMIT: "4Gi"
+    BUILDAH_EXTRA_ARGS: >
+      --build-arg 
+      PEBBLES_DEPLOY_SRC=https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/pebbles/pebbles-deploy.git
   <<: *job_definition
 
 build-pebbles-backup-image:
