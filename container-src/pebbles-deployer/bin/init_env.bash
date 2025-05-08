@@ -32,8 +32,12 @@ if [[ ! -z ${CI_COMMIT_REF_NAME} ]]; then
     cd /opt/deployment/pebbles-environments
     git checkout -b ${PEBBLES_ENVIRONMENTS_COMMIT_REF_NAME} -t origin/${PEBBLES_ENVIRONMENTS_COMMIT_REF_NAME} || true
     git pull
-    # pebbles-deploy: clone and checkout branch if it exists
+    # pebbles-deploy: remove the existing repo if it is already in the image, then clone and checkout branch if it exists
     cd /opt/deployment
+    if [ -d "pebbles-deploy" ]; then
+     echo "Removing existing pebbles-deploy directory"
+     rm -rf pebbles-deploy
+    fi
     git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/pebbles/pebbles-deploy.git
     cd /opt/deployment/pebbles-deploy
     git checkout -b ${PEBBLES_DEPLOY_COMMIT_REF_NAME} -t origin/${PEBBLES_DEPLOY_COMMIT_REF_NAME} || true
