@@ -95,6 +95,7 @@ if [ "$development_mode" == "1" ]; then
         -v $SCRIPT_DIR/../../imagebuilder:/opt/deployment/imagebuilder:rw \
         --name ${env_name}-deployer \
         $docker_opts \
+        -e DEVELMODE=1\
         $container_image:$image_tag $*
 else
     $DOCKER_EXECUTABLE run --rm \

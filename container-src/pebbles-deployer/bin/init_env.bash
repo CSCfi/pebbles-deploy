@@ -108,18 +108,25 @@ if [[ "$DEPLOYMENT_TYPE" == 'k3s' && ! -e ~/.kube/config ]]; then
     ansible-playbook fetch_k3s_kubeconfig.yml
 fi
 
+# Set PS1_SUFFIX based on DM value
+if [[ "$DEVELMODE" == "1" ]]; then
+    PS1_SUFFIX=" D"
+else
+    PS1_SUFFIX=""
+fi
+
 # Set up custom prompt. Make production deployments stand out.
 # More info on format: https://unix.stackexchange.com/questions/105958/terminal-prompt-not-wrapping-correctly
 case $DEPLOYMENT_ROLE in
 production)
-    export PS1='\[${YELLOW}\]\[${RED_BG}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\]\n\D{%Y%m%d-%H:%M:%S}> '
-    ;;
+   export PS1="\[${YELLOW}\]\[${RED_BG}\]${ENV_NAME}\[${RESET}\] \$(short_cwd) \[${GREEN}\]\$(parse_git_branch)\[${RESET}\]\n\D{%Y%m%d-%H:%M:%S}${PS1_SUFFIX}> "
+   ;;
 qa)
-    export PS1='\[${YELLOW}\]\[${BLUE_BG}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\]\n\D{%Y%m%d-%H:%M:%S}> '
-    ;;
+   export PS1="\[${YELLOW}\]\[${BLUE_BG}\]${ENV_NAME}\[${RESET}\] \$(short_cwd) \[${GREEN}\]\$(parse_git_branch)\[${RESET}\]\n\D{%Y%m%d-%H:%M:%S}${PS1_SUFFIX}> "
+   ;;
 *)
-    export PS1='\[${YELLOW}\]${ENV_NAME}\[${RESET}\] $(short_cwd) \[${GREEN}\]($(parse_git_branch))\[${RESET}\]\n\D{%Y%m%d-%H:%M:%S}> '
-    ;;
+   export PS1="\[${YELLOW}\]${ENV_NAME}\[${RESET}\] \$(short_cwd) \[${GREEN}\]\$(parse_git_branch)\[${RESET}\]\n\D{%Y%m%d-%H:%M:%S}${PS1_SUFFIX}> "
+   ;;
 esac
 
 popd > /dev/null
