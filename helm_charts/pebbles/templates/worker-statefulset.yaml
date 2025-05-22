@@ -84,13 +84,6 @@ spec:
             - name: REMOTE_DEBUG_SERVER
               value: {{ .Values.remoteDebugServerWorker }}
             {{- end }}
-            - name: IMAGEBUILDER_BASE_URL
-              value: {{ .Values.imagebuilderBaseUrl }}
-            - name: IMAGEBUILDER_API_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: worker-secret
-                  key: imagebuilder-api-token
           envFrom:
             - configMapRef:
                 name: worker-configmap

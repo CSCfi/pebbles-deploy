@@ -43,6 +43,11 @@ clusterControllerPollingIntervalSecMin: 30
 clusterControllerPollingIntervalSecMax: 90
 workspaceControllerPollingIntervalSecMin: 30
 workspaceControllerPollingIntervalSecMax: 90
+customImageControllerPollingIntervalSecMin: 10
+customImageControllerPollingIntervalSecMax: 30
+customImageControllerRegistry: ''
+customImageControllerRepo: ''
+customImageControllerBuildNamespace: ''
 
 # Resources for db
 dbMemoryRequest: 200Mi

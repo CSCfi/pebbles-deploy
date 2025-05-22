@@ -3,9 +3,14 @@ kind: ConfigMap
 metadata:
   name: worker-configmap
 data:
-  SESSION_CONTROLLER_POLLING_INTERVAL_SEC_MIN: "{{ .Values.sessionControllerPollingIntervalSecMin}}"
-  SESSION_CONTROLLER_POLLING_INTERVAL_SEC_MAX: "{{ .Values.sessionControllerPollingIntervalSecMax}}"
-  CLUSTER_CONTROLLER_POLLING_INTERVAL_SEC_MIN: "{{ .Values.clusterControllerPollingIntervalSecMin}}"
-  CLUSTER_CONTROLLER_POLLING_INTERVAL_SEC_MAX: "{{ .Values.clusterControllerPollingIntervalSecMax}}"
-  WORKSPACE_CONTROLLER_POLLING_INTERVAL_SEC_MIN: "{{ .Values.workspaceControllerPollingIntervalSecMin}}"
-  WORKSPACE_CONTROLLER_POLLING_INTERVAL_SEC_MAX: "{{ .Values.workspaceControllerPollingIntervalSecMax}}"
+  SESSION_CONTROLLER_POLLING_INTERVAL_SEC_MIN: "{{ .Values.sessionControllerPollingIntervalSecMin }}"
+  SESSION_CONTROLLER_POLLING_INTERVAL_SEC_MAX: "{{ .Values.sessionControllerPollingIntervalSecMax }}"
+  CLUSTER_CONTROLLER_POLLING_INTERVAL_SEC_MIN: "{{ .Values.clusterControllerPollingIntervalSecMin }}"
+  CLUSTER_CONTROLLER_POLLING_INTERVAL_SEC_MAX: "{{ .Values.clusterControllerPollingIntervalSecMax }}"
+  WORKSPACE_CONTROLLER_POLLING_INTERVAL_SEC_MIN: "{{ .Values.workspaceControllerPollingIntervalSecMin }}"
+  WORKSPACE_CONTROLLER_POLLING_INTERVAL_SEC_MAX: "{{ .Values.workspaceControllerPollingIntervalSecMax }}"
+  CUSTOM_IMAGE_CONTROLLER_POLLING_INTERVAL_SEC_MIN: "{{ .Values.customImageControllerPollingIntervalSecMin }}"
+  CUSTOM_IMAGE_CONTROLLER_POLLING_INTERVAL_SEC_MAX: "{{ .Values.customImageControllerPollingIntervalSecMax }}"
+  CUSTOM_IMAGE_CONTROLLER_REGISTRY: "{{ .Values.customImageControllerRegistry }}"
+  CUSTOM_IMAGE_CONTROLLER_REPO: "{{ .Values.customImageControllerRepo }}"
+  CUSTOM_IMAGE_CONTROLLER_BUILD_NAMESPACE: "{{ .Values.customImageControllerBuildNamespace }}"
