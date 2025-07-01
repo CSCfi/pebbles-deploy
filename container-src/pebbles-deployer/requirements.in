@@ -3,8 +3,7 @@
 # To update the requirements, run 'pip-compile -v -U'
 
 ## Primary requirements
-# ansible pinned to latest confirmed working version, upgrade to 10< needs changes to playbooks
-ansible==9.*
+ansible
 requests
 requests-oauthlib
 oslo.utils
@@ -22,6 +21,3 @@ inotify
 
 # for generating requirements.txt
 pip-tools
-
-# for parsing data from YAML files
-yq

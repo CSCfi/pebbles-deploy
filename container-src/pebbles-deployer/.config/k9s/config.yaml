@@ -1,0 +1,5 @@
+# Minimal K9s config to set the color theme ("skin")
+k9s:
+  ui:
+    skin: pebbles-light
+  skipLatestRevCheck: true

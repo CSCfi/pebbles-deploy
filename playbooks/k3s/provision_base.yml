@@ -1,0 +1,244 @@
+---
+- name: Create network and security groups
+  hosts: localhost
+  connection: local
+  vars:
+    network_name: "{{ cluster_name }}-network"
+  tasks:
+    - name: add public key to OpenStack for {{ cluster_name }}
+      openstack.cloud.keypair:
+        state: present
+        name: "{{ cluster_name }}"
+        public_key_file: "/dev/shm/{{ cluster_name }}/id_rsa.pub"
+
+    - name: check if network exists
+      openstack.cloud.networks_info:
+        name: "{{ network_name }}"
+      register: _network_info
+
+    # we assume the base infra exists if the network is already there
+    - when: not _network_info.networks or force_base_provisioning | d(false) | bool
+      block:
+
+      # Network setup
+
+        - name: create network
+          register: network_facts
+          openstack.cloud.network:
+            name: "{{ network_name }}"
+            state: present
+          when: network_name|default("") != ""
+
+        - name: create subnet
+          openstack.cloud.subnet:
+            network_name: "{{ network_name }}"
+            name: "{{ network_name }}-subnet-1"
+            cidr: "{{ network_cidr }}"
+            dns_nameservers: "{{ network_dns_servers }}"
+            allocation_pool_start: "{{ network_prefix }}.50"
+            allocation_pool_end: "{{ network_prefix }}.254"
+
+          when: network_name|default("") != ""
+          register: _subnet
+
+        - name: add subnet-1 interface to router {{ router }}
+          command: >
+            openstack router add subnet {{ router }} {{ network_name }}-subnet-1
+          when: _subnet.changed
+
+      # Security group setup
+
+        - name: bastion security group - create
+          register: sg_bastion
+          openstack.cloud.security_group:
+            name: "{{ cluster_name }}-bastion"
+            description: "Ansible generated security group for bastion"
+
+        - name: open external access to bastion
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-bastion"
+            protocol: tcp
+            remote_ip_prefix: "{{ item[0] }}"
+            port_range_min: "{{ item[1] }}"
+            port_range_max: "{{ item[1] }}"
+          loop: "{{ bastion_allow_cidrs | product(bastion_allow_ports) | list }}"
+          when: bastion_allow_cidrs is defined and bastion_allow_ports is defined
+
+        - name: common SG - create
+          register: sg_common
+          openstack.cloud.security_group:
+            name: "{{ cluster_name }}-common"
+            description: "Ansible generated common security group for {{ cluster_name }}"
+
+        - name: common SG - open cluster internal access to bastion
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-common"
+            remote_group: "{{ sg_bastion.security_group.id }}"
+
+        - name: common SG - open cluster internal ping
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-common"
+            remote_group: "{{ sg_common.security_group.id }}"
+            protocol: icmp
+
+        - name: infra SG - create
+          register: sg_infra
+          openstack.cloud.security_group:
+            name: "{{ cluster_name }}-infra"
+            description: "Ansible generated security group for {{ cluster_name }} infra VMs"
+
+        - name: infra SG - open comms in infra
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-infra"
+            remote_group: "{{ sg_infra.security_group.id }}"
+
+        - name: storage SG - create
+          openstack.cloud.security_group:
+            name: "{{ cluster_name }}-storage"
+            description: "Ansible generated security group for {{ cluster_name }} storage VMs"
+
+        - name: storage SG - open ceph ports
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-storage"
+            remote_group: "{{ sg_common.security_group.id }}"
+            protocol: tcp
+            port_range_min: "3300"
+            port_range_max: "7568"
+
+        - name: node SG - create
+          openstack.cloud.security_group:
+            name: "{{ cluster_name }}-node"
+            description: "Ansible generated security group for {{ cluster_name }} node VMs"
+
+        - name: node SG - open comms to infra
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-node"
+            remote_group: "{{ sg_infra.security_group.id }}"
+
+        - name: node SG - open cluster SDN
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-node"
+            protocol: udp
+            port_range_min: "8472"
+            port_range_max: "8472"
+
+        - name: ingress SG - create
+          openstack.cloud.security_group:
+            name: "{{ cluster_name }}-ingress"
+            description: "Ansible generated security group for {{ cluster_name }} ingress VMs"
+
+        - name: open external access to ingress
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-ingress"
+            protocol: tcp
+            remote_ip_prefix: "{{ item[0] }}"
+            port_range_min: "{{ item[1] }}"
+            port_range_max: "{{ item[1] }}"
+          loop: "{{ ingress_allow_cidrs | product(ingress_allow_ports) | list }}"
+          when: ingress_allow_cidrs is defined and ingress_allow_ports is defined
+
+        - name: api SG - create
+          openstack.cloud.security_group:
+            name: "{{ cluster_name }}-api"
+            description: "Ansible generated security group for {{ cluster_name }} api VMs"
+
+        - name: open internal access to API
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-api"
+            protocol: tcp
+            remote_group: "{{ sg_common.security_group.id }}"
+            port_range_min: "6443"
+            port_range_max: "6443"
+
+        - name: open external access to API
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-api"
+            protocol: tcp
+            remote_ip_prefix: "{{ item[0] }}"
+            port_range_min: "{{ item[1] }}"
+            port_range_max: "{{ item[1] }}"
+          loop: "{{ api_allow_cidrs | product(api_allow_ports) | list }}"
+          when: api_allow_cidrs is defined and api_allow_ports is defined
+
+      # Server groups
+
+        - name: create/query infra server group
+          openstack.cloud.server_group:
+            state: present
+            name: "{{ cluster_name }}-server_group_infra"
+            policy: anti-affinity
+          register: _os_server_group_infra
+
+        - name: create/query node server group
+          openstack.cloud.server_group:
+            state: present
+            name: "{{ cluster_name }}-server_group_node"
+            policy: soft-anti-affinity
+          register: _os_server_group_node
+
+- name: Create bastion host
+  hosts: localhost
+  connection: local
+  vars:
+    bastion_vm_ip: "{{ network_prefix }}.10"
+  tasks:
+        - name: provision bastion VM
+          openstack.cloud.server:
+            state: present
+            name: "{{ cluster_name }}-bastion"
+            image: "{{ bastion_vm_image }}"
+            key_name: "{{ cluster_name }}"
+            timeout: 200
+            flavor: "{{ bastion_vm_flavor }}"
+            auto_ip: false
+            nics:
+              - net-name: "{{ cluster_name }}-network"
+                fixed_ip: "{{ bastion_vm_ip }}"
+            security_groups:
+              - "{{ cluster_name }}-common"
+              - "{{ cluster_name }}-bastion"
+            wait: yes
+          register: _os_server
+
+        - name: associate floating IP with bastion
+          openstack.cloud.floating_ip:
+            server: "{{ cluster_name }}-bastion"
+            floating_ip_address: "{{ bastion_public_ip }}"
+            network: "{{ cluster_name }}-network"
+          when: bastion_public_ip is defined
+
+- import_playbook: generate_ssh_config.yml
+
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - name: wait for connectivity on port 22 on bastion
+      wait_for:
+        host: "{{ bastion_public_ip }}"
+        port: 22
+        search_regex: "OpenSSH"
+        delay: 2
+        timeout: 900
+
+    - name: wait for SSH to work
+      shell: >
+        ssh {{ bastion_public_ip }}
+        'echo success'
+      register: result
+      until: result.stdout.find('success') != -1
+      retries: 30
+      delay: 2
+      changed_when: false
+
+- name: install nmap-ncat and vim on bastion
+  hosts: bastion
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: install nmap-ncat and vim
+      dnf:
+        name:
+        - nmap-ncat
+        - vim
+        state: present

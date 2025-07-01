@@ -1,0 +1,91 @@
+# K9s light terminal theme
+k9s:
+  body:
+    fgColor: "#000000"
+    bgColor: default
+    logoColor: "#0044aa"
+  prompt:
+    fgColor: "#000000"
+    bgColor: default
+    suggestColor: "#444444"
+  info:
+    fgColor: "#0044aa"
+    sectionColor: "#000000"
+  dialog:
+    fgColor: "#000000"
+    bgColor: default
+    buttonFgColor: "#ffffff"
+    buttonBgColor: "#0044aa"
+    buttonFocusFgColor: "#ffffff"
+    buttonFocusBgColor: "#002266"
+    labelFgColor: "#b35000"
+  frame:
+    border:
+      fgColor: "#555555"
+      focusColor: "#0044aa"
+    menu:
+      fgColor: "#000000"
+      keyColor: "#0044aa"
+      numKeyColor: "#b35000"
+    crumbs:
+      fgColor: "#ffffff"
+      bgColor: "#0044aa"
+      activeColor: "#002266"
+    status:
+      newColor: "#0044aa"
+      modifyColor: "#b35000"
+      addColor: "#006600"
+      pendingColor: "#b35000"
+      errorColor: "#bb0000"
+      highlightColor: "#0044aa"
+      killColor: "#880088"
+      completedColor: "#555555"
+    title:
+      fgColor: "#000000"
+      bgColor: default
+      highlightColor: "#0044aa"
+      counterColor: "#b35000"
+      filterColor: "#004400"
+  views:
+    charts:
+      bgColor: default
+      defaultDialColors:
+        - "#0044aa"
+        - "#bb0000"
+      defaultChartColors:
+        - "#0044aa"
+        - "#bb0000"
+    table:
+      fgColor: "#000000"
+      bgColor: default
+      cursorFgColor: "#ffffff"
+      cursorBgColor: "#0044aa"
+      markColor: "#b35000"
+      header:
+        fgColor: "#333333"
+        bgColor: default
+        sorterColor: "#b35000"
+    xray:
+      fgColor: "#000000"
+      bgColor: default
+      cursorColor: "#0044aa"
+      cursorTextColor: "#ffffff"
+      graphicColor: "#555555"
+    yaml:
+      keyColor: "#0044aa"
+      colonColor: "#555555"
+      valueColor: "#000000"
+    logs:
+      fgColor: "#000000"
+      bgColor: default
+      indicator:
+        fgColor: "#ffffff"
+        bgColor: "#0044aa"
+        toggleOnColor: "#00ff00"
+        toggleOffColor: "#aaaaaa"
+    help:
+      fgColor: "#000000"
+      bgColor: default
+      keyColor: "#0044aa"
+      numKeyColor: "#b35000"
+      sectionColor: "#b35000"

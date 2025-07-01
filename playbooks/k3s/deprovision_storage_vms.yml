@@ -1,0 +1,16 @@
+---
+- name: Deprovision storage
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: delete storage VMs
+      openstack.cloud.server:
+        name: "{{ item }}"
+        state: absent
+      with_items: "{{ groups.storage }}"
+
+    - name: delete storage VM volumes
+      openstack.cloud.volume:
+        name: "{{ item }}"
+        state: absent
+      with_items: "{{ groups.storage }}"

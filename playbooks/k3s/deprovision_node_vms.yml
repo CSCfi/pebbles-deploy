@@ -1,0 +1,20 @@
+- name: Remove base infra for K3s in cPouta
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: List node VMs
+      openstack.cloud.server_info:
+        name: "{{ cluster_name }}-node-*"
+      register: _node_vms
+
+    - name: delete node VMs
+      openstack.cloud.server:
+        name: "{{ item.name }}"
+        state: absent
+      with_items: "{{ _node_vms.servers }}"
+
+    - name: delete node volumes
+      openstack.cloud.volume:
+        name: "{{ item.name }}"
+        state: absent
+      with_items: "{{ _node_vms.servers }}"

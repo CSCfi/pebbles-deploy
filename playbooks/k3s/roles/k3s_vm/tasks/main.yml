@@ -1,0 +1,86 @@
+---
+
+# -----------------------------------------------------------------------------
+# create volume
+- set_fact:
+    _volumes: "{{ [] }}"
+
+- when: volume_size | d(0) > 0
+  block:
+  - name: "{{ server_name }} - creating volume of size {{ volume_size }}"
+    delegate_to: localhost
+    openstack.cloud.volume:
+      state: present
+      size: "{{ volume_size }}"
+      display_name: "{{ server_name }}"
+      wait: yes
+  - set_fact:
+      _volumes: "{{ [server_name,] }}"
+
+# -----------------------------------------------------------------------------
+# create VM
+
+- when: vm_role != 'server'
+  block:
+    - name: fetch node join token from master
+      command: >
+        ssh {{ cluster_name }}-master "sudo bash -c 'cat /var/lib/rancher/k3s/server/node-token'"
+      register: _node_token
+
+    - set_fact:
+        _node_token: "{{_node_token.stdout }}"
+
+- name: "{{ server_name }} - render butane template"
+  set_fact:
+    _butane_def: "{{ lookup('template', 'butane/k3s-vm.butane.j2') }}"
+  vars:
+    k3s_join_token: "{{ _node_token | d(omit) }}"
+  no_log: true
+
+- name: Make sure server group exists and get its id
+  openstack.cloud.server_group:
+    name: "{{ server_group }}"
+    policy: soft-anti-affinity
+  when: server_group is defined
+  register: _server_group
+
+- name: "{{ server_name }} - create ignition from butane file"
+  delegate_to: localhost
+  command: butane
+  args:
+    stdin: "{{ _butane_def }}"
+  register: _ignition_def
+  no_log: true
+
+- name: "{{ server_name }} - provision VM"
+  delegate_to: localhost
+  openstack.cloud.server:
+    state: present
+    name: "{{ server_name }}"
+    image: "{{ image }}"
+    key_name: "{{ key_name }}"
+    timeout: 200
+    flavor: "{{ flavor }}"
+    auto_ip: false
+    nics:
+      - net-name: "{{ network }}"
+        fixed_ip: "{{ server_ip }}"
+    security_groups: "{{ security_groups }}"
+    wait: "{{ wait_for_server | d(true) | bool }}"
+    userdata: "{{ _ignition_def.stdout | string }}"
+    volumes: "{{ _volumes | d([]) }}"
+    scheduler_hints:
+      group: "{{ _server_group.server_group.id | d(omit) }}"
+  register: _os_server
+
+- name: "{{ server_name }} - lock server"
+  delegate_to: localhost
+  shell: openstack server lock {{ server_name }}
+  when: lock_server | d(false) | bool
+
+- name: "{{ server_name }} - assign floating IP"
+  openstack.cloud.floating_ip:
+    server: "{{ server_name }}"
+    floating_ip_address: "{{ floating_ip_address }}"
+    network: "{{ network }}"
+  when: floating_ip_address is defined

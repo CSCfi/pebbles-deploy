@@ -64,7 +64,7 @@
     - name: set target directory depending on inventory style
       set_fact:
         cert_target_dir: >-
-          /opt/deployment/pebbles-environments/{{ env_uses_shared_group_vars | ternary("group_vars/" + cluster_name, cluster_name + "/group_vars/all") }}
+          /opt/deployment/pebbles-environments/{{ cluster_name }}/group_vars/all
 
     - name: write new certificate
       copy:

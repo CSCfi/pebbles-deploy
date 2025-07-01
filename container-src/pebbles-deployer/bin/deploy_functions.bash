@@ -307,7 +307,7 @@ pb-merge-kubeconfig-to-secret() {
     KUBECONFIG=/dev/shm/cluster-kubeconfig.flat:~/.kube/config_sed kubectl config view --flatten > /dev/shm/cluster-kubeconfig.yml
 
     # add back top level mapping
-    yq -y '{"clusterKubeconfig": .}' /dev/shm/cluster-kubeconfig.yml > /dev/shm/cluster-kubeconfig-final.yml
+    yq '{"clusterKubeconfig": .}' /dev/shm/cluster-kubeconfig.yml > /dev/shm/cluster-kubeconfig-final.yml
 
     # make kubeconfig into a multiline string
     sed -i 's/clusterKubeconfig:/& |/' /dev/shm/cluster-kubeconfig-final.yml

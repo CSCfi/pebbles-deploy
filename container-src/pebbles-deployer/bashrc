@@ -169,6 +169,17 @@ refresh-ramdisk() {
     (cd /opt/deployment/pebbles-deploy && ansible-playbook playbooks/initialize_ramdisk.yml)
 }
 
+# display README.md from the environment
+function readme() {
+    if [ -f $ENV_BASE_DIR/README.md ]; then
+        echo
+        bat -pp $ENV_BASE_DIR/README.md
+        echo
+    else
+        echo "No README.md"
+    fi
+}
+
 # Alias to convert yaml to json using python.
 # example: cat /dev/shm/$ENV_NAME/values.yaml | yaml2json | jq -r '.clusterKubeconfig' > ~/.kube/config-clusters
 alias yaml2json="python3 -c 'import sys, yaml, json; y=yaml.safe_load(sys.stdin.read()); print(json.dumps(y))'"
@@ -293,7 +304,7 @@ source bin/deploy_functions.bash
 
 if [[ -e ${ENV_BASE_DIR}/README.md ]]; then
     # Render README.md in the environmnet
-    glow ${ENV_BASE_DIR}/README.md
+    bat --paging=never --plain ${ENV_BASE_DIR}/README.md
 else
     # Print generic oneliners based on deployment type
     echo "Oneliners"

@@ -1,0 +1,14 @@
+- name: Remove base infra for K3s in cPouta
+  hosts: localhost
+  connection: local
+  tasks:
+# Master VM
+    - name: delete master VM
+      openstack.cloud.server:
+        name: "{{ cluster_name }}-master"
+        state: absent
+
+    - name: delete master VM volume
+      openstack.cloud.volume:
+        name: "{{ cluster_name }}-master"
+        state: absent

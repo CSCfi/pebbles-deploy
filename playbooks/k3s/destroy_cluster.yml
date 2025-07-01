@@ -1,0 +1,5 @@
+---
+- import_playbook: deprovision_storage_vms.yml
+- import_playbook: deprovision_master_vms.yml
+- import_playbook: deprovision_node_vms.yml
+- import_playbook: deprovision_base.yml

@@ -1,0 +1,90 @@
+---
+- name: Generate ssh config
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - name: create $HOME/.ssh/
+      file:
+        dest: "{{lookup('env', 'HOME')}}/.ssh/"
+        state: directory
+
+    - name: figure out ssh_config_file location
+      set_fact:
+        ssh_config_file: "{{lookup('env', 'HOME')}}/.ssh/config"
+
+    - name: add catch-all config entry private network through bastion
+      blockinfile:
+        create: yes
+        mode: '0600'
+        dest: "{{ ssh_config_file }}"
+        insertafter: EOF
+        block: |
+          Host {{ network_prefix }}.* !{{ network_prefix }}.10
+              ProxyCommand ssh -q {{ bastion_ansible_user }}@{{ bastion_public_ip }} nc %h %p
+        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: catch-all"
+
+    - name: add cluster common ssh config
+      blockinfile:
+        create: yes
+        mode: '0600'
+        dest: "{{ ssh_config_file }}"
+        block: |
+          Host {{ cluster_name }}-* {{  network_prefix }}.* {{ bastion_public_ip }} {{ master_public_ip }}
+              ForwardAgent no
+              GSSAPIAuthentication no
+              StrictHostKeyChecking no
+              UserKnownHostsFile /dev/null
+              IdentityFile /dev/shm/{{ cluster_name }}/id_rsa
+              ServerAliveInterval 120
+        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} common"
+
+    - name: add ssh config entry for bastion
+      blockinfile:
+        create: yes
+        mode: '0600'
+        dest: "{{ ssh_config_file }}"
+        block: |
+          Host {{ cluster_name }}-bastion {{ bastion_public_ip }} {{ network_prefix }}.10
+              User {{ bastion_ansible_user }}
+              HostName {{ bastion_public_ip }}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: bastion"
+
+    - name: list cluster VMs
+      openstack.cloud.server_info:
+        server: "{{ cluster_name }}-*"
+      register: _os_server_facts
+
+    - name: preprocess address data for VMs, extracting a list of addresses per node
+      set_fact:
+        _vm_addresses: >
+          {{
+            _vm_addresses | default([]) +
+            [
+              {
+                'name': item.name,
+                'addresses': item.addresses[cluster_name + '-network']
+                  | default([])
+                  | selectattr('addr', 'defined')
+                  | selectattr('addr', 'match', '^192.168.*')
+                  | map(attribute='addr')
+                  | join(' ')
+              }
+            ]
+          }}
+      with_items: "{{ _os_server_facts.servers }}"
+      when:
+        - item.name not in groups.bastion
+        - (item.addresses is defined) and (item.addresses | length > 0)
+
+    - name: add ssh config entry for masters and nodes (dynamic)
+      blockinfile:
+        create: yes
+        mode: '0600'
+        dest: "{{ ssh_config_file }}"
+        block: |
+          Host {{ item.name }} {{ item.addresses }}
+              User {{ ansible_user }}
+              HostName {{ item.addresses }}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}: {{ item.name }}"
+      with_items: "{{ _vm_addresses|default([]) }}"

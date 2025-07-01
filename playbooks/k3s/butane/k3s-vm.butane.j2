@@ -1,0 +1,261 @@
+# Butane file for creating ignition definition for FCOS based k3s node
+
+---
+variant: fcos
+version: 1.6.0
+kernel_arguments:
+  should_exist:
+    - "console=tty0"
+    - "console=ttyS0,115200n8"
+    # Enable for debugging installation problems
+    # - "rd.debug"
+    # - "systemd.log_level=debug"
+    # - "systemd.log_target=console"
+
+systemd:
+  units:
+    - name: oneshot-k3s-installer.service
+      enabled: true
+      contents: |
+        [Unit]
+        After=network-online.target
+        Wants=network-online.target
+        Before=systemd-user-sessions.service
+        OnFailure=emergency.target
+        OnFailureJobMode=replace-irreversibly
+        ConditionPathExists=!/var/lib/k3s-{{ vm_role }}-installed
+
+        [Service]
+        RemainAfterExit=yes
+        Type=oneshot
+        ExecStart=/usr/local/sbin/run-k3s-installer-{{ vm_role }}.sh
+        ExecStartPost=/usr/bin/touch /var/lib/k3s-{{ vm_role }}-installed
+        ExecStartPost=/usr/bin/systemctl --no-block reboot
+        # Enable for debugging installation problems
+        #StandardOutput=tty
+        #StandardError=tty
+        #TTYPath=/dev/ttyS0
+
+        [Install]
+        WantedBy=multi-user.target
+
+    # disable zincati
+    - name: zincati.service
+      mask: true
+
+{% if vm_role == 'server' %}
+    - name: vacuum-k3s-db.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Runs K3s sqlite database cleanup
+        ConditionPathExists=/var/lib/rancher/k3s/server/db/state.db
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/k3s_sqlite_vacuum.sh
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: vacuum-k3s-db.timer
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run vacuum-k3s-db every hour
+
+        [Timer]
+        OnCalendar=*-*-* *:15
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: backup-k3s-db.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Runs K3s database backup and object dump
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/k3s_backup.sh
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: backup-k3s-db.timer
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run backup-k3s-db at 2 AM
+
+        [Timer]
+        OnBootSec=1h
+        OnUnitActiveSec=1h
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: annotate-csi-plugins.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Annotates rook-ceph csi plugin pods so that they don't block autoscaler from scaling down
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/annotate-csi-plugins.sh
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: annotate-csi-plugins.timer
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run annotate-csi-plugins every hour
+
+        [Timer]
+        OnCalendar=*-*-* *:10
+
+        [Install]
+        WantedBy=multi-user.target
+
+
+{% endif %}
+
+storage:
+  disks:
+  - device: /dev/vdb
+    wipe_table: true
+
+# use vdb for /var, except on storage nodes leave it untouched
+{% if vm_role != 'storage' %}
+    partitions:
+    - number: 1
+      label: var
+      size_mib: 0
+      resize: true
+  filesystems:
+    - path: /var
+      device: /dev/disk/by-partlabel/var
+      format: xfs
+      with_mount_unit: true
+{% endif %}
+
+  files:
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline: {{ server_name }}
+
+    - path: /usr/local/sbin/run-k3s-installer-{{ vm_role }}.sh
+      mode: 0755
+      contents:
+        inline: |
+          #!/usr/bin/env sh
+          main() {
+            export INSTALL_K3S_VERSION="{{ k3s_version }}"
+            export INSTALL_K3S_CHANNEL="{{ k3s_channel|d('stable') }}"
+{% if vm_role == 'server' %}
+            curl -sfL {{ k3s_installer_url|d("https://get.k3s.io") }} | sh -s - \
+                server \
+                --selinux \
+                --tls-san {{ k3s_api_public_ip }} \
+                --write-kubeconfig-group=adm --write-kubeconfig-mode=640
+            rpm-ostree install -y python python3-policycoreutils sqlite3 dstat
+{% else %}
+            curl -sfL {{ k3s_installer_url|d("https://get.k3s.io") }} | sh -s - \
+                agent \
+                --server https://{{ k3s_api_internal_ip }}:6443 \
+                --token {{ k3s_join_token|d('missing') }} \
+                --selinux \
+                --node-label role={{ vm_role }} \
+                --node-taint role={{ vm_role }}:NoSchedule
+            rpm-ostree install -y dstat
+{% endif %}
+            return 0
+          }
+          echo "starting k3s installation"
+          main
+
+    - path: /etc/systemd/network/50-flannel.link
+      mode: 0644
+      contents:
+        inline: |
+          [Match]
+          OriginalName=flannel*
+          [Link]
+          MACAddressPolicy=none
+
+    - path: /etc/rancher/k3s/registries.yaml
+      mode: 0644
+      contents:
+        inline: |
+          mirrors:
+            "private-registry:5000":
+              endpoint:
+                - "http://{{ k3s_api_internal_ip }}:5000"
+
+    # only do manual updates
+    - path: /etc/zincati/config.d/90-disable-auto-updates.toml
+      mode: 0644
+      contents:
+        inline: |
+          [updates]
+          enabled = false
+
+    # disable user namespaces by default to mitigate related vulnerabilities
+    - path: /etc/sysctl.d/99-disable-user-namespaces.conf
+      mode: 0644
+      contents:
+        inline: |
+          user.max_user_namespaces = {{ fcos_max_user_namespaces|d(0) }}
+
+{% if fcos_max_user_namespaces|d(0) == 0 %}
+    # fix irqbalance when user namespaces are disabled. Adapted from https://access.redhat.com/solutions/7097092
+    - path: /etc/systemd/system/irqbalance.service.d/override.conf
+      mode: 0644
+      contents:
+        inline: |
+          [Service]
+          PrivateUsers=false
+{% endif %}
+
+{% if vm_role == 'server' %}
+    - path: /usr/local/sbin/k3s_sqlite_vacuum.sh
+      mode: 0755
+      contents:
+        inline: |
+          #!/usr/bin/env sh
+          echo "vacuum; pragma wal_checkpoint(truncate)" | sqlite3 /var/lib/rancher/k3s/server/db/state.db
+
+
+    - path: /usr/local/sbin/k3s_backup.sh
+      mode: 0755
+      contents:
+        inline: |
+          #!/usr/bin/env sh
+
+          bu_file_base=/var/lib/pb/backup/k3s_$(date -Is)
+          # run backup on k3s sqlite and compress the result
+          sqlite3 /var/lib/rancher/k3s/server/db/state.db ".backup ${bu_file_base}.db"
+          xz ${bu_file_base}.db
+
+          # dump objects from K3s
+          /usr/local/bin/kubectl get --all-namespaces -o yaml all,pv,pvc | xz > "${bu_file_base}.yaml.xz"
+
+    - path: /usr/local/sbin/annotate-csi-plugins.sh
+      mode: 0755
+      contents:
+        inline: |
+          #!/usr/bin/env sh
+
+          /usr/local/bin/kubectl -n rook-ceph annotate pods -l app=csi-cephfsplugin cluster-autoscaler.kubernetes.io/safe-to-evict=true
+          /usr/local/bin/kubectl -n rook-ceph annotate pods -l app=csi-rbdplugin cluster-autoscaler.kubernetes.io/safe-to-evict=true
+
+  directories:
+    - path: /var/lib/pb/backup
+      mode: 0755
+
+{% endif %}

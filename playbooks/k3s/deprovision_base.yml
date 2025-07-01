@@ -1,0 +1,74 @@
+---
+- name: Remove base infra for K3s in cPouta
+  hosts: localhost
+  connection: local
+  vars:
+    network_name: "{{ cluster_name }}-network"
+    bastion_vm_ip: "{{ network_prefix }}.10"
+  tasks:
+# Bastion VM
+    - name: delete bastion VM
+      openstack.cloud.server:
+        name: "{{ cluster_name }}-bastion"
+        state: absent
+
+# Server groups
+    - name: delete infra server group
+      openstack.cloud.server_group:
+        name: "{{ cluster_name }}-infra"
+        state: absent
+
+    - name: delete node server group
+      openstack.cloud.server_group:
+        name: "{{ cluster_name }}-node"
+        state: absent
+
+# Network deletion
+
+    - name: remove subnet-1 interface from router {{ router }}
+      command: >
+        openstack router remove subnet {{ router }} {{ network_name }}-subnet-1
+      failed_when: false
+
+    - name: remove network
+      register: network_facts
+      openstack.cloud.network:
+        name: "{{ network_name }}"
+        state: absent
+      retries: 30
+      delay: 5
+
+# Security group deletion
+
+    - name: bastion security group - delete
+      register: sg_bastion
+      openstack.cloud.security_group:
+        name: "{{ cluster_name }}-bastion"
+        state: absent
+
+    - name: common SG - delete
+      register: sg_common
+      openstack.cloud.security_group:
+        name: "{{ cluster_name }}-common"
+        state: absent
+
+    - name: infra SG - delete
+      register: sg_infra
+      openstack.cloud.security_group:
+        name: "{{ cluster_name }}-infra"
+        state: absent
+
+    - name: node SG - delete
+      openstack.cloud.security_group:
+        name: "{{ cluster_name }}-node"
+        state: absent
+
+    - name: ingress SG - delete
+      openstack.cloud.security_group:
+        name: "{{ cluster_name }}-ingress"
+        state: absent
+
+    - name: api SG - delete
+      openstack.cloud.security_group:
+        name: "{{ cluster_name }}-api"
+        state: absent

@@ -89,17 +89,17 @@ if [[ -e /dev/shm/${env_name}/openrc.sh ]]; then
     source /dev/shm/${env_name}/openrc.sh
 fi
 
-if [[ "$SKIP_SSH_CONFIG" != "1" && "$DEPLOYMENT_TYPE" != 'helm' ]]; then
+if [[ "$SKIP_SSH_CONFIG" != "1" && "$DEPLOYMENT_TYPE" == 'k3s' ]]; then
     # skip generation if the file is already there
     if [[ ! -e ~/.ssh/config ]]; then
-        print_header "Generating ssh config entries"
-        ansible-playbook generate_ssh_config.yml
+        print_header "Generating ssh config entries for K3s"
+        ansible-playbook k3s/generate_ssh_config.yml
     fi
 fi
 
 if [[ "$DEPLOYMENT_TYPE" == 'k3s' && ! -e ~/.kube/config ]]; then
     print_header "Fetching K3s credentials from master"
-    ansible-playbook fetch_k3s_kubeconfig.yml
+    ansible-playbook k3s/fetch_k3s_kubeconfig.yml
 fi
 
 # Set PS1_SUFFIX based on DM value

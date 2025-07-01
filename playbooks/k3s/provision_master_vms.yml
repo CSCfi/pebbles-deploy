@@ -1,0 +1,69 @@
+---
+- name: Provision masters
+  hosts: localhost
+  connection: local
+  vars:
+    network_name: "{{ cluster_name }}-network"
+    k3s_api_internal_ip: "{{ network_prefix }}.11"
+    k3s_api_public_ip: "{{ master_public_ip }}"
+    network: "{{ cluster_name }}-network"
+    key_name: "{{ cluster_name }}"
+  roles:
+    - name: k3s_vm
+      vars:
+        vm_role: server
+        server_name: "{{ cluster_name }}-master"
+        server_ip: "{{ network_prefix }}.11"
+        image: "{{ master_vm_image }}"
+        flavor: "{{ master_vm_flavor }}"
+        volume_size: 50
+        floating_ip_address: "{{ master_public_ip }}"
+        security_groups:
+          - "{{ cluster_name}}-common"
+          - "{{ cluster_name}}-infra"
+          - "{{ cluster_name}}-node"
+          - "{{ cluster_name}}-ingress"
+          - "{{ cluster_name}}-api"
+
+- import_playbook: generate_ssh_config.yml
+
+- name: Wait for masters
+  hosts: localhost
+  tasks:
+    - name: wait for K3s to start responding
+      wait_for:
+        host: "{{ master_public_ip }}"
+        port: 6443
+        delay: 2
+        timeout: 900
+
+    - name: wait for SSH to work
+      shell: >
+        timeout 10 ssh -o ConnectTimeout=5 {{ network_prefix }}.11
+        'echo success'
+      register: result
+      until: result.stdout.find('success') != -1
+      retries: 30
+      delay: 5
+      changed_when: false
+
+- name: Extra configuration for masters
+  hosts: masters
+  tasks:
+    - name: create directory .kube
+      file:
+        path: ~{{ ansible_user }}/.kube
+        state: directory
+        owner: "{{ ansible_user }}"
+
+    - name: copy kubeconfig credentials to user home directory
+      copy:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: ~{{ ansible_user }}/.kube/config
+        remote_src: yes
+        owner: "{{ ansible_user }}"
+
+    - name: replace https://localhost:6443 by master IP
+      command: /usr/local/bin/k3s kubectl config set-cluster default
+        --server=https://{{ master_public_ip }}:6443
+        --kubeconfig ~{{ ansible_user }}/.kube/config

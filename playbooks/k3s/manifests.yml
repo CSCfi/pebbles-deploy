@@ -1,0 +1,50 @@
+- hosts: masters
+  become: yes
+  gather_facts: no
+  tasks:
+    - when: (custom_manifests is defined) and (custom_manifests | length > 0)
+      block:
+        - set_fact:
+            manifest_dir: "/opt/deployment/pebbles-environments/data/k3s-manifests/"
+
+        - name: find directories under {{ manifest_dir }}
+          delegate_to: localhost
+          become: no
+          ansible.builtin.find:
+            paths: "{{ manifest_dir }}"
+            recurse: yes
+            file_type: directory
+          register: _manifest_dirs
+
+        # flatten result to a list of paths, strip the root path
+        - set_fact:
+            _manifest_dirs: |
+              {{
+                _manifest_dirs.files | map(attribute='path')  | map('replace', manifest_dir, '') | flatten
+              }}
+
+        - name: create target directories
+          file:
+            path: "/var/lib/rancher/k3s/server/manifests/{{ item }}"
+            state: directory
+          with_items: "{{ _manifest_dirs }}"
+
+        - name: custom manifest templates
+          template:
+            src: "/opt/deployment/pebbles-environments/data/k3s-manifests/{{ item }}"
+            dest: "/var/lib/rancher/k3s/server/manifests/{{ item | splitext | first }}"
+            owner: root
+            group: root
+            mode: 0644
+          when: item | splitext | last == '.j2'
+          with_items: "{{ custom_manifests|d([ ]) }}"
+
+        - name: custom manifest files
+          copy:
+            src: "/opt/deployment/pebbles-environments/data/k3s-manifests/{{ item }}"
+            dest: "/var/lib/rancher/k3s/server/manifests/{{ item }}"
+            owner: root
+            group: root
+            mode: 0644
+          when: item | splitext | last in ('.yaml', '.yml')
+          with_items: "{{ custom_manifests|d([ ]) }}"

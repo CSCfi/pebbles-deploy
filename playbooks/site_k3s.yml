@@ -1,6 +1,5 @@
 ---
-- import_playbook: provision_k3s_heat_volumes.yml
-- import_playbook: provision_k3s_heat.yml
-- import_playbook: deploy_k3s.yml
-- import_playbook: private_registry.yml
-- import_playbook: deploy_k3s_autoscaler.yml
+- import_playbook: k3s/create_cluster.yml
+- import_playbook: k3s/fetch_k3s_kubeconfig.yml
+- import_playbook: k3s/manifests.yml
+- import_playbook: k3s/autoscaler.yml

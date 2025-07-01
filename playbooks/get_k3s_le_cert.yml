@@ -3,7 +3,7 @@
 # The process
 #   - create a security group
 #     - open 80 to the world
-#     - open 22 to cidrs that are allowed to access jump host
+#     - open 22 to cidrs that are allowed to access bastion
 #   - create a VM
 #   - assign master's floating IP to the VM
 #   - obtain a certificate using certbot
@@ -37,12 +37,12 @@
       openstack.cloud.security_group:
         name: temporary_cert_vm
 
-    - name: create security group rule (allow traffic from jump)
+    - name: create security group rule (allow traffic from bastion)
       openstack.cloud.security_group_rule:
         security_group: temporary_cert_vm
         remote_group: "{{ cluster_name }}-bastion"
 
-    - name: create security group rules (ssh matching jump host access)
+    - name: create security group rules (ssh matching bastion access)
       openstack.cloud.security_group_rule:
         security_group: temporary_cert_vm
         protocol: tcp
@@ -50,7 +50,7 @@
         port_range_max: 22
         remote_ip_prefix: "{{ item }}"
       with_items:
-        - "{{ jump_host_allow_cidrs }}"
+        - "{{ bastion_allow_cidrs }}"
 
     - name: create security group rule (http from anywhere)
       openstack.cloud.security_group_rule:
@@ -64,10 +64,9 @@
       openstack.cloud.server:
         state: present
         name: temporary_cert_vm
-        image: "{{ jump_host_vm_image }}"
+        image: "{{ bastion_vm_image }}"
         key_name: "{{ cluster_name }}"
         timeout: 200
-        #flavor: "{{ jump_host_vm_flavor }}"
         flavor: "{{ temporary_cert_vm_flavor | d('standard.small') }}"
         nics:
           - net-name: "{{ cluster_name }}-network"
@@ -186,7 +185,7 @@
     - name: set target directory depending on inventory style
       set_fact:
         cert_target_dir: >-
-          /opt/deployment/pebbles-environments/{{ env_uses_shared_group_vars | ternary("group_vars/" + cluster_name, cluster_name + "/group_vars/all") }}
+          /opt/deployment/pebbles-environments/{{ cluster_name }}/group_vars/all
 
     - name: write new certificate
       copy:

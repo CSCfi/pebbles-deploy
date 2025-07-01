@@ -22,24 +22,8 @@ WORKDIR /go/bin
 
 RUN GOBIN=$(pwd)/ GO111MODULE=on go install sigs.k8s.io/kustomize/kustomize/v5@$KUSTOMIZE_COMMIT_ID
 
-# stage: build glow
-FROM docker.io/library/golang:1.22-alpine as glow-build
-ARG GLOW_COMMIT_ID=1eacfb4ff1240d16811e48c4454a6ff627ee6d30
-
-WORKDIR /go/src
-
-RUN wget -O - https://codeload.github.com/charmbracelet/glow/zip/$GLOW_COMMIT_ID | unzip /dev/stdin
-
-WORKDIR /go/src/glow-$GLOW_COMMIT_ID
-
-# separate module download to its own layer for caching
-RUN go mod download -x
-
-# build glow and move to a fixed location to be picked up later by final layer
-RUN go build -o glow && mv glow /go/bin/glow
-
 # stage: final image
-FROM quay.io/fedora/fedora:40
+FROM quay.io/fedora/fedora:42
 ARG PEBBLES_DEPLOY_SRC="https://github.com/CSCfi/pebbles-deploy.git"
 ARG PEBBLES_DEPLOY_REF="main"
 
@@ -68,6 +52,9 @@ RUN dnf install -y \
     s3cmd \
     httpd-tools \
     age \
+    k9s \
+    bat \
+    yq \
  && dnf clean all
 
 # Install python requirements
@@ -96,7 +83,7 @@ RUN cd /tmp/ \
  && ARCH='' \
  && if [[ $(uname -m) == 'aarch64' ]]; then ARCH='-arm64'; fi \
  && TARBALL=openshift-client-linux${ARCH}.tar.gz \
- && curl -LOs https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.14/${TARBALL} \
+ && curl -LOs https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.19/${TARBALL} \
  && tar xvfz ${TARBALL} \
  && install oc /usr/local/bin/oc \
  && install kubectl /usr/local/bin/kubectl \
@@ -110,9 +97,6 @@ COPY --from=kustomize-build /go/bin/kustomize /usr/local/bin/kustomize
 
 # Copy ksops binary into place
 COPY --from=ksops-build /go/bin/ksops /usr/local/bin/ksops
-
-# Copy glow binary into place
-COPY --from=glow-build /go/bin/glow /usr/local/bin/glow
 
 # Choose an arbitrary GID so that vault password can be made group readable when mounted as a volume
 # in a reasonably safe way
@@ -135,17 +119,19 @@ ENV ANSIBLE_CONFIG=/opt/deployment/pebbles-deploy/ansible_dc.cfg
 ENV EDITOR=vim
 
 # user content from this point on
+WORKDIR /opt/deployment
+
+# copy scripts and configs, change the owner to deployer
+COPY bin bin
+COPY bashrc .bashrc
+COPY gitconfig .gitconfig
+COPY vimrc .vimrc
+COPY .config .config
+RUN chown -R 29295:29295 bin .bashrc .gitconfig .vimrc .config
+
 USER 29295
 
-WORKDIR /opt/deployment
 ENV HOME=/opt/deployment
-
-# bake Ansible roles in the image to reduce runtime dependencies
-RUN mkdir -p /opt/deployment/galaxy-roles/{k3s,nfs} \
- && curl https://a3s.fi/notebooks-devel-public/ansible-role-k3s-f0d5728956.tar.gz \
-  | tar xz -C /opt/deployment/galaxy-roles/k3s \
- && curl -L https://github.com/geerlingguy/ansible-role-nfs/archive/11e9802153ffe19709e1fd3d1e49beb0d641d760.tar.gz \
-  | tar xz --strip-components=1 -C /opt/deployment/galaxy-roles/nfs
 
 RUN ansible-galaxy install openstack \
  && ansible-galaxy collection install prometheus.prometheus
@@ -158,12 +144,5 @@ RUN helm plugin install https://github.com/jkroepke/helm-secrets --version v4.5.
 
 # clone pebbles-deploy, from the public mirror by default
 RUN git clone ${PEBBLES_DEPLOY_SRC} && cd pebbles-deploy && git checkout ${PEBBLES_DEPLOY_REF}
-
-# copy scripts
-COPY bin bin
-# copy config
-COPY bashrc .bashrc
-COPY gitconfig .gitconfig
-COPY vimrc .vimrc
 
 CMD /bin/bash
