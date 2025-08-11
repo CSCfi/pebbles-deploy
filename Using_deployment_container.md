@@ -12,6 +12,7 @@ git clone https://gitlab.ci.csc.fi/pebbles/pebbles-frontend
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-admin-frontend
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-deploy
 git clone https://gitlab.ci.csc.fi/pebbles/pebbles-environments
+git clone https://gitlab.ci.csc.fi/pebbles/pebbles-status-display
 git clone https://gitlab.ci.csc.fi/pebbles/imagebuilder
 ```
 
