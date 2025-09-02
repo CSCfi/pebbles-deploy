@@ -241,7 +241,7 @@ oauth2ProxyImage: quay.io/oauth2-proxy/oauth2-proxy:v7.12.0
 #oauth2ProxyRedisImage: redis:7.0.1
 #oauth2ProxyRedisArgs: ['--bind', '127.0.0.1', '--logfile', '/opt/log/oauth2-proxy-redis.log']
 # valkey backend, bitnami image
-oauth2ProxyRedisImage: docker.io/bitnami/valkey:7.2.5
+oauth2ProxyRedisImage: docker.io/bitnamilegacy/valkey:7.2.5
 oauth2ProxyRedisArgs: [
   'valkey-server',
   '--bind', '127.0.0.1',
@@ -312,7 +312,7 @@ publicStructuredConfig: {}
 
 # Optional bouncer to redirect service domain name to service implementation
 bouncerEnabled: false
-bouncerImage: docker.io/bitnami/nginx:1.23
+bouncerImage: docker.io/bitnamilegacy/nginx:1.23
 bouncerReplicas: 1
 bouncerImagePullPolicy: IfNotPresent
 bouncerMemoryRequest: 100Mi
