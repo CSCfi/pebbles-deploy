@@ -52,3 +52,10 @@ def parse_jinja2(filename, values):
     with open(filename, 'r') as f:
         template = f.read()
         return format_with_jinja2(template, values)
+
+def read_first_line_or_none(path):
+    try:
+        with open(path, 'r') as f:
+            return f.readline().rstrip('\n')
+    except FileNotFoundError:
+        return None

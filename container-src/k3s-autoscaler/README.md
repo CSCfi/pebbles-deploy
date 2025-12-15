@@ -45,6 +45,8 @@ freeMemoryTarget: 9 GiB
 minimumFreeNodeMemory: 4 GiB
 maximumNumberOfNodes: 1
 oldNodeAgeLimitHours: 72
+imagePullerIgnorelist:
+- docker.io/foo
 
 butaneBinary: /usr/bin/butane
 butaneConfigTemplate: k3s-node.butane.j2
@@ -72,4 +74,3 @@ OS_REGION: "nova"
 ### KUBECONFIG_FILE
 
 Path to standard kubeconfig file that has admin access to the target cluster.
-

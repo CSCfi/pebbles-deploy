@@ -1,4 +1,4 @@
-FROM quay.io/fedora/fedora:40
+FROM quay.io/fedora/fedora:42
 
 LABEL maintainer="CSC Noppe Team"
 
@@ -19,5 +19,7 @@ COPY *.py /opt/app/
 COPY *.j2 /opt/app/
 
 WORKDIR /opt/app
+
+RUN date -Is > BUILD
 
 CMD /usr/bin/python3 main.py

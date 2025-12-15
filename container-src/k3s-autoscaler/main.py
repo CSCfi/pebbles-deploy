@@ -7,6 +7,7 @@ import kubernetes
 import yaml
 from openshift.dynamic import DynamicClient
 
+import utils
 from scaler import Scaler
 
 # global flag to shut down
@@ -27,7 +28,9 @@ def main():
         level=int(os.environ.get('AUTOSCALER_LOGLEVEL', logging.INFO)),
         format='%(levelname)s - %(message)s'
     )
-    logging.info('Starting autoscaler')
+    build = utils.read_first_line_or_none('BUILD')
+    build = build if build else 'unknown'
+    logging.info(f'Starting autoscaler build {build}')
 
     global terminate
     # wire our handler to handle SIGTERM for controlled shutdowns by systemd

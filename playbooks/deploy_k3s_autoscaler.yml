@@ -53,6 +53,7 @@
               minimumFreeNodeMemory: {{ minimum_free_node_memory | d('0') }}
               maximumNumberOfNodes: {{ maximum_number_of_nodes }}
               oldNodeAgeLimitHours: {{ old_node_age_limit_hours }}
+              imagePullerIgnorelist: {{ image_puller_ignorelist | d([]) | to_json }}
               
               butaneBinary: /usr/bin/butane
               butaneConfigTemplate: /run/pebbles/k3s-autoscaler/k3s-node.butane.j2

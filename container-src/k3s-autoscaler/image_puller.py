@@ -11,9 +11,9 @@ class ImagePuller:
     Class to warm cache on cluster nodes
     """
 
-    def __init__(self, dynamic_client, config, pull_history):
+    def __init__(self, dynamic_client, image_pull_ignorelist, pull_history):
         self.dynamic_client = dynamic_client
-        self.config = config
+        self.image_pull_ignorelist = image_pull_ignorelist if image_pull_ignorelist else []
         self.pull_history = pull_history if pull_history else set()
 
     def update(self, target_nodes, reference_pods):
@@ -23,7 +23,8 @@ class ImagePuller:
         images = ImagePuller._find_active_images(reference_pods)
 
         # find out a list of node-image pairs for missing images
-        missing_pairs = ImagePuller._find_missing_node_image_pairs(target_nodes, images, self.pull_history)
+        missing_pairs = ImagePuller._find_missing_node_image_pairs(
+            target_nodes, images, self.pull_history, self.image_pull_ignorelist)
         if missing_pairs:
             logging.debug('missing node-image pairs:')
             for pair in missing_pairs:
@@ -54,7 +55,7 @@ class ImagePuller:
         return res
 
     @staticmethod
-    def _find_missing_node_image_pairs(nodes, images, pull_history):
+    def _find_missing_node_image_pairs(nodes, images, pull_history, ignorelist):
         """Finds out a list of images missing from nodes.
            Skip images that have been recorded as pulled to avoid getting stuck in a pull loop in case
            the image name in the application does not match the image that the node reports.
@@ -64,6 +65,9 @@ class ImagePuller:
             node_name = node.metadata.name
             images_on_node = ImagePuller._extract_images_from_node(node)
             for image in images:
+                if any(image.startswith(name) for name in ignorelist):
+                    logging.debug('image %s matches ignorelist', image)
+                    continue
                 history_key = f'{node_name}:{image}'
                 if image in images_on_node or history_key in pull_history:
                     continue

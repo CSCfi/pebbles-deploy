@@ -23,6 +23,7 @@ def extract_pod_reserved_memory(pod):
 
 
 def is_pod_safe_to_evict(pod):
+    # TODO: add rook csi daemon pod detection
     if not pod.metadata.get('annotations'):
         return False
 
@@ -44,6 +45,7 @@ class Scaler:
         self.minimum_free_node_memory = 0
         self.old_node_age_limit_sec = 0
         self.maximum_number_of_nodes = 0
+        self.image_puller_ignorelist = []
 
         self.nodes = []
         self.pods = []
@@ -72,10 +74,12 @@ class Scaler:
         self.minimum_free_node_memory = utils.parse_memspec_to_bytes(self.config.get('minimumFreeNodeMemory', '0 GiB'))
         self.old_node_age_limit_sec = self.config.get('oldNodeAgeLimitHours', 7 * 24) * 60 * 60
         self.maximum_number_of_nodes = self.config.get('maximumNumberOfNodes')
+        self.image_puller_ignorelist = self.config.get('imagePullerIgnorelist')
 
         logging.info('Using config')
         for key in ('clusterName', 'flavor', 'image', 'volumeSize',
-        'freeMemoryTarget', 'minimumFreeNodeMemory', 'maximumNumberOfNodes', 'oldNodeAgeLimitHours'):
+            'freeMemoryTarget', 'minimumFreeNodeMemory', 'maximumNumberOfNodes', 'oldNodeAgeLimitHours',
+            'imagePullerIgnorelist'):
             logging.info('  %s: %s', key, config.get(key, 'Not set, using default'))
 
     def update(self):
@@ -172,7 +176,7 @@ class Scaler:
         node_names = [n.metadata.name for n in nodes]
         pods_on_nodes = [
             p for p in self.pods
-            if not p.spec.nodeName or p.spec.nodeName in node_names
+            if p.spec.nodeName in node_names
         ]
         return pods_on_nodes
 
