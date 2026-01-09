@@ -285,7 +285,7 @@ class Scaler:
         osd.delete_server(node_name)
 
     def _run_image_puller(self):
-        puller = ImagePuller(self.dc, self.config, self.pull_history)
+        puller = ImagePuller(self.dc, self.image_puller_ignorelist, self.pull_history)
         puller.update(self._get_active_user_nodes(), self._get_pods_on_nodes(self._get_user_nodes()))
         self.pull_history = puller.pull_history
 

@@ -49,11 +49,11 @@ class TestImagePullerUnit(unittest.TestCase):
     def test_find_missing_respects_ignorelist_prefix(self):
         node_a = make_node("node-a")
         nodes = [node_a]
-        images = ["repo/a:1", "other/a:1"]
+        images = ["repo/a:1", "other/a:1", "repo/b/foo:latest"]
         res = ImagePuller._find_missing_node_image_pairs(
-            nodes, images, pull_history=set(), ignorelist=["repo/"]
+            nodes, images, pull_history=set(), ignorelist=["repo/a"]
         )
-        self.assertEqual(res, [(node_a, "other/a:1")])
+        self.assertEqual(res, [(node_a, "other/a:1"), (node_a, "repo/b/foo:latest")])
 
     def test_find_missing_respects_pull_history(self):
         node_a = make_node("node-a")
