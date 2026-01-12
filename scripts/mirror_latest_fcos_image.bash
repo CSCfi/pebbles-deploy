@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 #
-# Script that downloads latest stable Fedora CoreOS image and uploads it to OpenStack
+# Script that downloads latest Fedora CoreOS image and uploads it to OpenStack
+#
+# Set the release stream with FCOS_STREAM variable, default is "stable". Use "next" for bleeding edge.
 #
 
 # bail out on any error
 set -e
 
-METADATA_URL=https://builds.coreos.fedoraproject.org/streams/stable.json
+FCOS_STREAM=${FCOS_STREAM:-stable}
+
+METADATA_URL=https://builds.coreos.fedoraproject.org/streams/${FCOS_STREAM}.json
 
 # get metadata
 metadata_file=$(mktemp)
