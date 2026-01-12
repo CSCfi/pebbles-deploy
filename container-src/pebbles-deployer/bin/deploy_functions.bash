@@ -58,7 +58,7 @@ build-image-from-project-src() {
     oc get buildconfig ${name} || oc create -f ~/pebbles-deploy/openshift/${name}-bc.yaml
     oc get imagestream ${name} || oc create -f ~/pebbles-deploy/openshift/${name}-is.yaml
 
-    # patch buildconfig to include application version (timestamp for a devel build)
+    # patch buildconfig to include application version (timestamp for a devel build) and potential extra pip packages
     oc patch buildconfig ${name} --patch-file /dev/stdin << EOF
 spec:
   strategy:
@@ -66,6 +66,8 @@ spec:
       buildArgs:
         - name: PB_APP_VERSION
           value: "$(date -Is)"
+        - name: EXTRA_PIP_PACKAGES
+          value: "$BUILD_ARG_EXTRA_PIP_PACKAGES"
 EOF
     # create a build for current source branch, only taking files under version control
     tmpfile=$(mktemp -u /tmp/src-${name}-XXXXXX.tar)

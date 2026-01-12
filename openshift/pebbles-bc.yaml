@@ -18,6 +18,8 @@ spec:
       buildArgs:
       - name: PB_APP_VERSION
         value: "unknown"
+      - name: EXTRA_PIP_PACKAGES
+        value: ""
   resources:
     limits:
       cpu: 1
