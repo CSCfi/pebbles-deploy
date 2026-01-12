@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# A simple script to build poc-deployer locally
-# The default container image tag is `cscfi/pebbles-deployer:latest`
+# A simple script to build pebbles-deployer locally
+# The default container image name is `cscfi/pebbles-deployer:latest`
 # How to run: ./build.bash <container_image_name_and_tag>
 
 set -ex
