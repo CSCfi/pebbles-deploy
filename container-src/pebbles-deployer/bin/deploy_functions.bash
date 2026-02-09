@@ -282,8 +282,13 @@ pb-merge-kubeconfig-to-secret() {
     # change 'default' to cluster name in kubeconfig
     sed "s/: default$/: $ENV_NAME/g" ~/.kube/config > ~/.kube/config_sed
 
-    # remove top level mapping of secret kubeconfig
+    # decrypt existing secret and remove top level mapping
     sops --age $age_public_key -d $secret_kubeconfig_path | yq -r '.clusterKubeconfig' > /dev/shm/cluster-kubeconfig.flat
+
+    # remove old entries from existing kubeconfig file to ensure new data is present in the final file
+    KUBECONFIG=/dev/shm/cluster-kubeconfig.flat kubectl config delete-context $ENV_NAME
+    KUBECONFIG=/dev/shm/cluster-kubeconfig.flat kubectl config delete-user $ENV_NAME
+    KUBECONFIG=/dev/shm/cluster-kubeconfig.flat kubectl config delete-cluster $ENV_NAME
 
     # merge cluster kubeconfig to environment kubeconfig
     KUBECONFIG=/dev/shm/cluster-kubeconfig.flat:~/.kube/config_sed kubectl config view --flatten > /dev/shm/cluster-kubeconfig.yml
