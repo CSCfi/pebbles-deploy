@@ -334,13 +334,6 @@ apiPreStopSleepSeconds: 10
 
 # ----------------------------------------------------------------------------
 #
-# Imagebuilder client config for building custom images
-#
-imagebuilderBaseUrl: ''
-imagebuilderApiToken: ''
-
-# ----------------------------------------------------------------------------
-#
 # General settings
 #
 

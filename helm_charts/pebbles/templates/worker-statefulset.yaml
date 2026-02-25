@@ -139,9 +139,6 @@ spec:
         - name: cluster-kubeconfig
           secret:
             secretName: cluster-kubeconfig
-        - name: worker-secret
-          secret:
-            secretName: worker-secret
         - name: log
           emptyDir: {}
         {{- if .Values.deployCentralLogging }}

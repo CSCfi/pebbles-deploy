@@ -35,7 +35,7 @@ short_cwd() {
 branch-info() {
     printf  "%23s %10s %12s %8s %s\n" "repository" "revision" "commit date" "modified" "branch"
     printf  "%23s %10s %12s %8s %s\n" "----------" "--------" "-----------" "--------" "------"
-    for repo in pebbles pebbles-{,deploy,environments,frontend,admin-frontend,status-display} imagebuilder; do
+    for repo in pebbles pebbles-{,deploy,environments,frontend,admin-frontend,status-display}; do
         # skip repos that have not been loopback mounted
         if [ ! -e /opt/deployment/$repo/.git ]; then
             continue

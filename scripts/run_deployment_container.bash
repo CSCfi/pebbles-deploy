@@ -92,7 +92,6 @@ if [ "$development_mode" == "1" ]; then
         -v $SCRIPT_DIR/../../pebbles-frontend:/opt/deployment/pebbles-frontend:rw \
         -v $SCRIPT_DIR/../../pebbles-admin-frontend:/opt/deployment/pebbles-admin-frontend:rw \
         -v $SCRIPT_DIR/../../pebbles-status-display:/opt/deployment/pebbles-status-display:rw \
-        -v $SCRIPT_DIR/../../imagebuilder:/opt/deployment/imagebuilder:rw \
         --name ${env_name}-deployer \
         $docker_opts \
         -e DEVELMODE=1\
