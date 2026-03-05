@@ -286,9 +286,22 @@ pb-merge-kubeconfig-to-secret() {
     sops --age $age_public_key -d $secret_kubeconfig_path | yq -r '.clusterKubeconfig' > /dev/shm/cluster-kubeconfig.flat
 
     # remove old entries from existing kubeconfig file to ensure new data is present in the final file
-    KUBECONFIG=/dev/shm/cluster-kubeconfig.flat kubectl config delete-context $ENV_NAME
-    KUBECONFIG=/dev/shm/cluster-kubeconfig.flat kubectl config delete-user $ENV_NAME
-    KUBECONFIG=/dev/shm/cluster-kubeconfig.flat kubectl config delete-cluster $ENV_NAME
+    KCONF=/dev/shm/cluster-kubeconfig.flat
+
+    # context
+    if KUBECONFIG="$KCONF" kubectl config get-contexts -o name | grep -qx "$ENV_NAME"; then
+       KUBECONFIG="$KCONF" kubectl config delete-context "$ENV_NAME"
+    fi
+
+    # user
+    if KUBECONFIG="$KCONF" kubectl config view -o jsonpath='{.users[*].name}' | grep -qw "$ENV_NAME"; then
+      KUBECONFIG="$KCONF" kubectl config delete-user "$ENV_NAME"
+    fi
+
+    # cluster
+    if KUBECONFIG="$KCONF" kubectl config view -o jsonpath='{.clusters[*].name}' | grep -qw "$ENV_NAME"; then
+       KUBECONFIG="$KCONF" kubectl config delete-cluster "$ENV_NAME"
+    fi
 
     # merge cluster kubeconfig to environment kubeconfig
     KUBECONFIG=/dev/shm/cluster-kubeconfig.flat:~/.kube/config_sed kubectl config view --flatten > /dev/shm/cluster-kubeconfig.yml
