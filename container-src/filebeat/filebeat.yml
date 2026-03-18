@@ -4,11 +4,11 @@ filebeat.config:
     reload.enabled: false
 
 filebeat.inputs:
-  - type: log
+  - type: filestream
+    id: app-logs
     enabled: true
     paths:
       - /opt/log/*.log
 
-output:
-  logstash:
-    hosts: ["logstash:5044"]
+output.logstash:
+  hosts: ["logstash:5044"]
