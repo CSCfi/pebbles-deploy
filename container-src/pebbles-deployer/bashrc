@@ -32,23 +32,82 @@ short_cwd() {
     echo $PWD | sed -e "s|^$HOME|~|g"
 }
 
-branch-info() {
-    printf  "%23s %10s %12s %8s %s\n" "repository" "revision" "commit date" "modified" "branch"
-    printf  "%23s %10s %12s %8s %s\n" "----------" "--------" "-----------" "--------" "------"
-    for repo in pebbles pebbles-{,deploy,environments,frontend,admin-frontend,status-display}; do
-        # skip repos that have not been loopback mounted
-        if [ ! -e /opt/deployment/$repo/.git ]; then
-            continue
-        fi
-        branch=$(cd /opt/deployment/$repo && parse_git_branch)
-        revision=$(cd /opt/deployment/$repo && git show --no-patch --format=%h)
-        rev_date=$(cd /opt/deployment/$repo && git show --no-patch --format=%cs)
-        num_modified=$(cd /opt/deployment/$repo && git status --porcelain | wc -l)
-        if [ $num_modified -eq 0 ]; then
-            num_modified=' '
+read-version-info-value() {
+    local file="$1"
+    local key="$2"
+    local line
+
+    while IFS= read -r line; do
+        case "$line" in
+            "${key}="*)
+                printf '%s\n' "${line#*=}"
+                return 0
+                ;;
+        esac
+    done < "$file"
+
+    return 1
+}
+
+
+read-version-info() {
+    local repo_dir="$1"
+    local version_info_file="$repo_dir/.version_info"
+
+    # defaults
+    branch='unknown'
+    revision='unknown'
+    rev_date='unknown'
+    num_modified=' '
+
+    if [[ -f "$version_info_file" ]]; then
+        local git_commit git_branch git_commit_date git_num_dirty
+
+        git_commit="$(read-version-info-value "$version_info_file" GIT_COMMIT)"
+        git_branch="$(read-version-info-value "$version_info_file" GIT_BRANCH)"
+        git_commit_date="$(read-version-info-value "$version_info_file" GIT_COMMIT_DATE)"
+        git_num_dirty="$(read-version-info-value "$version_info_file" GIT_NUM_DIRTY)"
+
+        if [[ -n "$git_commit" ]]; then
+            revision="${git_commit:0:7}"
         fi
 
-        printf "%23s %10s %12s %8s %s \n" $repo $revision $rev_date " $num_modified" $branch
+        if [[ -n "$git_branch" ]]; then
+            branch="$git_branch"
+        fi
+
+        if [[ -n "$git_commit_date" ]]; then
+            rev_date="${git_commit_date:0:10}"
+        fi
+
+        if [[ -n "$git_num_dirty" ]]; then
+            num_modified="$git_num_dirty"
+        fi
+    fi
+}
+
+branch-info() {
+    printf "%23s %10s %12s %8s %s\n" "repository" "revision" "commit date" "modified" "branch"
+    printf "%23s %10s %12s %8s %s\n" "----------" "--------" "-----------" "--------" "------"
+
+    for repo in pebbles pebbles-{,deploy,environments,frontend,admin-frontend,status-display}; do
+        repo_dir="/opt/deployment/$repo"
+
+        if [[ -e "$repo_dir/.git" ]]; then
+            branch=$(cd "$repo_dir" && parse_git_branch)
+            revision=$(cd "$repo_dir" && git show --no-patch --format=%h)
+            rev_date=$(cd "$repo_dir" && git show --no-patch --format=%cs)
+            num_modified=$(cd "$repo_dir" && git status --porcelain | wc -l)
+            if [[ "$num_modified" -eq 0 ]]; then
+                num_modified=' '
+            fi
+        elif [[ -e "$repo_dir/.version_info" ]]; then
+            read-version-info "$repo_dir"
+        else
+            continue
+        fi
+
+        printf "%23s %10s %12s %8s %s\n" "$repo" "$revision" "$rev_date" "$num_modified" "$branch"
     done
 }
 

@@ -142,7 +142,24 @@ RUN helm repo add gitlab https://charts.gitlab.io
 # Install Helm-Secrets plugin
 RUN helm plugin install https://github.com/jkroepke/helm-secrets --version v4.5.1
 
-# clone pebbles-deploy, from the public mirror by default
-RUN git clone ${PEBBLES_DEPLOY_SRC} && cd pebbles-deploy && git checkout ${PEBBLES_DEPLOY_REF}
+# Copy the current build context so we can optionally consume a prebuilt
+# pebbles-deploy source tarball if it has been staged there by build.bash.
+COPY --chown=29295:29295 . /tmp/pebbles-deployer-build-context
+
+# Use local pebbles-deploy snapshot if provided, otherwise fall back to cloning.
+RUN if [[ -f /tmp/pebbles-deployer-build-context/pebbles-deploy-src.tar.gz ]]; then \
+      mkdir -p /opt/deployment/pebbles-deploy && \
+      tar -xzf /tmp/pebbles-deployer-build-context/pebbles-deploy-src.tar.gz \
+          -C /opt/deployment/pebbles-deploy && \
+      if [[ -f /tmp/pebbles-deployer-build-context/.version_info ]]; then \
+          cp /tmp/pebbles-deployer-build-context/.version_info \
+             /opt/deployment/pebbles-deploy/.version_info; \
+      fi; \
+    else \
+      git clone "$PEBBLES_DEPLOY_SRC" && \
+      cd pebbles-deploy && \
+      git checkout "$PEBBLES_DEPLOY_REF"; \
+    fi && \
+    rm -rf /tmp/pebbles-deployer-build-context
 
 CMD /bin/bash
