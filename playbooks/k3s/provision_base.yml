@@ -207,6 +207,12 @@
             network: "{{ cluster_name }}-network"
           when: bastion_public_ip is defined
 
+        # lock bastion to prevent accidental operations for production resources
+        - name: lock bastion
+          shell: openstack server lock  {{ cluster_name }}-bastion
+          when: lock_servers | d(false) | bool
+
+
 - import_playbook: generate_ssh_config.yml
 
 - hosts: localhost

@@ -27,6 +27,7 @@
           - "{{ cluster_name}}-infra"
           - "{{ cluster_name}}-storage"
           - "{{ cluster_name}}-node"
+        lock_server: "{{ lock_servers | d(false) }}"
       loop: "{{ groups.storage }}"
       loop_control:
         extended: true

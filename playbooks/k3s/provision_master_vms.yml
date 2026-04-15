@@ -24,6 +24,7 @@
           - "{{ cluster_name}}-node"
           - "{{ cluster_name}}-ingress"
           - "{{ cluster_name}}-api"
+        lock_server: "{{ lock_servers | d(false) }}"
 
 - import_playbook: generate_ssh_config.yml
 
