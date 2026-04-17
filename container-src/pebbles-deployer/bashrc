@@ -80,7 +80,7 @@ read-version-info() {
             rev_date="${git_commit_date:0:10}"
         fi
 
-        if [[ -n "$git_num_dirty" ]]; then
+        if [[ -n "$git_num_dirty" && "$git_num_dirty" -ne 0 ]]; then
             num_modified="$git_num_dirty"
         fi
     fi
