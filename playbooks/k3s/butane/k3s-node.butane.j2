@@ -5,11 +5,12 @@
 ---
 variant: fcos
 version: 1.4.0
-{% if fcos_cgroups_v1 | d(false) | bool %}
+{% if fcos_kernel_arguments | d([]) %}
 kernel_arguments:
   should_exist:
-    # Rocker/RStudio earlier than 4.3 does not like cgroups v2
-    - systemd.unified_cgroup_hierarchy=0
+{% for karg in fcos_kernel_arguments %}
+    - {{ karg }}
+{% endfor %}
 {% endif %}
 systemd:
   units:
