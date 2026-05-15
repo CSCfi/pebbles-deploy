@@ -24,6 +24,7 @@ variables:
       - logstash
       - pebbles-backup
       - pebbles-deployer
+      - pebbles-session-proxy
 
 stages:
   - build
@@ -99,6 +100,11 @@ build-filebeat-image:
 build-k3s-autoscaler-image:
   variables:
     COMPONENT: k3s-autoscaler
+  <<: *job_definition
+
+build-pebbles-session-proxy-image:
+  variables:
+    COMPONENT: pebbles-session-proxy
   <<: *job_definition
 
 # call pipeline project
