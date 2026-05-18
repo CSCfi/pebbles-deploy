@@ -148,7 +148,7 @@ Next we create a configuration file for local deployment for Helm.
 Create local_values/local_k8s.yaml file with the following contents:
 
 ```yaml
-dbImage: quay.io/fedora/postgresql-15:latest
+dbImage: quay.io/fedora/postgresql-16:latest
 # enable localhost prefix for podman/kind
 #imagePrefix: localhost/
 

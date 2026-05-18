@@ -28,8 +28,8 @@ spec:
       {{- end }}
       initContainers:
         - name: wait-for-db
-          image: {{ .Values.dbImage }}
-          imagePullPolicy: {{ .Values.dbImagePullPolicy }}
+          image: {{ .Values.imagePrefix }}{{ .Values.backup.jobImage }}
+          imagePullPolicy: {{ .Values.apiImagePullPolicy }}
           command:
             - bash
             - -c

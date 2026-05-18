@@ -1,4 +1,4 @@
-FROM docker.io/library/almalinux:8
+FROM docker.io/library/almalinux:9
 
 LABEL maintainer="CSC Noppe Team"
 RUN dnf makecache
@@ -18,16 +18,16 @@ RUN dnf install -y \
         s3cmd \
  && dnf clean all
 
-# Add PostgreSQL 15, the client version needs to be equal or higher than server
+# Add PostgreSQL 17, the client version needs to be equal or higher than server
 RUN ARCH=$(uname -m) \
  && dnf install -y \
-    https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-${ARCH}/pgdg-redhat-repo-latest.noarch.rpm \
+    https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-${ARCH}/pgdg-redhat-repo-latest.noarch.rpm \
  && dnf -qy module disable postgresql \
- && dnf install -y postgresql15 \
+ && dnf install -y postgresql17 \
  && dnf clean all
 
 # Add postgresql bin to path for pg_isready
-ENV PATH=$PATH:/usr/pgsql-15/bin/
+ENV PATH=$PATH:/usr/pgsql-17/bin/
 
 # add a user
 RUN groupadd -g 29295 deployer
