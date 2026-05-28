@@ -42,7 +42,7 @@ gnureadline==8.2.13
     # via cmd2
 google-auth==2.43.0
     # via kubernetes
-idna==3.11
+idna==3.15
     # via requests
 iso8601==2.1.0
     # via
