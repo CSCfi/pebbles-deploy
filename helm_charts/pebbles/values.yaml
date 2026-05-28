@@ -307,6 +307,9 @@ oauth2ProxyRedirectUrl: http://localhost/oauth2/callback
 # Public structured config for frontend
 publicStructuredConfig: {}
 
+# List of allowed base images for custom images
+customImageBaseImages: []
+
 # The url that is used in generated absolute hyperlinks
 #baseUrl: http://localhost
 

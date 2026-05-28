@@ -67,10 +67,14 @@ data:
     {{- if .Values.serviceAnnouncement }}
     SERVICE_ANNOUNCEMENT: {{ .Values.serviceAnnouncement }}
     {{- end }}
+
   faq-content.yaml: |
 {{- if .Values.faq }}
 {{ .Values.faq | indent 4}}
 {{- end }}
+
+  custom-image-base-images.yaml: |
+{{ .Values.customImageBaseImages | default list | toYaml | indent 4 }}
 
   auth-config.yaml: |
 {{- if .Values.authConfig }}
