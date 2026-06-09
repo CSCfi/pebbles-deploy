@@ -122,6 +122,15 @@
             port_range_min: "8472"
             port_range_max: "8472"
 
+        - name: infra SG - open NFSv4 from nodes
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-infra"
+            remote_group: "{{ cluster_name }}-node"
+            protocol: tcp
+            port_range_min: "2049"
+            port_range_max: "2049"
+          when: master_nfs_server_enabled | d(false) | bool
+
         - name: ingress SG - create
           openstack.cloud.security_group:
             name: "{{ cluster_name }}-ingress"

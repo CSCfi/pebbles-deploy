@@ -96,6 +96,7 @@ systemd:
         [Install]
         WantedBy=multi-user.target
 
+{% if (groups.storage | default([])) | length > 0 %}
     - name: annotate-csi-plugins.service
       enabled: true
       contents: |
@@ -120,7 +121,27 @@ systemd:
 
         [Install]
         WantedBy=multi-user.target
+{% endif %}
 
+{% if nfs_server_enabled | d(false) | bool %}
+    # Ignition can't enable nfs-server (from layered nfs-utils) at first boot, so enable it once after the install reboot.
+    - name: pb-enable-nfs-server.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Enable nfs-server once nfs-utils has been layered
+        ConditionPathExists=/usr/lib/systemd/system/nfs-server.service
+        ConditionPathExists=!/var/lib/pb-nfs-enabled
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/bin/systemctl enable --now nfs-server.service
+        ExecStartPost=/usr/bin/touch /var/lib/pb-nfs-enabled
+
+        [Install]
+        WantedBy=multi-user.target
+{% endif %}
 
 {% endif %}
 
@@ -129,18 +150,32 @@ storage:
   - device: /dev/vdb
     wipe_table: true
 
-# use vdb for /var, except on storage nodes leave it untouched
+# use vdb for /var (and /var/export when NFS server is enabled); storage nodes leave it untouched
 {% if vm_role != 'storage' %}
     partitions:
     - number: 1
       label: var
+{% if nfs_server_enabled | d(false) | bool %}
+      size_mib: 51200
+    - number: 2
+      label: export
       size_mib: 0
       resize: true
+{% else %}
+      size_mib: 0
+      resize: true
+{% endif %}
   filesystems:
     - path: /var
       device: /dev/disk/by-partlabel/var
       format: xfs
       with_mount_unit: true
+{% if nfs_server_enabled | d(false) | bool %}
+    - path: /var/export
+      device: /dev/disk/by-partlabel/export
+      format: xfs
+      with_mount_unit: true
+{% endif %}
 {% endif %}
 
   files:
@@ -164,6 +199,10 @@ storage:
                 --tls-san {{ k3s_api_public_ip }} \
                 --write-kubeconfig-group=adm --write-kubeconfig-mode=640
             rpm-ostree install -y python python3-policycoreutils sqlite3 dstat
+{% if nfs_server_enabled | d(false) | bool %}
+            # NFS server userspace tools (kernel nfsd serves; nfs-utils is not in the FCOS base)
+            rpm-ostree install -y nfs-utils
+{% endif %}
 {% else %}
             curl -sfL {{ k3s_installer_url|d("https://get.k3s.io") }} | sh -s - \
                 agent \
@@ -222,6 +261,15 @@ storage:
           PrivateUsers=false
 {% endif %}
 
+{% if vdb_read_ahead_kb is defined %}
+    # Set read-ahead on /dev/vdb via udev (applied at device-add, in KiB).
+    - path: /etc/udev/rules.d/60-vdb-readahead.rules
+      mode: 0644
+      contents:
+        inline: |
+          ACTION=="add|change", KERNEL=="vdb", ATTR{queue/read_ahead_kb}="{{ vdb_read_ahead_kb }}"
+{% endif %}
+
 {% if vm_role == 'server' %}
     - path: /usr/local/sbin/k3s_sqlite_vacuum.sh
       mode: 0755
@@ -245,6 +293,7 @@ storage:
           # dump objects from K3s
           /usr/local/bin/kubectl get --all-namespaces -o yaml all,pv,pvc | xz > "${bu_file_base}.yaml.xz"
 
+{% if (groups.storage | default([])) | length > 0 %}
     - path: /usr/local/sbin/annotate-csi-plugins.sh
       mode: 0755
       contents:
@@ -253,6 +302,18 @@ storage:
 
           /usr/local/bin/kubectl -n rook-ceph annotate pods -l app=csi-cephfsplugin cluster-autoscaler.kubernetes.io/safe-to-evict=true
           /usr/local/bin/kubectl -n rook-ceph annotate pods -l app=csi-rbdplugin cluster-autoscaler.kubernetes.io/safe-to-evict=true
+{% endif %}
+
+{% if nfs_server_enabled | d(false) | bool %}
+    # NFSv4 export (fsid=0 = pseudo-root); access is restricted to the node group by the infra SG (tcp/2049).
+    - path: /etc/exports
+      # /etc/exports ships empty in the base (setup package), so Ignition must overwrite it.
+      overwrite: true
+      mode: 0644
+      contents:
+        inline: |
+          /var/export *(rw,sync,no_subtree_check,no_root_squash,fsid=0)
+{% endif %}
 
   directories:
     - path: /var/lib/pb/backup

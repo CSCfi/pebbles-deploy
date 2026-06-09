@@ -16,8 +16,10 @@
         server_ip: "{{ network_prefix }}.11"
         image: "{{ master_vm_image }}"
         flavor: "{{ master_vm_flavor }}"
-        volume_size: 50
+        # master_nfs_server_enabled=true requires master_vm_volume_size > 50 (var takes 50 GiB).
+        volume_size: "{{ master_vm_volume_size | d(50) }}"
         floating_ip_address: "{{ master_public_ip }}"
+        nfs_server_enabled: "{{ master_nfs_server_enabled | d(false) }}"
         security_groups:
           - "{{ cluster_name}}-common"
           - "{{ cluster_name}}-infra"

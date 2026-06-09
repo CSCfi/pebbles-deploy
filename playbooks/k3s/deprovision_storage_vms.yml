@@ -7,10 +7,10 @@
       openstack.cloud.server:
         name: "{{ item }}"
         state: absent
-      with_items: "{{ groups.storage }}"
+      with_items: "{{ groups.storage | default([]) }}"
 
     - name: delete storage VM volumes
       openstack.cloud.volume:
         name: "{{ item }}"
         state: absent
-      with_items: "{{ groups.storage }}"
+      with_items: "{{ groups.storage | default([]) }}"
