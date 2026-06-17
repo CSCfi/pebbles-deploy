@@ -20,6 +20,7 @@
         volume_size: "{{ master_vm_volume_size | d(50) }}"
         floating_ip_address: "{{ master_public_ip }}"
         nfs_server_enabled: "{{ master_nfs_server_enabled | d(false) }}"
+        k3s_server_on_ramdisk: "{{ master_k3s_server_on_ramdisk | d(false) }}"
         security_groups:
           - "{{ cluster_name}}-common"
           - "{{ cluster_name}}-infra"

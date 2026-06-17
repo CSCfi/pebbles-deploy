@@ -70,6 +70,9 @@ systemd:
         [Install]
         WantedBy=multi-user.target
 
+{% if not (k3s_server_on_ramdisk | d(false) | bool) %}
+    # Skipped on ramdisk: the backup dumps the (secret-bearing) sqlite db to persistent storage,
+    # which would defeat the point of the ramdisk, and a throwaway cluster can't be restored anyway.
     - name: backup-k3s-db.service
       enabled: true
       contents: |
@@ -95,6 +98,7 @@ systemd:
 
         [Install]
         WantedBy=multi-user.target
+{% endif %}
 
 {% if (groups.storage | default([])) | length > 0 %}
     - name: annotate-csi-plugins.service
@@ -138,6 +142,46 @@ systemd:
         RemainAfterExit=yes
         ExecStart=/usr/bin/systemctl enable --now nfs-server.service
         ExecStartPost=/usr/bin/touch /var/lib/pb-nfs-enabled
+
+        [Install]
+        WantedBy=multi-user.target
+{% endif %}
+
+{% if k3s_server_on_ramdisk | d(false) | bool %}
+    # Keep the K3s server dir (sqlite db, certs, tokens, manifests) in RAM only, off persistent storage.
+    # NOTE: rebooting the master wipes this tmpfs, so K3s state is lost and the cluster must be reinstalled
+    - name: var-lib-rancher-k3s-server.mount
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Ramdisk (tmpfs) for the K3s server directory
+        # Mount before k3s so the tmpfs is in place before the server populates the directory.
+        Before=k3s.service
+
+        [Mount]
+        What=tmpfs
+        Where=/var/lib/rancher/k3s/server
+        Type=tmpfs
+        Options=size=512M,uid=0,gid=0,mode=0700,noswap
+
+        [Install]
+        WantedBy=local-fs.target
+
+    # The mount above makes systemd pre-create /var/lib/rancher/k3s before k3s, so storage/ lacks the
+    # container_file_t the local-path helper needs
+    - name: pb-relabel-k3s-storage.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Label k3s local-path storage dir container_file_t for SELinux
+        ConditionPathExists=!/var/lib/pb-k3s-storage-relabeled
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/bin/mkdir -p /var/lib/rancher/k3s/storage
+        ExecStart=/usr/bin/chcon -R -t container_file_t /var/lib/rancher/k3s/storage
+        ExecStartPost=/usr/bin/touch /var/lib/pb-k3s-storage-relabeled
 
         [Install]
         WantedBy=multi-user.target
