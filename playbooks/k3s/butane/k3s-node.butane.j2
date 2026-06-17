@@ -113,6 +113,7 @@ storage:
           [Link]
           MACAddressPolicy=none
 
+{% if private_registry_enabled | d(false) | bool %}
     - path: /etc/rancher/k3s/registries.yaml
       mode: 0644
       contents:
@@ -121,6 +122,7 @@ storage:
             "private-registry:5000":
               endpoint:
                 - "http://{{ master_vm_ip }}:5000"
+{% endif %}
 
     # only do manual updates
     - path: /etc/zincati/config.d/90-disable-auto-updates.toml

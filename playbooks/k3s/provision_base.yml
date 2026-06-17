@@ -140,6 +140,15 @@
             port_range_max: "2049"
           when: master_nfs_server_enabled | d(false) | bool
 
+        - name: infra SG - open private registry from common
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-infra"
+            remote_group: "{{ cluster_name }}-common"
+            protocol: tcp
+            port_range_min: "5000"
+            port_range_max: "5000"
+          when: private_registry_enabled | d(false) | bool
+
         - name: ingress SG - create
           openstack.cloud.security_group:
             name: "{{ cluster_name }}-ingress"
