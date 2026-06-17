@@ -143,6 +143,28 @@ systemd:
         WantedBy=multi-user.target
 {% endif %}
 
+{% if vaulted_master_bootstrap_data is defined %}
+    # Restore stable cluster credentials (CA, service-account key, token)
+    - name: pb-restore-k3s-bootstrap.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Restore k3s master bootstrap credentials from the bastion
+        After=network-online.target
+        Wants=network-online.target
+        Before=k3s.service
+        RequiresMountsFor=/var/lib/rancher/k3s/server
+        ConditionPathExists=!/var/lib/rancher/k3s/server/cred
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/local/sbin/restore-k3s-bootstrap.sh
+
+        [Install]
+        WantedBy=multi-user.target
+{% endif %}
+
 {% endif %}
 
 storage:
@@ -271,6 +293,30 @@ storage:
 {% endif %}
 
 {% if vm_role == 'server' %}
+{% if vaulted_master_bootstrap_data is defined %}
+    - path: /usr/local/sbin/restore-k3s-bootstrap.sh
+      mode: 0755
+      contents:
+        inline: |
+          #!/usr/bin/env sh
+          set -e
+          url="http://{{ network_prefix }}.10:{{ master_bootstrap_serve_port | d(8043) }}/k3s-master-bootstrap.tar.gz.b64"
+          mkdir -p /var/lib/rancher/k3s/server
+          n=0
+          until curl -sfm 30 "$url" -o /run/k3s-bootstrap.b64; do
+            n=$((n + 1))
+            if [ "$n" -ge 10 ]; then
+              echo "FATAL: could not fetch k3s bootstrap data from $url after $n tries" >&2
+              exit 1
+            fi
+            echo "waiting for bootstrap server $url (try $n)..." >&2
+            sleep 6
+          done
+          base64 -d /run/k3s-bootstrap.b64 | tar xz -C /
+          rm -f /run/k3s-bootstrap.b64
+          test -d /var/lib/rancher/k3s/server/cred
+{% endif %}
+
     - path: /usr/local/sbin/k3s_sqlite_vacuum.sh
       mode: 0755
       contents:

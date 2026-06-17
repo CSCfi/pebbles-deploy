@@ -64,6 +64,15 @@
           loop: "{{ bastion_allow_cidrs | product(bastion_allow_ports) | list }}"
           when: bastion_allow_cidrs is defined and bastion_allow_ports is defined
 
+        - name: bastion SG - open master bootstrap server to the master only
+          openstack.cloud.security_group_rule:
+            security_group: "{{ cluster_name }}-bastion"
+            protocol: tcp
+            remote_ip_prefix: "{{ network_prefix }}.11/32"
+            port_range_min: "{{ master_bootstrap_serve_port | d(8043) }}"
+            port_range_max: "{{ master_bootstrap_serve_port | d(8043) }}"
+          when: vaulted_master_bootstrap_data is defined
+
         - name: common SG - create
           register: sg_common
           openstack.cloud.security_group:
@@ -257,3 +266,47 @@
         - nmap-ncat
         - vim
         state: present
+
+    # Serve the master bootstrap credentials over the internal network
+    - name: set up master bootstrap data server
+      when: vaulted_master_bootstrap_data is defined
+      block:
+        - name: create bootstrap data directory
+          file:
+            path: /opt/pebbles/bootstrap
+            state: directory
+            mode: '0755'
+
+        - name: place master bootstrap data (base64) for serving
+          copy:
+            content: "{{ vaulted_master_bootstrap_data }}"
+            dest: /opt/pebbles/bootstrap/k3s-master-bootstrap.tar.gz.b64
+            mode: '0644'
+          no_log: true
+
+        - name: install master bootstrap server unit
+          copy:
+            dest: /etc/systemd/system/pb-bootstrap-server.service
+            mode: '0644'
+            content: |
+              [Unit]
+              Description=Serve k3s master bootstrap data to the master over the internal network
+              After=network-online.target
+              Wants=network-online.target
+
+              [Service]
+              ExecStart=/usr/bin/python3 -m http.server {{ master_bootstrap_serve_port | d(8043) }} \
+                        --bind {{ network_prefix }}.10 --directory /opt/pebbles/bootstrap
+              DynamicUser=yes
+              Restart=always
+              RestartSec=2
+
+              [Install]
+              WantedBy=multi-user.target
+
+        - name: enable and (re)start master bootstrap server
+          systemd:
+            name: pb-bootstrap-server.service
+            enabled: yes
+            state: restarted
+            daemon_reload: yes
