@@ -37,11 +37,41 @@ systemd:
         WantedBy=multi-user.target
 {% endif %}
 
-    - name: oneshot-k3s-installer.service
+{% if fcos_kernel_version | d('') %}
+    # Stage a newer kernel from a Fedora repo mirror
+    - name: oneshot-kernel-upgrade.service
       enabled: true
       contents: |
         [Unit]
 {% if fcos_upgrade_on_first_boot | d(false) | bool %}
+        After=network-online.target oneshot-system-upgrade.service
+{% else %}
+        After=network-online.target
+{% endif %}
+        Wants=network-online.target
+        Before=oneshot-k3s-installer.service
+        Before=systemd-user-sessions.service
+        OnFailure=emergency.target
+        OnFailureJobMode=replace-irreversibly
+        ConditionPathExists=!/var/lib/kernel-upgraded
+
+        [Service]
+        RemainAfterExit=yes
+        Type=oneshot
+        ExecStart=/usr/local/sbin/run-kernel-upgrade.sh
+        ExecStartPost=/usr/bin/touch /var/lib/kernel-upgraded
+
+        [Install]
+        WantedBy=multi-user.target
+{% endif %}
+
+    - name: oneshot-k3s-installer.service
+      enabled: true
+      contents: |
+        [Unit]
+{% if fcos_kernel_version | d('') %}
+        After=network-online.target oneshot-kernel-upgrade.service
+{% elif fcos_upgrade_on_first_boot | d(false) | bool %}
         After=oneshot-system-upgrade.service
 {% else %}
         After=network-online.target
@@ -103,6 +133,32 @@ storage:
             return 0
           }
           main
+
+{% if fcos_kernel_version | d('') %}
+    - path: /usr/local/sbin/run-kernel-upgrade.sh
+      mode: 0755
+      contents:
+        inline: |
+          #!/usr/bin/env sh
+          # Replace the FCOS base kernel with a pinned build from a Fedora mirror (HTTPS-trusted).
+          set -e
+          main() {
+            arch="{{ fcos_kernel_arch | d('x86_64') }}"
+            ver="{{ fcos_kernel_version }}"
+            baseurl="{{ fcos_kernel_base_url }}"
+            workdir=$(mktemp -d /var/tmp/kernel-upgrade.XXXXXX)
+            trap 'rm -rf "$workdir"' EXIT
+            for pkg in {{ fcos_kernel_packages | d(['kernel', 'kernel-core', 'kernel-modules', 'kernel-modules-core']) | join(' ') }}; do
+              rpm="${pkg}-${ver}.${arch}.rpm"
+              echo "downloading ${baseurl}${rpm}"
+              curl --fail --location --retry 5 --retry-delay 2 -o "${workdir}/${rpm}" "${baseurl}${rpm}"
+            done
+            echo "replacing kernel with ${ver}"
+            rpm-ostree override replace "${workdir}"/*.rpm
+            return 0
+          }
+          main
+{% endif %}
 
     - path: /etc/systemd/network/50-flannel.link
       mode: 0644

@@ -65,6 +65,10 @@
                 fcos_kernel_arguments: {{ fcos_kernel_arguments | d([]) }}
                 fcos_max_user_namespaces: {{ fcos_max_user_namespaces | d(0) }}
                 private_registry_enabled: {{ private_registry_enabled | d(false) }}
+                fcos_kernel_version: {{ fcos_kernel_version | d('') }}
+                fcos_kernel_base_url: {{ fcos_kernel_base_url if (fcos_kernel_version is defined and fcos_kernel_version) else '' }}
+                fcos_kernel_arch: {{ fcos_kernel_arch | d('x86_64') }}
+                fcos_kernel_packages: {{ fcos_kernel_packages | d(['kernel', 'kernel-core', 'kernel-modules', 'kernel-modules-core']) | to_json }}
             mode: "0600"
             seuser: system_u
             serole: object_r
