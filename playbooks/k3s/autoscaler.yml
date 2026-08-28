@@ -160,6 +160,7 @@
                 --pull=always  \
                 --read-only \
                 --rm \
+                --memory={{ autoscaler_memory_limit | d('512m') }} \
                 -e AUTOSCALER_CONFIG_FILE=/run/pebbles/k3s-autoscaler/autoscaler-config.yaml \
                 -e KUBECONFIG_FILE=/run/pebbles/k3s-autoscaler/kubeconfig \
                 -e OPENSTACK_CREDENTIALS_FILE=/run/pebbles/k3s-autoscaler/openstack_credentials.yaml \
@@ -184,9 +185,9 @@
           when:
             - _autoscaler_service.changed
 
-        - name: enable and start k3s-autoscaler
+        - name: enable and start (or restart on change) k3s-autoscaler
           systemd:
             name: k3s-autoscaler
             enabled: true
-            state: started
+            state: "{{ 'restarted' if _autoscaler_service.changed else 'started' }}"
     # endblock
