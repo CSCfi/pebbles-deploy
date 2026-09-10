@@ -44,7 +44,9 @@ class OpenStackDriver:
         self.conn = None
 
     def connect(self):
-        self.conn = openstack.connect(app_name='autoscaler', **get_openstack_credentials(self.config))
+        # openstacksdk >= 4.16 no longer retries connection errors by default
+        self.conn = openstack.connect(app_name='autoscaler', connect_retries=1,
+                                      **get_openstack_credentials(self.config))
 
     def list_servers(self):
         return self.conn.compute.servers()

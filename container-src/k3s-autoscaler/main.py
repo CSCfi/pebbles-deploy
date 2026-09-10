@@ -4,8 +4,8 @@ import signal
 from time import sleep
 
 import kubernetes
+from kubernetes.dynamic import DynamicClient
 import yaml
-from openshift.dynamic import DynamicClient
 
 import utils
 from scaler import Scaler

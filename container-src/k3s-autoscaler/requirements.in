@@ -1,11 +1,10 @@
-#
-# Use 'pip-compile' from pip-tools package to generate requirements.txt from this file.
-# To update the requirements, run 'pip-compile -v -U'
+# Regenerate on the image's Python with
+#   pip-compile -v -U --generate-hashes --allow-unsafe --pip-args "--uploaded-prior-to <cutoff>"
+# See container-src/pebbles-deployer/requirements.in for what the cutoff and flags are for.
 
 ## Primary requirements
 kubernetes
-openshift
-python-openstackclient
+openstacksdk
 PyYAML
 Jinja2
 python-dateutil
