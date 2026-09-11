@@ -8,7 +8,7 @@ The core installation of our k3s cluster consists of three VMs:
 
 * master: runs all system components, handles external traffic
 * nfs: NFS server for persistent storage
-* jump: ssh gateway, k3s-autoscaler
+* bastion: ssh gateway, k3s-autoscaler
 
 All core hosts are running EL-compatible OS, such as AlmaLinux.
 
@@ -50,23 +50,14 @@ during the first boot.
 
 ## Deprovisioning
 
-First remove the node VMs - they not part of the stack but using shared stack provisioned resources.
+Remove the whole cluster, including all VMs and their volumes, the network and the security groups:
 
 ```bash
-openstack server list | grep dev-cluster-X-node
-openstack server delete fcos_node_1_from_above
-openstack server delete fcos_node_2_from_above
-...
+cd pebbles-deploy
+ansible-playbook playbooks/k3s/destroy_cluster.yml
 ```
 
-Remove the Heat stacks for the environment in question.
-
-```bash
-openstack stack delete --wait dev-cluster-X
-openstack stack delete --wait dev-cluster-X-volumes
-```
-
-**NOTE:** Deleting the volume stack will **delete all data** in the environment.
+**NOTE:** This **deletes all data** in the environment.
 
 ## Nfs-provisioner
 

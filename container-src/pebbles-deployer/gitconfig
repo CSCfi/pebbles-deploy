@@ -5,3 +5,4 @@
 	directory = /opt/deployment/pebbles-admin-frontend
 	directory = /opt/deployment/pebbles-deploy
 	directory = /opt/deployment/pebbles-environments
+	directory = /opt/deployment/pebbles-status-display

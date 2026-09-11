@@ -1,8 +1,7 @@
-# Function for recreating files on ramdisk from ansible-inventory.
-# builds logstash in the current OpenShift namespace
+# builds an image from container-src/<name> in the current OpenShift namespace
 build-image-from-container-src() {
     if [[ -z $1 ]]; then
-        echo 'build-image-from-container-source() needs image name as an argument' > /dev/stderr
+        echo 'build-image-from-container-src needs image name as an argument' > /dev/stderr
         return
     fi
     # pop the first argument and pass the rest later to oc build
@@ -21,6 +20,7 @@ build-image-from-container-src() {
     rm -v $tmpfile
 }
 
+# builds logstash in the current OpenShift namespace
 build-image-logstash() {
     build-image-from-container-src logstash "$@"
 }
@@ -47,7 +47,7 @@ build-image-k3s-autoscaler() {
 
 build-image-from-project-src() {
     if [[ -z $1 ]]; then
-        echo 'build-image-from-project-source() needs project name as an argument' > /dev/stderr
+        echo 'build-image-from-project-src needs project name as an argument' > /dev/stderr
         return
     fi
     # pop the first argument and pass the rest later to oc build
@@ -189,7 +189,7 @@ pb-load-data() {
             fi
         else
             echo
-            echo "File $ENV_BASE_DIR/$file not found"
+            echo "File $file not found"
             echo
         fi
     done

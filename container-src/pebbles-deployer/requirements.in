@@ -1,23 +1,20 @@
 #
 # Use 'pip-compile' from pip-tools package to generate requirements.txt from this file.
-# To update the requirements, run 'pip-compile -v -U'
+# To update the requirements, run
+#
+#   pip-compile -v -U --generate-hashes --allow-unsafe --pip-args "--uploaded-prior-to <cutoff>"
+#
+# where <cutoff> is an ISO 8601 timestamp at least a week old, so that freshly
+# published releases are not picked up. Run it on the same Python as the image.
+# The build installs with --require-hashes, which needs both the hashes and the
+# setuptools pin that --allow-unsafe adds.
 
 ## Primary requirements
 ansible
-requests
-requests-oauthlib
-oslo.utils
-openshift
-python-heatclient
-python-novaclient
 python-openstackclient
-python-swiftclient
 python-troveclient
 openstacksdk
 jinja2
-
-# for hot-reload/rsync-on-change in development
-inotify
 
 # for generating requirements.txt
 pip-tools

@@ -101,14 +101,19 @@ git clone ssh://git@gitlab.ci.csc.fi:10022/pebbles/pebbles-environments.git
 Linux:
 
 ```shell script
-curl -LO https://git.io/get_helm.sh
-bash ./get_helm.sh -v v3.15.0
+HELM_VERSION=v3.22.0
+HELM_SHA256=1e4ab49e429626cf6c6958d914248b78c9730803c2751b87627e171dc800e7bb
+curl -fsSLO https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz
+echo "${HELM_SHA256}  helm-${HELM_VERSION}-linux-amd64.tar.gz" | sha256sum -c -
+tar xfz helm-${HELM_VERSION}-linux-amd64.tar.gz
+sudo install linux-amd64/helm /usr/local/bin/helm
 ```
 
 Mac:
 
 ```shell script
-brew install helm
+brew install helm@3
+brew link helm@3
 ```
 
 # Building
