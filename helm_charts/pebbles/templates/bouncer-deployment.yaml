@@ -50,16 +50,13 @@ spec:
             timeoutSeconds: 3
           volumeMounts:
             - name: config
-              mountPath: /opt/bitnami/nginx/html/index.html
+              mountPath: /usr/share/nginx/html/index.html
               subPath: index.html
             - name: config
-              mountPath: /opt/bitnami/nginx/conf/server_blocks/bouncer_server_block.conf
+              mountPath: /etc/nginx/conf.d/bouncer_server_block.conf
               subPath: bouncer_server_block.conf
-            - name: config
-              mountPath: /opt/bitnami/nginx/conf/redirect_to_index.conf
-              subPath: redirect_to_index.conf
             - name: tls-secret
-              mountPath: /opt/bitnami/nginx/certs
+              mountPath: /etc/nginx/certs
       volumes:
         - name: config
           configMap:

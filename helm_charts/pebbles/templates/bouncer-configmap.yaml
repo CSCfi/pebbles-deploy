@@ -19,16 +19,14 @@ data:
     </body>
     </html>
 
-  redirect_to_index.conf: |
-    error_page 404 /index.html;
-
-  # adapted from bitnami nginx example
+  # included by the image's nginx.conf via 'include /etc/nginx/conf.d/*.conf'.
+  # the image's own default.conf keeps serving plain HTTP on 8080 (health probes).
   bouncer_server_block.conf: |
     server {
         listen       8443 ssl;
 
-        ssl_certificate      /opt/bitnami/nginx/certs/tls.crt;
-        ssl_certificate_key  /opt/bitnami/nginx/certs/tls.key;
+        ssl_certificate      /etc/nginx/certs/tls.crt;
+        ssl_certificate_key  /etc/nginx/certs/tls.key;
 
         ssl_session_cache    shared:SSL:1m;
         ssl_session_timeout  5m;
@@ -36,8 +34,13 @@ data:
         ssl_ciphers  HIGH:!aNULL:!MD5;
         ssl_prefer_server_ciphers  on;
 
+        # bounce every path, not just /, to the redirect page.
+        # '=200' overrides the 404 status, so monitoring/link checkers don't
+        # see the bounce as an error.
+        error_page 404 =200 /index.html;
+
         location / {
-          root   html;
+          root   /usr/share/nginx/html;
           index  index.html;
         }
     }
