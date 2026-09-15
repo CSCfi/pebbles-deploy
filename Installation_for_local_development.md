@@ -31,7 +31,7 @@ podman machine init --memory 3072 --rootful
 # start the machine
 podman machine start
 
-# enable memory compression (swapping to a compressed ramdisk)
+# enable memory compression (swapping to a compressed ramdisk) and spillover swap on disk
 podman machine ssh $HOME/src/gitlab.ci.csc.fi/pebbles/pebbles-deploy/scripts/podman_enable_zram_swap.bash
 
 # deploy Kind with NGINX ingress controller
