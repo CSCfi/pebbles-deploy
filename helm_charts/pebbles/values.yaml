@@ -317,7 +317,7 @@ customImageBaseImages: []
 bouncerEnabled: false
 bouncerImage: docker.io/nginxinc/nginx-unprivileged:1.31-alpine
 bouncerReplicas: 1
-bouncerImagePullPolicy: IfNotPresent
+bouncerImagePullPolicy: Always
 bouncerMemoryRequest: 100Mi
 bouncerMemoryLimit: 100Mi
 bouncerCpuRequest: 100m
