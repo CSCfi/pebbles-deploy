@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import utils
 from image_puller import ImagePuller
+from scaler import Scaler
 
 
 # ---------- Helpers to build fake nodes & pods ----------
@@ -64,6 +65,27 @@ class TestImagePullerUnit(unittest.TestCase):
             nodes, images, pull_history=pull_history, ignorelist=[]
         )
         self.assertEqual(res, [])
+
+
+class TestScalerConfig(unittest.TestCase):
+
+    def test_node_join_timeout_defaults_to_20_minutes(self):
+        scaler = Scaler(None, dict(freeMemoryTarget='1 GiB'))
+        self.assertEqual(scaler.node_join_timeout_sec, 20 * 60)
+
+    def test_node_join_timeout_from_config(self):
+        scaler = Scaler(None, dict(freeMemoryTarget='1 GiB', nodeJoinTimeoutMinutes=30))
+        self.assertEqual(scaler.node_join_timeout_sec, 30 * 60)
+
+    def test_node_join_timeout_accepts_numeric_string(self):
+        scaler = Scaler(None, dict(freeMemoryTarget='1 GiB', nodeJoinTimeoutMinutes='30'))
+        self.assertEqual(scaler.node_join_timeout_sec, 30 * 60)
+
+    def test_node_join_timeout_invalid_values_fall_back_to_default(self):
+        for value in (None, '', '20m', 0, -5, True, float('inf'), float('nan'), [30]):
+            with self.subTest(value=value):
+                scaler = Scaler(None, dict(freeMemoryTarget='1 GiB', nodeJoinTimeoutMinutes=value))
+                self.assertEqual(scaler.node_join_timeout_sec, 20 * 60)
 
 
 class TestStringMethods(unittest.TestCase):

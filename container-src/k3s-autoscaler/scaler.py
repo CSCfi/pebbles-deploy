@@ -34,6 +34,23 @@ def is_old_node(node, limit_in_seconds):
     return time.time() - dateutil.parser.isoparse(node.metadata.creationTimestamp).timestamp() > limit_in_seconds
 
 
+DEFAULT_NODE_JOIN_TIMEOUT_MINUTES = 20
+
+
+def parse_node_join_timeout_sec(value):
+    if value is None:
+        return DEFAULT_NODE_JOIN_TIMEOUT_MINUTES * 60
+    try:
+        minutes = float(value)
+    except (TypeError, ValueError):
+        minutes = 0
+    if isinstance(value, bool) or not 0 < minutes < float('inf'):
+        logging.error('invalid nodeJoinTimeoutMinutes %r, using default %d',
+            value, DEFAULT_NODE_JOIN_TIMEOUT_MINUTES)
+        return DEFAULT_NODE_JOIN_TIMEOUT_MINUTES * 60
+    return minutes * 60
+
+
 class Scaler:
 
     def __init__(self, dynamic_client, config):
@@ -44,6 +61,7 @@ class Scaler:
         self.free_memory_target = 0
         self.minimum_free_node_memory = 0
         self.old_node_age_limit_sec = 0
+        self.node_join_timeout_sec = 0
         self.maximum_number_of_nodes = 0
         self.image_puller_ignorelist = []
 
@@ -73,13 +91,14 @@ class Scaler:
         self.free_memory_target = utils.parse_memspec_to_bytes(self.config.get('freeMemoryTarget'))
         self.minimum_free_node_memory = utils.parse_memspec_to_bytes(self.config.get('minimumFreeNodeMemory', '0 GiB'))
         self.old_node_age_limit_sec = self.config.get('oldNodeAgeLimitHours', 7 * 24) * 60 * 60
+        self.node_join_timeout_sec = parse_node_join_timeout_sec(self.config.get('nodeJoinTimeoutMinutes'))
         self.maximum_number_of_nodes = self.config.get('maximumNumberOfNodes')
         self.image_puller_ignorelist = self.config.get('imagePullerIgnorelist')
 
         logging.info('Using config')
         for key in ('clusterName', 'flavor', 'image', 'volumeSize',
             'freeMemoryTarget', 'minimumFreeNodeMemory', 'maximumNumberOfNodes', 'oldNodeAgeLimitHours',
-            'imagePullerIgnorelist'):
+            'nodeJoinTimeoutMinutes', 'imagePullerIgnorelist'):
             logging.info('  %s: %s', key, config.get(key, 'Not set, using default'))
 
     def update(self):
@@ -231,7 +250,7 @@ class Scaler:
                 logging.info('initial taint has been removed and node %s is now ready', node_name)
                 break
 
-            if time.time() - start_ts > 15 * 60:
+            if time.time() - start_ts > self.node_join_timeout_sec:
                 logging.error('node %s failed to become ready, deleting VM', node_name)
                 self._delete_openstack_vm(node_name)
                 break
