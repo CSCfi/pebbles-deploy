@@ -16,6 +16,9 @@ spec:
     metadata:
       labels:
         name: bouncer
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/bouncer-configmap.yaml") . | sha256sum }}
+        checksum/tls: {{ include (print $.Template.BasePath "/bouncer-tls-secret.yaml") . | sha256sum }}
     spec:
       {{- if .Values.nodeSelector }}
       nodeSelector:

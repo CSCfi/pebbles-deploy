@@ -1,17 +1,17 @@
 {{- if .Values.bouncerEnabled }}
+{{- $domains := include "pebbles.bouncerDomains" . | fromJson }}
+{{- range $domain, $_ := $domains }}
 ---
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: bouncer
-  {{- if .Values.ipWhitelist }}
+  name: bouncer-{{ $domain | replace "." "-" }}
+  {{- if $.Values.ipWhitelist }}
   annotations:
-    haproxy.router.openshift.io/ip_whitelist: {{ .Values.ipWhitelist }}
+    haproxy.router.openshift.io/ip_whitelist: {{ $.Values.ipWhitelist }}
   {{- end }}
 spec:
-  {{- if .Values.bouncerFromDomain }}
-  host: {{ .Values.bouncerFromDomain }}
-  {{- end }}
+  host: {{ $domain }}
   to:
     kind: Service
     name: bouncer
@@ -20,12 +20,8 @@ spec:
     targetPort: web-secure
   tls:
     insecureEdgeTerminationPolicy: Redirect
-    {{- if .Values.bouncerTlsCert }}
     termination: passthrough
-    {{- else }}
-    termination: edge
-    {{- end }}
 status:
   ingress: [ ]
-
+{{- end }}
 {{- end }}

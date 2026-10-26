@@ -6,6 +6,9 @@ usage() {
   cat <<EOF
 Usage: $0 --domain <domain_name> [--cert-extra-options "<options>"]
 
+Writes the certificate and key to secrets-bouncer-cert-<domain_name>.sops.yaml
+in the environment directory, as bouncerDomains.<domain_name> for the Helm chart.
+
 Required arguments:
   --domain <domain_name>        Domain name for which to obtain the certificate.
 
@@ -55,6 +58,11 @@ if [[ -z "$DOMAIN_NAME" ]]; then
   usage
 fi
 
+if [[ ! "$DOMAIN_NAME" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]]; then
+  echo "Error: --domain must be a lowercase host name."
+  exit 1
+fi
+
 
 # === Static configuration ===
 CONFIG_FILE="${ENV_BASE_DIR}/.env_secrets.sops.yaml"
@@ -62,7 +70,8 @@ CONFIG_FILE="${ENV_BASE_DIR}/.env_secrets.sops.yaml"
 CERTBOT_WORKDIR="/dev/shm/${DOMAIN_NAME}/certbot"
 CERTBOT_CONF="${CERTBOT_WORKDIR}/certbot.conf"
 CERT_DIR="/etc/letsencrypt/live/${DOMAIN_NAME}"
-TARGET_CERT_SOPS_FILE="${ENV_BASE_DIR}/secrets-bouncer-cert.sops.yaml"
+TARGET_CERT_SOPS_FILE="${ENV_BASE_DIR}/secrets-bouncer-cert-${DOMAIN_NAME}.sops.yaml"
+LEGACY_CERT_SOPS_FILE="${ENV_BASE_DIR}/secrets-bouncer-cert.sops.yaml"
 
 # Convert extra options string into an array
 read -r -a EXTRA_OPTS_ARRAY <<< "$CERTBOT_EXTRA_OPTIONS"
@@ -125,11 +134,17 @@ fi
 # Write updated file
 {
   echo "# Ansible/SOPS updated certificate"
-  echo "bouncerTlsCert: |"
-  sed 's/^/  /' "$FULLCHAIN_PATH"
-  echo "bouncerTlsKey: |"
-  sed 's/^/  /' "$PRIVKEY_PATH"
+  echo "bouncerDomains:"
+  echo "  ${DOMAIN_NAME}:"
+  echo "    tlsCert: |"
+  sed 's/^/      /' "$FULLCHAIN_PATH"
+  echo "    tlsKey: |"
+  sed 's/^/      /' "$PRIVKEY_PATH"
 } | sops -e --input-type=yaml --output-type=yaml --output $TARGET_CERT_SOPS_FILE /dev/stdin
 
 
 echo "Certificate and key have been updated in $TARGET_CERT_SOPS_FILE"
+
+if [[ -f "$LEGACY_CERT_SOPS_FILE" ]]; then
+  echo "Note: $LEGACY_CERT_SOPS_FILE still holds the single-domain certificate, which the chart refuses alongside bouncerDomains; run this script for that domain too, then remove the file and bouncerFromDomain from the values."
+fi

@@ -322,10 +322,18 @@ bouncerMemoryRequest: 100Mi
 bouncerMemoryLimit: 100Mi
 bouncerCpuRequest: 100m
 bouncerCpuLimit: 1800m
-bouncerFromDomain: 'example.org'
 bouncerToDomain: 'service.example.com'
+# Deprecated single-domain form; cannot be combined with bouncerDomains below
+bouncerFromDomain: ''
 bouncerTlsCert: ''
 bouncerTlsKey: ''
+# Domains to bounce, each with its own certificate, picked by SNI. Keyed by
+# domain so that each certificate can come from its own secrets file:
+#   bouncerDomains:
+#     example.org:
+#       tlsCert: ''
+#       tlsKey: ''
+bouncerDomains: {}
 
 # ----------------------------------------------------------------------------
 #
