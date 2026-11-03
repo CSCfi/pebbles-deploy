@@ -6,8 +6,11 @@ usage() {
   cat <<EOF
 Usage: $0 --domain <domain_name> [--cert-extra-options "<options>"]
 
-Writes the certificate and key to secrets-bouncer-cert-<domain_name>.sops.yaml
-in the environment directory, as bouncerDomains.<domain_name> for the Helm chart.
+Obtains a certificate for the domain and stores it in
+secrets-bouncer-domains.sops.yaml in the environment directory, as
+bouncerDomains.<domain_name> for the Helm chart. An existing entry for the
+domain is replaced; entries for other domains are kept. The file is updated
+with a read-modify-write, so do not run the script for two domains at once.
 
 Required arguments:
   --domain <domain_name>        Domain name for which to obtain the certificate.
@@ -70,7 +73,7 @@ CONFIG_FILE="${ENV_BASE_DIR}/.env_secrets.sops.yaml"
 CERTBOT_WORKDIR="/dev/shm/${DOMAIN_NAME}/certbot"
 CERTBOT_CONF="${CERTBOT_WORKDIR}/certbot.conf"
 CERT_DIR="/etc/letsencrypt/live/${DOMAIN_NAME}"
-TARGET_CERT_SOPS_FILE="${ENV_BASE_DIR}/secrets-bouncer-cert-${DOMAIN_NAME}.sops.yaml"
+DOMAINS_SOPS_FILE="${ENV_BASE_DIR}/secrets-bouncer-domains.sops.yaml"
 LEGACY_CERT_SOPS_FILE="${ENV_BASE_DIR}/secrets-bouncer-cert.sops.yaml"
 
 # Convert extra options string into an array
@@ -122,7 +125,7 @@ else
   echo "Certificate already exists for $DOMAIN_NAME, skipping certbot run."
 fi
 
-# === Read and encode certificate + key ===
+# === Store certificate + key as bouncerDomains.<domain> ===
 FULLCHAIN_PATH="${CERT_DIR}/fullchain.pem"
 PRIVKEY_PATH="${CERT_DIR}/privkey.pem"
 
@@ -131,19 +134,19 @@ if [[ ! -f "$FULLCHAIN_PATH" || ! -f "$PRIVKEY_PATH" ]]; then
   exit 1
 fi
 
-# Write updated file
-{
-  echo "# Ansible/SOPS updated certificate"
-  echo "bouncerDomains:"
-  echo "  ${DOMAIN_NAME}:"
-  echo "    tlsCert: |"
-  sed 's/^/      /' "$FULLCHAIN_PATH"
-  echo "    tlsKey: |"
-  sed 's/^/      /' "$PRIVKEY_PATH"
-} | sops -e --input-type=yaml --output-type=yaml --output $TARGET_CERT_SOPS_FILE /dev/stdin
+if [[ ! -f "$DOMAINS_SOPS_FILE" ]]; then
+  {
+    echo "# bouncer certificates, maintained with scripts/get_harica_bouncer_certificate.bash"
+    echo 'bouncerDomains: {}'
+  } | sops -e --input-type=yaml --output-type=yaml --output "$DOMAINS_SOPS_FILE" /dev/stdin
+fi
 
+# replaces the domain's entry in place, or adds it; other entries keep their ciphertext
+ENTRY_JSON=$(jq -n --rawfile cert "$FULLCHAIN_PATH" --rawfile key "$PRIVKEY_PATH" \
+  '{tlsCert: $cert, tlsKey: $key}')
+sops set "$DOMAINS_SOPS_FILE" "[\"bouncerDomains\"][\"${DOMAIN_NAME}\"]" "$ENTRY_JSON"
 
-echo "Certificate and key have been updated in $TARGET_CERT_SOPS_FILE"
+echo "Certificate and key for $DOMAIN_NAME stored in $DOMAINS_SOPS_FILE"
 
 if [[ -f "$LEGACY_CERT_SOPS_FILE" ]]; then
   echo "Note: $LEGACY_CERT_SOPS_FILE still holds the single-domain certificate, which the chart refuses alongside bouncerDomains; run this script for that domain too, then remove the file and bouncerFromDomain from the values."
