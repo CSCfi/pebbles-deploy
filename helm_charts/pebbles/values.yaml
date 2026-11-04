@@ -315,7 +315,7 @@ customImageBaseImages: []
 
 # Optional bouncer to redirect service domain name to service implementation
 bouncerEnabled: false
-bouncerImage: docker.io/nginxinc/nginx-unprivileged:1.31-alpine
+bouncerImage: docker.io/nginx/nginx-unprivileged:1.31-alpine
 bouncerReplicas: 1
 bouncerImagePullPolicy: Always
 bouncerMemoryRequest: 100Mi
