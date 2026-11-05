@@ -5,7 +5,7 @@
 #
 # The reason for having bootstrap data is to preserve credentials between development system reinstallations.
 
-set -e
+set -eo pipefail
 
 OUTPUT_FILE=/tmp/vault_master_bootstrap.yml
 
@@ -30,4 +30,5 @@ rm -f $enc_file $vault_file
 
 echo
 echo "master bootstrap data vault file was saved to $OUTPUT_FILE"
+echo "set restore_master_bootstrap_data: true in the inventory to make the master use it"
 echo

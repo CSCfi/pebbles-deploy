@@ -21,6 +21,7 @@
         floating_ip_address: "{{ master_public_ip }}"
         nfs_server_enabled: "{{ master_nfs_server_enabled | d(false) }}"
         k3s_server_on_ramdisk: "{{ master_k3s_server_on_ramdisk | d(false) }}"
+        restore_master_bootstrap: "{{ restore_master_bootstrap_data | d(false) }}"
         security_groups:
           - "{{ cluster_name}}-common"
           - "{{ cluster_name}}-infra"
@@ -71,3 +72,37 @@
       command: /usr/local/bin/k3s kubectl config set-cluster default
         --server=https://{{ master_public_ip }}:6443
         --kubeconfig ~{{ ansible_user }}/.kube/config
+
+# The restore only runs on the master's first boot, so the served credentials are dead weight afterwards
+- name: Clear master bootstrap data from the bastion
+  hosts: bastion
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: clear master bootstrap data
+      when: restore_master_bootstrap_data | d(false) | bool
+      block:
+        - name: stop and disable master bootstrap server
+          systemd:
+            name: pb-bootstrap-server.service
+            enabled: no
+            state: stopped
+
+        - name: remove master bootstrap data
+          file:
+            path: /opt/pebbles/bootstrap
+            state: absent
+
+- name: Close the master bootstrap port
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: bastion SG - close master bootstrap server port
+      openstack.cloud.security_group_rule:
+        security_group: "{{ cluster_name }}-bastion"
+        protocol: tcp
+        remote_ip_prefix: "{{ network_prefix }}.11/32"
+        port_range_min: "{{ master_bootstrap_serve_port | d(8043) }}"
+        port_range_max: "{{ master_bootstrap_serve_port | d(8043) }}"
+        state: absent
+      when: restore_master_bootstrap_data | d(false) | bool

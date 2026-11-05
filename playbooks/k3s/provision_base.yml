@@ -71,7 +71,7 @@
             remote_ip_prefix: "{{ network_prefix }}.11/32"
             port_range_min: "{{ master_bootstrap_serve_port | d(8043) }}"
             port_range_max: "{{ master_bootstrap_serve_port | d(8043) }}"
-          when: vaulted_master_bootstrap_data is defined
+          when: restore_master_bootstrap_data | d(false) | bool
 
         - name: common SG - create
           register: sg_common
@@ -278,7 +278,7 @@
 
     # Serve the master bootstrap credentials over the internal network
     - name: set up master bootstrap data server
-      when: vaulted_master_bootstrap_data is defined
+      when: restore_master_bootstrap_data | d(false) | bool
       block:
         - name: create bootstrap data directory
           file:

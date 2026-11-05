@@ -35,6 +35,28 @@ packages on the hosts and reboot if any changes were detected. This will only ru
 flag present in `/var/lib/pb/INSTALLED` in place. Note that you may need to retry the step, OS update could take a very
 long time and ssh connection problems might occur.
 
+The playbooks provision a cluster from scratch and do not reconcile an existing one. Re-running them against an
+existing environment skips the base infrastructure (network, security groups) and leaves creation-time settings such
+as `restore_master_bootstrap_data` unapplied. To change those, update the inventory, then destroy and recreate the
+cluster. In-place updates are limited to the autoscaler and the Kubernetes manifests. Pass
+`-e force_base_provisioning=1` to re-run the base infrastructure tasks on an existing environment, but limit this
+strictly to development/throwaway environments that don't hold valuable data.
+
+### Keeping cluster credentials across a reinstall
+
+A new cluster gets a new CA, which invalidates every kubeconfig and token issued by the old one. To keep them,
+capture the credentials from the running cluster before destroying it:
+
+```bash
+cd pebbles-deploy
+scripts/create_k3s_master_bootstrap_data.bash
+```
+
+Add the resulting vault file to the inventory, set `restore_master_bootstrap_data: true`, then destroy and recreate
+the cluster. The master restores the credentials from the bastion on its first boot, and the K3s installation does
+not proceed if the restore fails. Once the master is up, the data is removed from the bastion and the server stopped.
+Unset `restore_master_bootstrap_data` to deploy with a fresh CA while keeping the vault file.
+
 ## Adding nodes to run user sessions
 
 If `k3s-autoscaler` installation is enabled, nodes for user workloads are deployed automatically by the autoscaler.

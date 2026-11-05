@@ -1,4 +1,5 @@
 ---
+- import_playbook: check_master_bootstrap.yml
 - import_playbook: provision_base.yml
 - import_playbook: provision_master_vms.yml
 - import_playbook: provision_storage_vms.yml

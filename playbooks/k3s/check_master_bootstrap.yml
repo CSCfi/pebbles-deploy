@@ -1,0 +1,16 @@
+---
+
+- name: Check master bootstrap arguments
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: check bootstrap data is loaded when its restore is enabled
+      fail:
+        msg: >-
+          restore_master_bootstrap_data is set, but vaulted_master_bootstrap_data is not defined.
+          Create the data with scripts/create_k3s_master_bootstrap_data.bash and pass the resulting
+          vault file, or unset restore_master_bootstrap_data to deploy with a fresh cluster CA.
+      when:
+        - restore_master_bootstrap_data | d(false) | bool
+        - vaulted_master_bootstrap_data is not defined

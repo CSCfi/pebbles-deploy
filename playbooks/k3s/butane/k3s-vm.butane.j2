@@ -21,6 +21,10 @@ systemd:
         After=network-online.target
         Wants=network-online.target
         Before=systemd-user-sessions.service
+{% if vm_role == 'server' and restore_master_bootstrap | d(false) | bool %}
+        Requires=pb-restore-k3s-bootstrap.service
+        After=pb-restore-k3s-bootstrap.service
+{% endif %}
         OnFailure=emergency.target
         OnFailureJobMode=replace-irreversibly
         ConditionPathExists=!/var/lib/k3s-{{ vm_role }}-installed
@@ -147,6 +151,26 @@ systemd:
         WantedBy=multi-user.target
 {% endif %}
 
+    # storage/ must be container_file_t: the local-path helper writes into it from a container.
+    # restorecon would reset it to the policy default container_var_lib_t, which containers cannot
+    # write, so only the parent is handed to restorecon.
+    - name: pb-relabel-k3s-storage.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Restore SELinux labels on the k3s state dir
+        Before=k3s.service
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/bin/mkdir -p /var/lib/rancher/k3s/storage
+        ExecStart=-/usr/sbin/restorecon -F /var/lib/rancher /var/lib/rancher/k3s
+        ExecStart=/usr/bin/chcon -R -t container_file_t /var/lib/rancher/k3s/storage
+
+        [Install]
+        WantedBy=multi-user.target
+
 {% if k3s_server_on_ramdisk | d(false) | bool %}
     # Keep the K3s server dir (sqlite db, certs, tokens, manifests) in RAM only, off persistent storage.
     # NOTE: rebooting the master wipes this tmpfs, so K3s state is lost and the cluster must be reinstalled
@@ -166,28 +190,9 @@ systemd:
 
         [Install]
         WantedBy=local-fs.target
-
-    # The mount above makes systemd pre-create /var/lib/rancher/k3s before k3s, so storage/ lacks the
-    # container_file_t the local-path helper needs
-    - name: pb-relabel-k3s-storage.service
-      enabled: true
-      contents: |
-        [Unit]
-        Description=Label k3s local-path storage dir container_file_t for SELinux
-        ConditionPathExists=!/var/lib/pb-k3s-storage-relabeled
-
-        [Service]
-        Type=oneshot
-        RemainAfterExit=yes
-        ExecStart=/usr/bin/mkdir -p /var/lib/rancher/k3s/storage
-        ExecStart=/usr/bin/chcon -R -t container_file_t /var/lib/rancher/k3s/storage
-        ExecStartPost=/usr/bin/touch /var/lib/pb-k3s-storage-relabeled
-
-        [Install]
-        WantedBy=multi-user.target
 {% endif %}
 
-{% if vaulted_master_bootstrap_data is defined %}
+{% if restore_master_bootstrap | d(false) | bool %}
     # Restore stable cluster credentials (CA, service-account key, token)
     - name: pb-restore-k3s-bootstrap.service
       enabled: true
@@ -339,7 +344,7 @@ storage:
 {% endif %}
 
 {% if vm_role == 'server' %}
-{% if vaulted_master_bootstrap_data is defined %}
+{% if restore_master_bootstrap | d(false) | bool %}
     - path: /usr/local/sbin/restore-k3s-bootstrap.sh
       mode: 0755
       contents:
@@ -347,7 +352,7 @@ storage:
           #!/usr/bin/env sh
           set -e
           url="http://{{ network_prefix }}.10:{{ master_bootstrap_serve_port | d(8043) }}/k3s-master-bootstrap.tar.gz.b64"
-          mkdir -p /var/lib/rancher/k3s/server
+          mkdir -Z -p /var/lib/rancher/k3s/server
           n=0
           until curl -sfm 30 "$url" -o /run/k3s-bootstrap.b64; do
             n=$((n + 1))
