@@ -13,7 +13,8 @@
 ansible
 python-openstackclient
 python-troveclient
-openstacksdk
+# openstack.cloud (bundled in ansible) is not ready for openstacksdk 6. Update when ansible becomes compatible.
+openstacksdk<6
 jinja2
 
 # for generating requirements.txt

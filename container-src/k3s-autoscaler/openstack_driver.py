@@ -4,6 +4,7 @@ import os
 
 import openstack
 import yaml
+from openstack.exceptions import NotFoundException
 
 
 def get_openstack_credentials(config):
@@ -55,27 +56,33 @@ class OpenStackDriver:
         return self.conn.block_storage.volumes()
 
     def find_volume(self, volume_name):
-        return self.conn.block_storage.find_volume(volume_name)
+        try:
+            return self.conn.block_storage.find_volume(volume_name, ignore_missing=False)
+        except NotFoundException:
+            return None
 
     def list_images(self):
-        return self.conn.compute.images()
+        return self.conn.image.images()
 
     def list_flavors(self):
         return self.conn.compute.flavors()
 
     def find_flavor(self, flavor_name):
-        return self.conn.compute.find_flavor(flavor_name)
+        try:
+            return self.conn.compute.find_flavor(flavor_name, ignore_missing=False)
+        except NotFoundException:
+            return None
 
     def create_server(self, name, image, flavor, keypair, network, security_groups, server_group, user_data):
         logging.debug('Creating server %s' % name)
         sec_groups = [dict(name=x) for x in security_groups]
-        server_group_id = self.conn.compute.find_server_group(server_group).id
+        server_group_id = self.conn.compute.find_server_group(server_group, ignore_missing=False).id
         server = self.conn.compute.create_server(
             name=name,
-            image_id=self.conn.compute.find_image(image).id,
-            flavor_id=self.conn.compute.find_flavor(flavor).id,
+            image_id=self.conn.image.find_image(image, ignore_missing=False).id,
+            flavor_id=self.conn.compute.find_flavor(flavor, ignore_missing=False).id,
             key_name=keypair,
-            networks=[{'uuid': self.conn.network.find_network(network).id}],
+            networks=[{'uuid': self.conn.network.find_network(network, ignore_missing=False).id}],
             security_groups=sec_groups,
             scheduler_hints=dict(group=server_group_id),
             user_data=base64.b64encode(user_data).decode('utf-8'),
@@ -85,7 +92,7 @@ class OpenStackDriver:
 
     def delete_server(self, name):
         logging.debug('Deleting server %s' % name)
-        self.conn.compute.delete_server(self.conn.compute.find_server(name))
+        self.conn.compute.delete_server(self.conn.compute.find_server(name, ignore_missing=False))
 
     def create_volume(self, volume_name, volume_size):
         logging.debug('Creating volume %s' % volume_name)
@@ -94,22 +101,22 @@ class OpenStackDriver:
 
     def delete_volume(self, name):
         logging.debug('Deleting volume %s' % name)
-        self.conn.block_storage.delete_volume(self.conn.block_storage.find_volume(name))
+        self.conn.block_storage.delete_volume(self.conn.block_storage.find_volume(name, ignore_missing=False))
 
     def attach_volume(self, server_name, volume_name):
         logging.debug('Attaching volume %s to server %s', volume_name, server_name)
         # we need to wait for the server to be active before attempting to attach the disk
-        server = self.conn.compute.find_server(server_name)
+        server = self.conn.compute.find_server(server_name, ignore_missing=False)
         self.conn.compute.wait_for_server(server)
         self.conn.compute.create_volume_attachment(
             server,
-            self.conn.block_storage.find_volume(volume_name)
+            self.conn.block_storage.find_volume(volume_name, ignore_missing=False)
         )
 
     def detach_volume(self, server_name, volume_name):
         logging.debug('Detaching volume %s from server %s', volume_name, server_name)
-        server = self.conn.compute.find_server(server_name)
-        volume = self.conn.block_storage.find_volume(volume_name)
+        server = self.conn.compute.find_server(server_name, ignore_missing=False)
+        volume = self.conn.block_storage.find_volume(volume_name, ignore_missing=False)
 
         n_retries = 0
         while True:
