@@ -114,10 +114,10 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 150Mi
+              memory: {{ .Values.filebeatMemoryRequest }}
             limits:
               cpu: 100m
-              memory: 150Mi
+              memory: {{ .Values.filebeatMemoryLimit }}
           securityContext:
             runAsGroup: 0
           volumeMounts:

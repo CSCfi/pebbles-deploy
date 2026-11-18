@@ -207,6 +207,10 @@ filebeatConfig: |
     logstash:
       hosts: ["logstash:5044"]
 
+# Resources for filebeat sidecars
+filebeatMemoryRequest: 200Mi
+filebeatMemoryLimit: 200Mi
+
 #logstashStorageClass: standard-rwo
 #logstashVolumeSize: 1Gi
 
