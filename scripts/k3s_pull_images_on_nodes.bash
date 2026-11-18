@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 #
-# Script that pulls given images on all k3s nodes labeled with role=user
+# Script that pulls given images on all schedulable k3s nodes labeled with role=user
 #
 # Requires working passwordless ssh to nodes
 #
 
 # bail out on any error
 set -e
-images=$*
 
-nodes=$(oc get nodes -l role=user -o name | sed -e 's|node/||g')
+images=$*
+nodes=$(oc get nodes -l role=user --field-selector spec.unschedulable=false -o name | sed -e 's|node/||g')
+
 for image in $images; do
     for node in $nodes; do
         echo "pulling $image on $node"
